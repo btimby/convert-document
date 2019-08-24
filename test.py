@@ -22,6 +22,7 @@ def request(i):
 pool = Pool(20)
 try:
     pool.map(request, range(10000))
+
 except KeyboardInterrupt:
     pool.terminate()
     pool.join()

@@ -10,7 +10,7 @@ latest stable image off DockerHub and run it like this:
 
 ```shell
 docker pull alephdata/convert-document
-docker run -p 3000:3000 -v --tmpfs /tmp -ti alephdata/convert-document
+docker run -p 3000:3000 --tmpfs /tmp -ti alephdata/convert-document
 ```
 
 Once the service has initialised, files can be sent to the `/convert` endpoint, and a PDF version
