@@ -9,7 +9,8 @@ from threading import Timer
 from com.sun.star.beans import PropertyValue
 from com.sun.star.connection import NoConnectException
 
-from convert.formats import Formats
+from formats import Formats
+
 
 CONNECTION_STRING = "socket,host=localhost,port=%s,tcpNoDelay=1;urp;StarOffice.ComponentContext"  # noqa
 COMMAND = 'soffice --nologo --headless --nocrashreport --nodefault --nofirststartwizard --norestore --invisible --accept="%s"'  # noqa
@@ -109,10 +110,14 @@ class PdfConverter(object):
     def get_output_properties(self, doc):
         for (service, pdf) in self.PDF_FILTERS:
             if doc.supportsService(service):
+                pageone = PropertyValue()
+                pageone.Name = "PageRange"
+                pageone.Value = "1"
                 return self.property_tuple({
                     "FilterName": pdf,
                     "MaxImageResolution": 300,
                     "SelectPdfVersion": 1,
+                    "FilterData": (pageone, ),
                 })
         raise ConversionFailure("PDF export not supported.")
 

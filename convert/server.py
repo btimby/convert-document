@@ -2,20 +2,49 @@ import os
 import shutil
 import logging
 import asyncio
+import mimetypes
 from aiohttp import web
-from tempfile import mkstemp
-from pantomime import normalize_mimetype, normalize_extension
+from tempfile import NamedTemporaryFile
+from wand.image import Image, Color
 
-from convert.converter import FORMATS, PdfConverter
-from convert.converter import ConversionFailure
+from converter import FORMATS, PdfConverter
+from converter import ConversionFailure
+
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('aiohttp').setLevel(logging.WARNING)
+
 
 MEGABYTE = 1024 * 1024
 BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger('aiohttp').setLevel(logging.WARNING)
-log = logging.getLogger('convert')
-converter = PdfConverter()
+LOGGER = logging.getLogger('convert')
+CONVERTER = PdfConverter()
+
+
+async def _doc2pdf(path, timeout):
+    extension = os.path.splitext(path)[1]
+    mimetype = mimetypes.guess_type(path)
+    filters = list(FORMATS.get_filters(extension, mimetype))
+
+    with NamedTemporaryFile(delete=False, suffix=extension) as t:
+        t.close()
+        CONVERTER.convert_file(path, t.name, filters, timeout=timeout)
+        path = t.name
+
+    if os.path.getsize(path) == 0:
+        raise ConversionFailure("Could not convert.")
+
+    return path
+
+
+async def _thumbnail(path, width, height):
+    with Image(filename=path, resolution=300) as s:
+        d = Image(s.sequence[0])
+        d.background_color = Color("white")
+        d.alpha_channel = 'remove'
+        d.transform(resize='%ix%i>' % (width, height))
+        return d.make_blob('jpeg')
 
 
 async def info(request):
@@ -24,50 +53,52 @@ async def info(request):
 
 async def convert(request):
     data = await request.post()
-    upload = data['file']
-    extension = normalize_extension(upload.filename)
-    mime_type = normalize_mimetype(upload.content_type, default=None)
-    log.info('PDF convert: %s [%s]', upload.filename, mime_type)
-    fd, upload_file = mkstemp()
-    os.close(fd)
-    fd, out_file = mkstemp(suffix='.pdf')
-    os.close(fd)
+
+    path, upload = data.get('path'), data.get('file')
+    width = int(data.get('width', 640))
+    height = int(data.get('height', 480))
+    timeout = int(data.get('timeout', 300))
 
     try:
-        with open(upload_file, 'wb') as fh:
-            shutil.copyfileobj(upload.file, fh, BUFFER_SIZE)
+        # Determine path or upload.
+        if upload:
+            extension = os.path.splitext(upload.filename)[1]
+            with NamedTemporaryFile(delete=False, suffix=extension) as t:
+                shutil.copyfileobj(upload.file, t, BUFFER_SIZE)
+                path = t.name
 
-        filters = list(FORMATS.get_filters(extension, mime_type))
-        timeout = int(request.query.get('timeout', 300))
+        elif path:
+            extension = os.path.splitext(path)[1]
 
-        await asyncio.sleep(0)
-        converter.convert_file(upload_file, out_file, filters,
-                               timeout=timeout)
-        out_size = os.path.getsize(out_file)
-        if out_size == 0:
-            raise ConversionFailure("Could not convert.")
-        await asyncio.sleep(0)
+        else:
+            raise ConversionFailure('No file or path provided')
+
+        # Determine file type (doc or image)
+        if extension in FORMATS.extensions:
+            # Convert doc to image.
+            path = await _doc2pdf(path, timeout)
+            asyncio.sleep(0)
+
+        # Resize image and return.
+        blob = await _thumbnail(path, width, height)
+        asyncio.sleep(0)
 
         response = web.StreamResponse()
-        response.content_length = out_size
-        response.content_type = 'application/pdf'
+        response.content_length = len(blob)
+        response.content_type = 'image/jpeg'
         await response.prepare(request)
-        with open(out_file, 'rb') as f:
-            while True:
-                chunk = f.read(BUFFER_SIZE)
-                if not chunk:
-                    break
-                await response.write(chunk)
+        await response.write(blob)
+
         return response
-    except ConversionFailure as fail:
-        log.info("Failed to convert: %s", fail)
-        return web.Response(text=str(fail), status=400)
+
+    except ConversionFailure as exc:
+        LOGGER.info("Failed to convert", exc_info=True)
+        return web.Response(text=str(exc), status=400)
+
     except Exception as exc:
-        log.exception('System error: %s.', exc)
-        converter.terminate()
-    finally:
-        os.remove(upload_file)
-        os.remove(out_file)
+        LOGGER.exception(exc)
+        CONVERTER.terminate()
+        return web.Response(text=str(exc), status=500)
 
 
 app = web.Application(client_max_size=MAX_UPLOAD)
