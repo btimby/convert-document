@@ -26,8 +26,7 @@ def preview_video(path, width, height):
             _, stderr = process.communicate()
             LOGGER.info(stderr)
             if b'Output file is empty' in stderr:
-                # Seems like we got a frame.
-                raise Exception()
+                raise Exception('Could not grab frame')
 
             return t.read()
 

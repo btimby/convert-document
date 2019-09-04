@@ -2,13 +2,13 @@ import os
 import shutil
 import logging
 import asyncio
-import time
 import functools
-import threading
 
+from os.path import normpath, splitext
 from os.path import join as pathjoin
 
-from aiohttp import web
+import aiofiles
+from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
 from tempfile import NamedTemporaryFile
@@ -65,7 +65,6 @@ DOCUMENT_EXTENSIONS = set([
 ])
 
 # Configuration
-# TODO: Take this from config.
 FILE_ROOT = os.environ.get('FILE_ROOT', '/mnt/files')
 WIDTH = os.environ.get('WIDTH', 320)
 HEIGHT = os.environ.get('HEIGHT', 240)
@@ -91,10 +90,24 @@ async def _get_params(request):
 
     @run_in_executor
     def _upload(upload):
-        extension = os.path.splitext(upload.filename)[1]
+        extension = splitext(upload.filename)[1]
         with NamedTemporaryFile(delete=False, suffix=extension) as t:
             shutil.copyfileobj(upload.file, t, BUFFER_SIZE)
         return t.name
+
+    async def _download(url):
+        extension = splitext(url)[1]
+        async with ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    raise web.HTTPBadRequest(
+                        reason='Could not download: %s, %s' % (
+                            url, resp.reason))
+
+                with NamedTemporaryFile(delete=False, suffix=extension) as t:
+                    f = await aiofiles.open(t.name, mode='wb')
+                    await f.write(await resp.read())
+                    await f.close()
 
     if request.method == 'POST':
         data = await request.post()
@@ -102,16 +115,24 @@ async def _get_params(request):
     else:
         data = request.query
 
-    path, upload = data.get('path'), data.get('file')
+    path, upload, url = data.get('path'), data.get('file'), data.get('url')
     width = int(data.get('width', WIDTH))
     height = int(data.get('height', HEIGHT))
     width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
 
-    if request.method == 'GET':
+    if path:
+        # TODO: sanitize this path, ensure it is rooted in FILE_ROOT
+        path = normpath(path)
         path = pathjoin(FILE_ROOT, path)
 
-    if upload:
+    elif upload:
         path = await _upload(upload)
+
+    elif url:
+        path = await _download(url)
+
+    else:
+        raise web.HTTPBadRequest(reason='No path, file or url provided')
 
     if not os.path.isfile(path):
         raise web.HTTPNotFound()
@@ -124,6 +145,7 @@ def _preview(path, width, height):
     extension = os.path.splitext(path)[1]
     LOGGER.debug('file: %s, extension: %s', path, extension)
 
+    # TODO: ensure image is exactly the requested size by padding it.
     if extension == '.pdf':
         return preview_pdf(path, width, height)
 
@@ -134,11 +156,12 @@ def _preview(path, width, height):
         return preview_video(path, width, height)
 
     elif extension[1:] in IMAGE_EXTENSIONS:
-        # Resize image and return.
         return preview_image(path, width, height)
 
     else:
         raise web.HTTPBadRequest()
+
+    # TODO: Don't return an error, fall back to a generic preview.
 
 
 async def preview(request):
@@ -164,7 +187,8 @@ def main():
     app = web.Application(
         client_max_size=MAX_UPLOAD, middlewares=[normalize_path_middleware()])
     app.add_routes([web.get('/', info)])
-    app.add_routes([web.post('/preview/', preview), web.get('/preview/', preview)])
+    app.add_routes(
+        [web.post('/preview/', preview), web.get('/preview/', preview)])
     web.run_app(app, port=3000)
 
 
