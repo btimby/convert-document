@@ -2,11 +2,12 @@
 # unlicensed
 import os
 import uno
-import time
 import logging
 import subprocess
+import time
 import mimetypes
-from threading import Timer
+
+from threading import Timer, Lock
 from tempfile import NamedTemporaryFile
 
 from lxml import etree
@@ -26,6 +27,7 @@ COMMAND = 'soffice --nologo --headless --nocrashreport --nodefault --nofirststar
 RESOLVER_CLASS = 'com.sun.star.bridge.UnoUrlResolver'
 DESKTOP_CLASS = 'com.sun.star.frame.Desktop'
 DEFAULT_PORT = 6519
+SOFFICE_LOCK = Lock()
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +55,7 @@ class PdfConverter(object):
         self.local_context = uno.getComponentContext()
         self.resolver = self._svc_create(self.local_context, RESOLVER_CLASS)
         self.process = None
+        self.connect()
 
     def _svc_create(self, ctx, clazz):
         return ctx.ServiceManager.createInstanceWithContext(clazz, ctx)
@@ -201,6 +204,12 @@ CONVERTER = PdfConverter()
 
 
 def preview_doc(path, width, height):
+    start = time.time()
     with NamedTemporaryFile(suffix='.pdf') as t:
-        CONVERTER.convert_file(path, t.name, timeout=5)
+        try:
+            CONVERTER.convert_file(path, t.name, timeout=5)
+
+        finally:
+            LOGGER.info('preview_doc(%s) took: %ss', path, time.time() - start)
+
         return preview_pdf(t.name, width, height)

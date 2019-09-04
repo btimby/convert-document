@@ -14,7 +14,7 @@ from aiohttp.web_middlewares import normalize_path_middleware
 from tempfile import NamedTemporaryFile
 
 from gs import preview_pdf
-from soffice import preview_doc, FORMATS
+from soffice import preview_doc
 from ffmpeg import preview_video
 from image import preview_image
 
@@ -29,9 +29,40 @@ BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
 
 LOGGER = logging.getLogger(__name__)
-VIDEO_EXTENSIONS = (
-    '.avi', '.mpg', '.mov',
-)
+VIDEO_EXTENSIONS = set([
+    '3g2', '3gp', '4xm', 'a64', 'aac', 'ac3', 'act', 'adf', 'adts', 'adx',
+    'aea', 'afc', 'aiff', 'alaw', 'alsa', 'amr', 'anm', 'apc', 'ape',
+    'aqtitle', 'asf', 'ast', 'au', 'avi', 'avm2', 'avr', 'avs', 'bfi',
+    'bink', 'bit', 'bmv', 'boa', 'brstm', 'c93', 'caf', 'cdg', 'cdxl',
+    'daud', 'dfa', 'dirac', 'divx', 'dnxhd', 'dsicin', 'dts', 'dtshd',
+    'dvd', 'dxa', 'ea', 'ea_cdata', 'eac3', 'epaf', 'f32be', 'f32le',
+    'f4v', 'film_cpk', 'filmstrip', 'fli', 'flic', 'flc', 'flv', 'frm',
+    'g722', 'g723_1', 'g729', 'gxf', 'h261', 'h263', 'h264', 'hds', 'hevc',
+    'hls', 'hls', 'idf', 'iff', 'ismv', 'iss', 'iv8', 'ivf', 'jv', 'latm',
+    'lavfi', 'lmlm4', 'loas', 'lvf', 'lxf', 'm4v', 'mgsts', 'microdvd',
+    'mjpeg', 'mkv', 'mlp', 'mm', 'mmf', 'mov', 'mov', 'mp4', 'm4a', '3gp',
+    '3g2', 'mj2', 'mp2', 'mp4', 'mpeg', 'mpegts', 'mpg', 'mpjpeg', 'mpl2',
+    'mpsub', 'mtv', 'mv', 'mvi', 'mxf', 'mxg', 'nsv', 'null', 'nut', 'nuv',
+    'ogg', 'ogv', 'oma', 'opus', 'oss', 'paf', 'pjs', 'pmp', 'psp',
+    'psxstr', 'pva', 'pvf', 'qcp', 'r3d', 'rl2', 'rm', 'roq', 'rpl', 'rsd',
+    'rso', 'rtp', 'rtsp', 's16be', 's16le', 's24be', 's24le', 's32be',
+    's32le', 's8', 'sami', 'sap', 'sbg', 'sdl', 'sdp', 'sdr2', 'segment',
+    'shn', 'siff', 'smjpeg', 'smk', 'smush', 'sol', 'sox', 'svcd', 'swf',
+    'tak', 'tee', 'thp', 'tmv', 'truehd', 'vc1', 'vcd', 'v4l2', 'vivo',
+    'vmd', 'vob', 'voc', 'vplayer', 'vqf', 'w64', 'wc3movie', 'webm',
+    'webvtt', 'wmv', 'wsaud', 'wsvqa', 'wtv', 'wv', 'xa', 'xbin', 'xmv',
+    'xwma', 'yop'
+])
+IMAGE_EXTENSIONS = set([
+    'bmp', 'dcx', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'tif', 'xbm',
+    'xpm'
+])
+DOCUMENT_EXTENSIONS = set([
+    'dot', 'docm', 'dotx', 'dotm', 'psw', 'doc', 'xls', 'ppt', 'wpd',
+    'wps', 'csv', 'sdw', 'sgl', 'vor', 'docx', 'xlsx', 'pptx', 'xlsm',
+    'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
+    'odt', 'ods', 'odp'
+])
 
 # Configuration
 # TODO: Take this from config.
@@ -82,25 +113,32 @@ async def _get_params(request):
     if upload:
         path = await _upload(upload)
 
+    if not os.path.isfile(path):
+        raise web.HTTPNotFound()
+
     return data, path, width, height
 
 
 @run_in_executor
 def _preview(path, width, height):
-    extension = os.path.splitext(path)
+    extension = os.path.splitext(path)[1]
+    LOGGER.debug('file: %s, extension: %s', path, extension)
 
     if extension == '.pdf':
         return preview_pdf(path, width, height)
 
-    elif extension[1:] in FORMATS.extensions:
-        blob = preview_doc(path, width, height)
+    elif extension[1:] in DOCUMENT_EXTENSIONS:
+        return preview_doc(path, width, height)
 
-    elif extension in VIDEO_EXTENSIONS:
+    elif extension[1:] in VIDEO_EXTENSIONS:
         return preview_video(path, width, height)
 
-    else:
+    elif extension[1:] in IMAGE_EXTENSIONS:
         # Resize image and return.
         return preview_image(path, width, height)
+
+    else:
+        raise web.HTTPBadRequest()
 
 
 async def preview(request):
@@ -117,14 +155,9 @@ async def preview(request):
 
         return response
 
-    except ConversionFailure as e:
-        LOGGER.info("Failed to convert", exc_info=True)
-        return web.Response(text=str(e), status=400)
-
     except Exception as e:
         LOGGER.exception(e)
-        CONVERTER.terminate()
-        return web.Response(text=str(e), status=500)
+        raise web.HTTPInternalServerError()
 
 
 def main():
