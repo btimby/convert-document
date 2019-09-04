@@ -11,4 +11,4 @@ shell: build
 	docker run -ti alephdata/convert-document sh
 
 run: build
-	docker run -ti alephdata/convert-document
+	docker run -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files -ti alephdata/convert-document

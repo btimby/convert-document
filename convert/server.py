@@ -3,19 +3,26 @@ import shutil
 import logging
 import asyncio
 import mimetypes
+import time
+import functools
+import threading
 
+from os.path import join as pathjoin
 from subprocess import Popen, PIPE
 
 from aiohttp import web
+from aiohttp.web_middlewares import normalize_path_middleware
+
 from tempfile import NamedTemporaryFile
 from wand.image import Image, Color
+import ghostscript
 
 from converter import FORMATS, PdfConverter
 from converter import ConversionFailure
 
 
 logging.basicConfig(level=logging.DEBUG)
-logging.getLogger('aiohttp').setLevel(logging.WARNING)
+logging.getLogger('aiohttp').setLevel(logging.INFO)
 
 
 MEGABYTE = 1024 * 1024
@@ -26,42 +33,66 @@ CONVERTER = PdfConverter()
 VIDEO_EXTENSIONS = (
     '.avi', '.mpg', '.mov',
 )
+# TODO: Take this from config.
+FILE_ROOT = os.environ.get('FILE_ROOT', '/mnt/files')
+GS_LOCK = threading.Lock()
 
 
-async def _doc2pdf(doc, timeout):
+def run_in_executor(f):
+    @functools.wraps(f)
+    def inner(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        return loop.run_in_executor(None, functools.partial(f, *args, **kwargs))
+    return inner
+
+
+@run_in_executor
+def _doc2pdf(doc, timeout):
     extension = os.path.splitext(doc)[1]
     mimetype = mimetypes.guess_type(doc)
+
     # TODO: filters should be determined by CONVERTER, pass in mimetype
     # instead.
-    filters = list(FORMATS.get_filters(extension, mimetype))
+    filters = list(FORMATS.get_filters(extension[1:], mimetype))
+    LOGGER.debug(filters)
 
-    with NamedTemporaryFile(delete=False, suffix=extension) as t:
+    with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
         CONVERTER.convert_file(doc, t.name, filters, timeout=timeout)
         return t.name
 
 
-async def _vid2img(path):
+@run_in_executor
+def _pdf2img(path):
+    with NamedTemporaryFile(suffix='.png') as t:
+        args = [
+            b'-dFirstPage=1', b'-dLastPage=1',
+            b'-dNOPAUSE', b'-dBATCH', b'-sDEVICE=png16m',
+            b'-sOutputFile=%s' % bytes(t.name, 'utf8'), bytes(path, 'utf8'),
+        ]
+        with GS_LOCK:
+            ghostscript.Ghostscript(*args)
+        return t.read()
+
+
+@run_in_executor
+def _vid2img(path):
     # TODO: ffmpeg can operate on stdin / stdout, so we can do zero-copy.
     # TODO: we could make a motion png.
-    with NamedTemporaryFile(delete=False, suffix='.jpg') as t:
-        pass
-
-    cmd = ['ffmpeg', '-ss', None, '-i', path, '-frames:v', '1', '-y', t.name]
-
-    # Try to grab a frame at various offsets.
-    for offset in ('00:00:20', '00:00:10', '00:00:01'):
-        cmd[2] = offset
+    with NamedTemporaryFile(suffix='.apng') as t:
+        cmd = [
+            'ffmpeg', '-y', '-ss', '00:00', '-i', path, '-i',
+            'images/film-overlay.png', '-filter_complex',
+            '[0:v]scale=320:240[bg]; [1:v]scale=320x240[ovl];[bg][ovl]overlay'
+            '=0:0', '-plays', '0', '-t', '5', '-r', '1', t.name
+        ]
+        LOGGER.debug(' '.join(cmd))
         process = Popen(cmd, stderr=PIPE)
-        stderr = process.communicate()[1]
+        _, stderr = process.communicate()
         LOGGER.info(stderr)
-        if b'Output file is empty' not in stderr:
+        if b'Output file is empty' in stderr:
             # Seems like we got a frame.
-            break
-
-    else:
-        raise ConversionFailure('Could not grab a frame')
-
-    return t.name
+            raise Exception()
+        return t.read()
 
 
 async def _thumbnail(path, width, height):
@@ -78,12 +109,22 @@ async def info(request):
 
 
 async def convert(request):
-    data = await request.post()
+    LOGGER.info('method: %s', request.method)
+
+    if request.method == 'POST':
+        data = await request.post()
+
+    else:
+        data = request.query
 
     path, upload = data.get('path'), data.get('file')
     width = int(data.get('width', 640))
     height = int(data.get('height', 480))
     timeout = int(data.get('timeout', 300))
+
+    if request.method == 'GET':
+        path = pathjoin(FILE_ROOT, path)
+        LOGGER.info('Ajusted path: %s', path)
 
     # NOTE: Everything in this list will be deleted. It is important not to
     # place given path in here, only our temporary files.
@@ -109,25 +150,54 @@ async def convert(request):
         LOGGER.info('extension: %s', extension)
 
         # Determine file type (doc or image)
-        if extension in FORMATS.extensions:
-            # Convert doc to image.
-            path = await _doc2pdf(path, timeout)
+        start = time.time()
+        # TODO: file type sniffing is b0rk3d. For example, extension .docx is
+        # not in FORMATS.extensions, nor VIDEO_EXTENSIONS, so it is handled by
+        # Wand, this surprisingly calls out to uno (so it works). But it
+        # invokes soffice for each request is ~4s. Using a daemon is much
+        # faster at ~100-1000ms.
+        if extension == '.pdf':
+            LOGGER.info('pdf')
+            blob = await _pdf2img(path)
+
+        elif extension[1:] in FORMATS.extensions:
+            LOGGER.info('doc')
+            try:
+                path = await _doc2pdf(path, timeout)
+                LOGGER.debug('PDF is %i bytes' % os.path.getsize(path))
+                blob = await _pdf2img(path)
+
+            finally:
+                LOGGER.debug('Conversion took: %ss', time.time() - start)
+                LOGGER.debug('Doc converted to: %s', path)
+
             cleanup.append(path)
 
         elif extension in VIDEO_EXTENSIONS:
             LOGGER.info('video')
-            path = await _vid2img(path)
-            cleanup.append(path)
+            try:
+                blob = await _vid2img(path)
 
-        await asyncio.sleep(0)
+            finally:
+                LOGGER.debug('Framegrab took: %ss', time.time() - start)
+                LOGGER.debug('Video converted to: %s', path)
+                LOGGER.debug('Frame %i bytes', len(blob))
 
-        # Resize image and return.
-        blob = await _thumbnail(path, width, height)
+        else:
+            # Resize image and return.
+            start = time.time()
+            try:
+                blob = await _thumbnail(path, width, height)
+
+            finally:
+                LOGGER.debug('Thumbnail took: %ss', time.time() - start)
+
         await asyncio.sleep(0)
 
         response = web.StreamResponse()
         response.content_length = len(blob)
-        response.content_type = 'image/jpeg'
+        response.content_type = 'image/png'
+        response.headers['Cache-Control'] = 'max-age=300, public'
         await response.prepare(request)
         await response.write(blob)
 
@@ -150,7 +220,7 @@ async def convert(request):
                 LOGGER.exception(e)
 
 
-app = web.Application(client_max_size=MAX_UPLOAD)
+app = web.Application(client_max_size=MAX_UPLOAD, middlewares=[normalize_path_middleware()])
 app.add_routes([web.get('/', info)])
-app.add_routes([web.post('/convert', convert)])
+app.add_routes([web.post('/convert/', convert), web.get('/convert/', convert)])
 web.run_app(app, port=3000)

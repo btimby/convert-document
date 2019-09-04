@@ -11,7 +11,7 @@ RUN apt-get -qq -y update \
         fonts-dejavu-core fonts-dejavu-extra fonts-droid-fallback fonts-dustin \
         fonts-f500 fonts-fanwood fonts-freefont-ttf fonts-liberation fonts-lmodern \
         fonts-lyx fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
-        python3-uno python3-lxml python3-icu curl libmagickwand-dev ffmpeg \
+        python3-uno python3-lxml python3-icu curl ghostscript libgs-dev imagemagick libmagickwand-dev ffmpeg \
     && apt-get -qq -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -21,8 +21,16 @@ WORKDIR /app
 RUN pip3 install pipenv
 RUN pipenv install --system
 
-COPY policy.xml /etc/ImageMagick-6/policy.xml
+# COPY policy.xml /etc/ImageMagick-6/policy.xml
+RUN sed -i '/disable ghostscript format types/d' "/etc/ImageMagick-6/policy.xml"
+RUN sed -i '/\"PS\"/d' "/etc/ImageMagick-6/policy.xml"
+RUN sed -i '/\"EPS\"/d' "/etc/ImageMagick-6/policy.xml"
+RUN sed -i '/\"PDF\"/d' "/etc/ImageMagick-6/policy.xml"
+RUN sed -i '/\"XPS\"/d' "/etc/ImageMagick-6/policy.xml"
 COPY convert/* /app/convert/
+COPY images/* /app/images/
+
+EXPOSE 3000/tcp
 
 # USER nobody:nogroup
 CMD ["python3", "convert/server.py"]
