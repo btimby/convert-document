@@ -27,10 +27,10 @@ RUN sed -i '/\"PS\"/d' "/etc/ImageMagick-6/policy.xml"
 RUN sed -i '/\"EPS\"/d' "/etc/ImageMagick-6/policy.xml"
 RUN sed -i '/\"PDF\"/d' "/etc/ImageMagick-6/policy.xml"
 RUN sed -i '/\"XPS\"/d' "/etc/ImageMagick-6/policy.xml"
-COPY convert/* /app/convert/
+COPY preview/* /app/preview/
 COPY images/* /app/images/
 
 EXPOSE 3000/tcp
 
 # USER nobody:nogroup
-CMD ["python3", "convert/server.py"]
+CMD ["python3", "preview/server.py"]
