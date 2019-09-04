@@ -5,21 +5,29 @@ import uno
 import time
 import logging
 import subprocess
+import mimetypes
 from threading import Timer
+from tempfile import NamedTemporaryFile
+
+from lxml import etree
+from collections import defaultdict, OrderedDict
+from pantomime import normalize_mimetype, normalize_extension
+
 from com.sun.star.beans import PropertyValue
 from com.sun.star.connection import NoConnectException
 
-from formats import Formats
+from gs import preview_pdf
 
 
+NS = {'oor': 'http://openoffice.org/2001/registry'}
+NAME = '{%s}name' % NS['oor']
 CONNECTION_STRING = "socket,host=localhost,port=%s,tcpNoDelay=1;urp;StarOffice.ComponentContext"  # noqa
 COMMAND = 'soffice --nologo --headless --nocrashreport --nodefault --nofirststartwizard --norestore --invisible --accept="%s"'  # noqa
 RESOLVER_CLASS = 'com.sun.star.bridge.UnoUrlResolver'
 DESKTOP_CLASS = 'com.sun.star.frame.Desktop'
 DEFAULT_PORT = 6519
-FORMATS = Formats()
 
-log = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class ConversionFailure(Exception):
@@ -53,13 +61,13 @@ class PdfConverter(object):
         # FIXME: this was done after discovering that killing the LO
         # process will only terminating it after the current request
         # is processed, which may well be never.
-        log.warning("Hard timeout.")
+        LOGGER.warning("Hard timeout.")
         os._exit(1)
 
     def connect(self):
         # Check if the LibreOffice process has an exit code
         if self.process is None or self.process.poll() is not None:
-            log.info("Starting headless LibreOffice...")
+            LOGGER.info("Starting headless LibreOffice...")
             command = COMMAND % self.connection
             self.process = subprocess.Popen(command,
                                             shell=True,
@@ -74,7 +82,15 @@ class PdfConverter(object):
             except NoConnectException:
                 time.sleep(1)
 
-    def convert_file(self, file_name, out_file, filters, timeout=300):
+    def convert_file(self, file_name, out_file, timeout=300):
+        extension = os.path.splitext(file_name)[1]
+        mimetype = mimetypes.guess_type(file_name)
+
+        # TODO: filters should be determined by CONVERTER, pass in mimetype
+        # instead.
+        filters = list(FORMATS.get_filters(extension[1:], mimetype))
+        LOGGER.debug(filters)
+
         timer = Timer(timeout, self.terminate)
         timer.start()
         try:
@@ -96,6 +112,7 @@ class PdfConverter(object):
                 doc.dispose()
                 doc.close(True)
                 del doc
+
         finally:
             timer.cancel()
 
@@ -129,3 +146,61 @@ class PdfConverter(object):
             property.Value = v
             properties.append(property)
         return tuple(properties)
+
+
+class Formats(object):
+    FILES = [
+        '/usr/lib/libreoffice/share/registry/writer.xcd',
+        '/usr/lib/libreoffice/share/registry/impress.xcd',
+        '/usr/lib/libreoffice/share/registry/draw.xcd',
+        # '/usr/lib/libreoffice/share/registry/calc.xcd',
+    ]
+
+    def __init__(self):
+        self.media_types = defaultdict(list)
+        self.extensions = defaultdict(list)
+        for xcd_file in self.FILES:
+            doc = etree.parse(xcd_file)
+            path = './*[@oor:package="org.openoffice.TypeDetection"]/node/node'
+            for tnode in doc.xpath(path, namespaces=NS):
+                node = {}
+                for prop in tnode.findall('./prop'):
+                    name = prop.get(NAME)
+                    for value in prop.findall('./value'):
+                        node[name] = value.text
+
+                name = node.get('PreferredFilter', tnode.get(NAME))
+                media_type = normalize_mimetype(node.get('MediaType'),
+                                                default=None)
+                if media_type is not None:
+                    self.media_types[media_type].append(name)
+
+                for ext in self.parse_extensions(node.get('Extensions')):
+                    self.extensions[ext].append(name)
+
+    def parse_extensions(self, extensions):
+        if extensions is not None:
+            for ext in extensions.split(' '):
+                if ext == '*':
+                    continue
+                ext = normalize_extension(ext)
+                if ext is not None:
+                    yield ext
+
+    def get_filters(self, extension, media_type):
+        filters = OrderedDict()
+        for filter_name in self.media_types.get(media_type, []):
+            filters[filter_name] = None
+        for filter_name in self.extensions.get(extension, []):
+            filters[filter_name] = None
+        return filters.keys()
+
+
+FORMATS = Formats()
+CONVERTER = PdfConverter()
+
+
+def preview_doc(path, width, height):
+    with NamedTemporaryFile(suffix='.pdf') as t:
+        CONVERTER.convert_file(path, t.name, timeout=5)
+        return preview_pdf(t.name, width, height)

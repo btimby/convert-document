@@ -21,12 +21,6 @@ WORKDIR /app
 RUN pip3 install pipenv
 RUN pipenv install --system
 
-# COPY policy.xml /etc/ImageMagick-6/policy.xml
-RUN sed -i '/disable ghostscript format types/d' "/etc/ImageMagick-6/policy.xml"
-RUN sed -i '/\"PS\"/d' "/etc/ImageMagick-6/policy.xml"
-RUN sed -i '/\"EPS\"/d' "/etc/ImageMagick-6/policy.xml"
-RUN sed -i '/\"PDF\"/d' "/etc/ImageMagick-6/policy.xml"
-RUN sed -i '/\"XPS\"/d' "/etc/ImageMagick-6/policy.xml"
 COPY preview/* /app/preview/
 COPY images/* /app/images/
 
