@@ -4,7 +4,7 @@ import logging
 import asyncio
 import functools
 
-from os.path import normpath, splitext
+from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
 
 import aiofiles
@@ -108,6 +108,7 @@ async def _get_params(request):
                     f = await aiofiles.open(t.name, mode='wb')
                     await f.write(await resp.read())
                     await f.close()
+                    return t.name
 
     if request.method == 'POST':
         data = await request.post()
@@ -134,7 +135,7 @@ async def _get_params(request):
     else:
         raise web.HTTPBadRequest(reason='No path, file or url provided')
 
-    if not os.path.isfile(path):
+    if not isfile(path):
         raise web.HTTPNotFound()
 
     return data, path, width, height
@@ -142,7 +143,7 @@ async def _get_params(request):
 
 @run_in_executor
 def _preview(path, width, height):
-    extension = os.path.splitext(path)[1]
+    extension = splitext(path)[1].lower()
     LOGGER.debug('file: %s, extension: %s', path, extension)
 
     # TODO: ensure image is exactly the requested size by padding it.
