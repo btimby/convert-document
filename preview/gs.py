@@ -18,7 +18,7 @@ def preview_pdf(path, width, height):
     with NamedTemporaryFile(suffix='.png') as t:
         args = [
             b'-dFirstPage=1', b'-dLastPage=1',
-            b'-dNOPAUSE', b'-dBATCH', b'-sDEVICE=png16m',
+            b'-dNOPAUSE', b'-dBATCH', b'-sDEVICE=png16m', b'-q',
             b'-sOutputFile=%s' % bytes(t.name, 'utf8'), bytes(path, 'utf8'),
         ]
 

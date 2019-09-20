@@ -24,7 +24,7 @@ def preview_video(path, width, height):
             LOGGER.debug(' '.join(cmd))
             process = Popen(cmd, stderr=PIPE)
             _, stderr = process.communicate()
-            LOGGER.info(stderr)
+            LOGGER.debug(stderr)
             if b'Output file is empty' in stderr:
                 raise Exception('Could not grab frame')
 

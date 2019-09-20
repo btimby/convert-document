@@ -6,6 +6,7 @@ import functools
 
 from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
+from time import time
 
 import aiofiles
 from aiohttp import web, ClientSession
@@ -19,7 +20,7 @@ from ffmpeg import preview_video
 from image import preview_image
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logging.getLogger('aiohttp').setLevel(logging.INFO)
 
 
@@ -29,6 +30,9 @@ BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
 
 LOGGER = logging.getLogger(__name__)
+GS_EXTENSIONS = set([
+    'pdf', 'eps', 'ps',
+])
 VIDEO_EXTENSIONS = set([
     '3g2', '3gp', '4xm', 'a64', 'aac', 'ac3', 'act', 'adf', 'adts', 'adx',
     'aea', 'afc', 'aiff', 'alaw', 'alsa', 'amr', 'anm', 'apc', 'ape',
@@ -70,6 +74,7 @@ WIDTH = os.environ.get('WIDTH', 320)
 HEIGHT = os.environ.get('HEIGHT', 240)
 MAX_WIDTH = os.environ.get('MAX_WIDTH', 800)
 MAX_HEIGHT = os.environ.get('MAX_HEIGHT', 600)
+DEFAULT_FORMAT = os.environ.get('DEFAULT_FORMAT', 'image')
 
 
 def run_in_executor(f):
@@ -96,19 +101,24 @@ async def _get_params(request):
         return t.name
 
     async def _download(url):
-        extension = splitext(url)[1]
-        async with ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    raise web.HTTPBadRequest(
-                        reason='Could not download: %s, %s' % (
-                            url, resp.reason))
+        start = time()
+        try:
+            extension = splitext(url)[1]
+            async with ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        raise web.HTTPBadRequest(
+                            reason='Could not download: %s, %s' % (
+                                url, resp.reason))
 
-                with NamedTemporaryFile(delete=False, suffix=extension) as t:
-                    f = await aiofiles.open(t.name, mode='wb')
-                    await f.write(await resp.read())
-                    await f.close()
-                    return t.name
+                    with NamedTemporaryFile(
+                           delete=False, suffix=extension) as t:
+                        f = await aiofiles.open(t.name, mode='wb')
+                        await f.write(await resp.read())
+                        await f.close()
+                        return t.name
+        finally:
+            LOGGER.info('_get_params()._download() took: %is', time() - start)
 
     if request.method == 'POST':
         data = await request.post()
@@ -117,6 +127,7 @@ async def _get_params(request):
         data = request.query
 
     path, upload, url = data.get('path'), data.get('file'), data.get('url')
+    format = data.get('format', DEFAULT_FORMAT)
     width = int(data.get('width', WIDTH))
     height = int(data.get('height', HEIGHT))
     width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
@@ -138,25 +149,25 @@ async def _get_params(request):
     if not isfile(path):
         raise web.HTTPNotFound()
 
-    return data, path, width, height
+    return data, path, format, width, height
 
 
 @run_in_executor
-def _preview(path, width, height):
-    extension = splitext(path)[1].lower()
+def _preview(path, format, width, height):
+    extension = splitext(path)[1].lower()[1:]
     LOGGER.debug('file: %s, extension: %s', path, extension)
 
     # TODO: ensure image is exactly the requested size by padding it.
-    if extension == '.pdf':
+    if extension in GS_EXTENSIONS:
         return preview_pdf(path, width, height)
 
-    elif extension[1:] in DOCUMENT_EXTENSIONS:
+    elif extension in DOCUMENT_EXTENSIONS:
         return preview_doc(path, width, height)
 
-    elif extension[1:] in VIDEO_EXTENSIONS:
+    elif extension in VIDEO_EXTENSIONS:
         return preview_video(path, width, height)
 
-    elif extension[1:] in IMAGE_EXTENSIONS:
+    elif extension in IMAGE_EXTENSIONS:
         return preview_image(path, width, height)
 
     else:
@@ -167,8 +178,8 @@ def _preview(path, width, height):
 
 async def preview(request):
     try:
-        data, path, width, height = await _get_params(request)
-        blob = await _preview(path, width, height)
+        data, path, format, width, height = await _get_params(request)
+        blob = await _preview(path, format, width, height)
 
         response = web.StreamResponse()
         response.content_length = len(blob)
