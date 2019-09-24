@@ -1,6 +1,7 @@
 [dev-packages]
 pylint = "*"
 flake8 = "*"
+requests = "*"
 
 [packages]
 aiohttp = "*"
@@ -11,3 +12,4 @@ aiomcache = "*"
 ghostscript = "*"
 img2pdf = "*"
 aiohttp-prometheus = {git = "https://github.com/amitsaha/aiohttp-prometheus.git"}
+unoconv = "*"

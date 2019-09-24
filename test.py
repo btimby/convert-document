@@ -2,21 +2,18 @@ import os
 import sys
 import signal
 import requests
+
 from multiprocessing import Pool
 
-signal.signal(signal.SIGINT, signal.SIG_IGN)
-url = os.environ.get('UNOSERVICE_URL')
+# signal.signal(signal.SIGINT, signal.SIG_IGN)
+url = os.environ.get('UNOSERVICE_URL', 'http://localhost:3000/preview/')
 
 
 def request(i):
-    path = sys.argv[1]
-    files = {'file': open(path, 'rb')}
-    data = {'extension': 'docx'}
-    # print('send request')
-    res = requests.post(url, files=files, data=data)
-    # message = res.text if res.status_code != 200 else ''
-    print(res.status_code, res.content[:20])
-    # print(res.content == open(path, 'rb').read())
+    path = 'sample.odt' if len(sys.argv) < 2 else sys.argv[1]
+    data = {'path': path}
+    res = requests.get(url, params=data)
+    print(i, res.status_code, res.content[:20])
 
 
 pool = Pool(20)
@@ -26,5 +23,3 @@ try:
 except KeyboardInterrupt:
     pool.terminate()
     pool.join()
-
-# request(5)

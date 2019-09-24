@@ -19,6 +19,7 @@ RUN apt-get -y update \
 
 COPY Pipfile* /app/
 COPY circusd.ini /etc/circus/circusd.ini
+COPY ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 
 WORKDIR /app
 RUN pip3 install pipenv

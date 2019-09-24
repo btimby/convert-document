@@ -1,4 +1,5 @@
 import logging
+import os.path
 
 from threading import Lock
 from tempfile import NamedTemporaryFile
@@ -25,10 +26,13 @@ class PdfBackend(BaseBackend):
             args = [
                 b'-dFirstPage=1', b'-dLastPage=1',
                 b'-dNOPAUSE', b'-dBATCH', b'-sDEVICE=png16m', b'-q',
-                b'-sOutputFile=%s' % bytes(t.name, 'utf8'), bytes(path, 'utf8'),
+                b'-sOutputFile=%s' % bytes(t.name, 'utf8'),
+                bytes(path, 'utf8'),
             ]
 
             with GS_LOCK:
                 ghostscript.Ghostscript(*args)
+
+            LOGGER.debug('%s is %i bytes', t.name, os.path.getsize(t.name))
 
             return ImageBackend().preview(t.name, width, height)
