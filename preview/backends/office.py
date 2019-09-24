@@ -18,31 +18,23 @@ from pantomime import normalize_mimetype, normalize_extension
 from com.sun.star.beans import PropertyValue
 from com.sun.star.connection import NoConnectException
 
-from gs import preview_pdf
+from preview.backends.base import BaseBackend
+from preview.backends.pdf import PdfBackend
+from preview.utils import log_duration
 
 
-NS = {'oor': 'http://openoffice.org/2001/registry'}
-NAME = '{%s}name' % NS['oor']
-CONNECTION_STRING = "socket,host=localhost,port=2002,tcpNoDelay=1;urp;StarOffice.ComponentContext"  # noqa
-RESOLVER_CLASS = 'com.sun.star.bridge.UnoUrlResolver'
-DESKTOP_CLASS = 'com.sun.star.frame.Desktop'
-DEFAULT_PORT = 2002
-LIBREOFFICE_EVENT = threading.Event()
-LIBREOFFICE_EVENT.set()
-RESTART_COMMAND = ["supervisorctl", "restart", "libreoffice"]
+OOR = 'http://openoffice.org/2001/registry'
+NAME = '{%s}name' % OOR
 
 LOGGER = logging.getLogger(__name__)
 
 
-def restart_libreoffice():
-    '''Ask supervisord to restart LibreOffice.'''
-    LIBREOFFICE_EVENT.clear()
-    try:
-        cmd = RESTART_COMMAND
-        subprocess.call(cmd)
+class ConversionFailure(Exception):
+    pass
 
-    finally:
-        LIBREOFFICE_EVENT.set()
+
+class ConversionTimeout(ConversionFailure):
+    pass
 
 
 class Formats(object):
@@ -59,7 +51,7 @@ class Formats(object):
         for xcd_file in self.FILES:
             doc = etree.parse(xcd_file)
             path = './*[@oor:package="org.openoffice.TypeDetection"]/node/node'
-            for tnode in doc.xpath(path, namespaces=NS):
+            for tnode in doc.xpath(path, namespaces={'oor': OOR }):
                 node = {}
                 for prop in tnode.findall('./prop'):
                     name = prop.get(NAME)
@@ -93,18 +85,7 @@ class Formats(object):
         return filters.keys()
 
 
-FORMATS = Formats()
-
-
-class ConversionFailure(Exception):
-    pass
-
-
-class ConversionTimeout(ConversionFailure):
-    pass
-
-
-class PdfConverter(object):
+class OfficeConverter(object):
     """Launch a background instance of LibreOffice and convert documents
     to PDF using it's filters.
     """
@@ -119,28 +100,26 @@ class PdfConverter(object):
     )
 
     def __init__(self, host=None):
-        context = uno.getComponentContext()
-        self.resolver = \
-            context.ServiceManager.createInstanceWithContext(
-                RESOLVER_CLASS, context)
-        self.connect()
+        self.formats = Formats()
 
     def connect(self):
-        for i in range(2):
-            # If LibreOffice is being restarted, wait for that to complete.
-            LIBREOFFICE_EVENT.wait()
+        def _connect():
+            context = uno.getComponentContext()
+            resolver = \
+                context.ServiceManager.createInstanceWithContext(
+                    'com.sun.star.bridge.UnoUrlResolver', context)
+            context = resolver.resolve(
+                "uno:socket,host=localhost,port=2002,tcpNoDelay=1;urp;"
+                "StarOffice.ComponentContext")
+            return context.ServiceManager.createInstanceWithContext(
+                'com.sun.star.frame.Desktop', context)
 
+        for _ in range(2):
             try:
-                context = self.resolver.resolve("uno:%s" % CONNECTION_STRING)
-                return context.ServiceManager.createInstanceWithContext(
-                    DESKTOP_CLASS, context)
-
-            except NoConnectException:
-                # TODO: if we have problems connecting, kill soffice and
-                # supervisord will restart it.
-                restart_libreoffice()
-
-        raise ConversionFailure('Could not connect to LibreOffice')
+                return _connect()
+            
+            except:
+                time.sleep(0.2)
 
     def convert_file(self, file_name, out_file, timeout=300):
         extension = os.path.splitext(file_name)[1]
@@ -149,7 +128,7 @@ class PdfConverter(object):
 
         # TODO: filters should be determined by CONVERTER, pass in mimetype
         # instead.
-        filters = list(FORMATS.get_filters(extension[1:], mimetype))
+        filters = list(self.formats.get_filters(extension[1:], mimetype))
         LOGGER.debug(filters)
 
         def terminate():
@@ -219,14 +198,28 @@ class PdfConverter(object):
         return tuple(properties)
 
 
-def preview_doc(path, width, height):
-    start = time.time()
-    converter = PdfConverter()
-    with NamedTemporaryFile(suffix='.pdf') as t:
+class OfficeBackend(BaseBackend):
+    extensions = [
+        'dot', 'docm', 'dotx', 'dotm', 'psw', 'doc', 'xls', 'ppt', 'wpd',
+        'wps', 'csv', 'sdw', 'sgl', 'vor', 'docx', 'xlsx', 'pptx', 'xlsm',
+        'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
+        'odt', 'ods', 'odp'
+    ]
+
+    def __init__(self):
+        self.office = OfficeConverter()
+
+    @log_duration
+    def preview(self, path, width, height):
+        with NamedTemporaryFile(suffix='.pdf') as t:
+            self.office.convert_file(path, t.name, timeout=30)
+            return PdfBackend().preview(t.name, width, height)
+
+    def check(self):
         try:
-            converter.convert_file(path, t.name, timeout=30)
+            self.office.connect()
+            return True
 
-        finally:
-            LOGGER.info('preview_doc(%s) took: %ss', path, time.time() - start)
-
-        return preview_pdf(t.name, width, height)
+        except Exception as e:
+            LOGGER.exception(e)
+            return False
