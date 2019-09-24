@@ -18,19 +18,12 @@ LOGGER.addHandler(logging.NullHandler())
 
 
 def setup_unoconv(inpath, outpath):
-    # TODO: fix which(), probably no PATH under circusd
-    unoconv_path = shutil.which('unoconv')
-    if not unoconv_path:
-        unoconv_path = '/usr/local/bin/unoconv'
-
     # We use a unique identifier for this module. We want concurrency and each
     # time we import it needs to be "private" to the caller. If the identifier
     # is static, Python import will return the same module each time (cache).
     module_id = ''.join([random.choice(string.ascii_letters +
                                        string.digits) for n in range(32)])
-    unoconv = imp.load_source(module_id, unoconv_path)
-
-    LOGGER.warn('unoconv.id == %i', id(unoconv))
+    unoconv = imp.load_source(module_id, shutil.which('unoconv'))
 
     import uno, unohelper
 
