@@ -1,4 +1,6 @@
-# convert-document
+![CI status](https://travis-ci.org/btimby/django-proxysql.png "CI Status")
+
+# preview-server
 
 A docker container environment to bundle the execution of `LibreOffice` to convert documents of various types (such as Word, OpenDocument, etc.) to PDF. An instance of `LibreOffice` will be run in the background, and controlled via a local socket (i.e. the UNO protocol).
 
