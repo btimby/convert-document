@@ -5,8 +5,7 @@ import logging
 from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
 
-import aiofiles
-from aiofiles.threadpool import wrap as aiofiles_wrap
+import asyncio
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
@@ -42,13 +41,11 @@ logging.getLogger('aiohttp').setLevel(HTTP_LOGLEVEL)
 async def upload(upload):
     extension = splitext(upload.filename)[1]
     with NamedTemporaryFile(delete=False, suffix=extension) as t:
-        t = aiofiles.open(t.name)
-        f = aiofiles_wrap(upload.file)
         while True:
-            data = await f.read(BUFFER_SIZE)
+            data = await run_in_executor(upload.file.read)(BUFFER_SIZE)
             if not data:
                 break
-            await t.write(data)
+            await run_in_executor(t.write)(data)
     return t.name
 
 
@@ -64,9 +61,7 @@ async def download(url):
 
             with NamedTemporaryFile(
                     delete=False, suffix=extension) as t:
-                f = await aiofiles.open(t.name, mode='wb')
-                await f.write(await resp.read())
-                await f.close()
+                await run_in_executor(t.write)(await resp.read())
                 return t.name
 
 
