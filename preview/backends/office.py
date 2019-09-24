@@ -1,9 +1,8 @@
 import imp
 import sys
-import random
-import string
 import shutil
 import logging
+import threading
 import os.path
 
 from tempfile import NamedTemporaryFile
@@ -17,12 +16,11 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def setup_unoconv(inpath, outpath):
+def convert(inpath, outpath=None):
     # We use a unique identifier for this module. We want concurrency and each
     # time we import it needs to be "private" to the caller. If the identifier
     # is static, Python import will return the same module each time (cache).
-    module_id = ''.join([random.choice(string.ascii_letters +
-                                       string.digits) for n in range(32)])
+    module_id = 'unoconv-%i' % threading.get_ident()
     unoconv = imp.load_source(module_id, shutil.which('unoconv'))
 
     import uno, unohelper
@@ -82,13 +80,24 @@ def setup_unoconv(inpath, outpath):
     # NOTE: this is a shortcut since I have only one office on my system.
     unoconv.office = unoconv.find_offices()[0]
 
-    unoconv.op = unoconv.Options(['--output=%s' % outpath, inpath])
+    args = ['-e', 'PageRange=1-1', inpath]
+    if outpath:
+        args.insert(0, '--output=%s' % outpath)
+    unoconv.op = unoconv.Options(args)
 
     try:
-        return unoconv.Convertor()
+        try:
+            convertor = unoconv.Convertor()
 
-    except SystemExit:
-        raise Exception('Could not initialize unoconv')
+        except SystemExit:
+            raise Exception('Could not initialize unoconv')
+
+        if outpath:
+            convertor.convert(inpath)
+
+    finally:
+        # Don't leak modules.
+        del sys.modules[module_id]
 
 
 class OfficeBackend(BaseBackend):
@@ -105,14 +114,13 @@ class OfficeBackend(BaseBackend):
     @log_duration
     def preview(self, path, width, height):
         with NamedTemporaryFile(suffix='.pdf') as t:
-            convertor = setup_unoconv(path, t.name)
-            convertor.convert(path)
+            convert(path, t.name)
             LOGGER.debug('%s is %i bytes', t.name, os.path.getsize(t.name))
             return PdfBackend().preview(t.name, width, height)
 
     def check(self):
         try:
-            setup_unoconv('/mnt/files/sample.docx', '/dev/null')
+            convert('fixtures/sample.docx')
             return True
 
         except Exception as e:
