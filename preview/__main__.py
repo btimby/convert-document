@@ -1,5 +1,4 @@
 import os
-import shutil
 import logging
 
 from os.path import normpath, splitext, isfile
@@ -8,6 +7,7 @@ from os.path import join as pathjoin
 import asyncio
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
+from aiohttp_prometheus import setup_metrics
 
 from tempfile import NamedTemporaryFile
 
@@ -104,8 +104,6 @@ generate = run_in_executor(generate)
 
 
 async def info(request):
-    # Find the office backend and perform a health check. This is used by
-    # Circus to determine if LibreOffice should be restarted.
     checks = []
     for backend in BACKENDS:
         checks.append(backend.check())
@@ -138,6 +136,7 @@ async def preview(request):
 def main():
     app = web.Application(
         client_max_size=MAX_UPLOAD, middlewares=[normalize_path_middleware()])
+    setup_metrics(app, 'preview-server')
     app.add_routes([web.get('/', info)])
     app.add_routes(
         [web.post('/preview/', preview), web.get('/preview/', preview)])

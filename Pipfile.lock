@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f63324867f9fc86653b3a9774fd2f23c5a0f505eeb21dedfd97e94c22d1b82b7"
+            "sha256": "da0e4eba9aa2421791f1be845ebee18cc337c22ef9908eaf46acea1aad1d1224"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -32,6 +32,10 @@
             ],
             "index": "pypi",
             "version": "==3.6.1"
+        },
+        "aiohttp-prometheus": {
+            "git": "https://github.com/amitsaha/aiohttp-prometheus.git",
+            "ref": "beeac0e78c156e6ad92a6c08fa05772cc33a2600"
         },
         "aiomcache": {
             "hashes": [
