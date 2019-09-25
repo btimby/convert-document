@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "af19b9bc44597c80580dead3b84defff7cee9308b0f99b1e00d8993ae753cb9d"
+            "sha256": "284e4266eac91af33324ee7eec3a6352095136decf0dd436c439291658aaa841"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -74,12 +74,8 @@
             "version": "==3.0.4"
         },
         "ghostscript": {
-            "hashes": [
-                "sha256:ad0a71048dd96644c46d09f7c8c7d479e2b4d290ca3125cc49540e463a2877ac",
-                "sha256:db90da79326ae62e4a3cc58a7c39c4be6503ad71c5e73047fb68599ae5e40cba"
-            ],
-            "index": "pypi",
-            "version": "==0.6"
+            "git": "https://gitlab.com/btimby/python-ghostscript.git",
+            "ref": "e530fdc4906f9bd54a7c427593f48bf7c54d6e0d"
         },
         "idna": {
             "hashes": [

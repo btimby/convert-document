@@ -3,7 +3,6 @@ import sys
 import shutil
 import logging
 import threading
-import os.path
 
 from tempfile import NamedTemporaryFile
 
@@ -115,7 +114,6 @@ class OfficeBackend(BaseBackend):
     def preview(self, path, width, height):
         with NamedTemporaryFile(suffix='.pdf') as t:
             convert(path, t.name)
-            LOGGER.debug('%s is %i bytes', t.name, os.path.getsize(t.name))
             return PdfBackend().preview(t.name, width, height)
 
     def check(self):

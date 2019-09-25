@@ -25,10 +25,17 @@ def quote(obj):
 
 def fstr(f, args, kwargs=None):
     fname = f.__name__
-    obj = args[0]
-    if callable(getattr(obj, fname, None)):
-        fname = obj.__class__.__name__ + '.' + fname
-        args = args[1:]
+    try:
+        obj = args[0]
+
+    except IndexError:
+        pass
+
+    else:
+        if callable(getattr(obj, fname, None)):
+            fname = obj.__class__.__name__ + '.' + fname
+            args = args[1:]
+
     astr = str(args).strip('(,)')
     if kwargs:
         astr += ', '

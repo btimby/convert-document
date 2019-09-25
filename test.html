@@ -1,14 +1,24 @@
+<style>
+    /* This will default the background image to your animation */
+    img.spinner {
+        background: url("spinner.png") no-repeat center;
+        width: 320px;
+        height: 240px;
+    }
+</style>
+
 <form action="http://localhost:3000/preview/" method="POST" enctype="multipart/form-data">
     <input type="file" name="file"/>
     <input type="submit" value="Upload"/>
 </form><br/>
 
-<img src="http://localhost:3000/preview/?path=Quicktime_Video.mov"/>
-<img src="http://localhost:3000/preview/?path=sample.odt"/>
-<img src="http://localhost:3000/preview/?path=sample.pdf"/>
-<img src="http://localhost:3000/preview/?path=sample.doc"/>
-<img src="http://localhost:3000/preview/?path=sample.docx"/>
-<img src="http://localhost:3000/preview/?path=bg.png"/>
-<img src="http://localhost:3000/preview/?url=https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG"/>
-<img src="http://localhost:3000/preview/?url=http://www.pdf995.com/samples/pdf.pdf"/>
-<img src="http://localhost:3000/preview/?url=https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4"/>
+<img src="http://localhost:3000/preview/?path=Quicktime_Video.mov" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=sample.odt" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=sample.pdf" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=sample.doc" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=sample.docx" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=candea.pptx" class="spinner"/>
+<img src="http://localhost:3000/preview/?path=bg.png" class="spinner"/>
+<img src="http://localhost:3000/preview/?url=https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG" class="spinner"/>
+<img src="http://localhost:3000/preview/?url=http://www.pdf995.com/samples/pdf.pdf" class="spinner"/>
+<img src="http://localhost:3000/preview/?url=https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4" class="spinner"/>

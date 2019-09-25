@@ -1,25 +1,61 @@
 import os
-import sys
-import signal
-import requests
+import random
+import asyncio
+import logging
 
-from multiprocessing import Pool
+from aiohttp import ClientSession
 
-# signal.signal(signal.SIGINT, signal.SIG_IGN)
-url = os.environ.get('UNOSERVICE_URL', 'http://localhost:3000/preview/')
-
-
-def request(i):
-    path = 'sample.odt' if len(sys.argv) < 2 else sys.argv[1]
-    data = {'path': path}
-    res = requests.get(url, params=data)
-    print(i, res.status_code, res.content[:20])
+from preview.utils import log_duration
 
 
-pool = Pool(20)
-try:
-    pool.map(request, range(10000))
+URL = os.environ.get('URL', 'http://localhost:3000/preview/')
+PATHS = [
+    'agreement.docx', 'candea.pptx', 'sample.doc', 'sample.odt', 'bg.png',
+    'Quicktime_Video.mov', 'sample.docx', 'sample.pdf',
+]
+LOGGER = logging.getLogger()
+LOGGER.setLevel(logging.WARNING)
+LOGGER.addHandler(logging.StreamHandler())
 
-except KeyboardInterrupt:
-    pool.terminate()
-    pool.join()
+
+async def run(r):
+    # create instance of Semaphore
+    sem = asyncio.Semaphore(20)
+    tasks = []
+
+    async def fetch(i, params):
+        # Getter function with semaphore.
+        async with sem:
+            async with session.get(URL, params=params) as response:
+                res = await response.read()
+                print(i, response.status, len(res), res[:20])
+                return response.status
+
+    # Create client session that will ensure we dont open new connection
+    # per each request.
+    async with ClientSession() as session:
+        for i in range(r):
+            params = {
+                'path': random.choice(PATHS),
+            }
+            task = asyncio.ensure_future(fetch(i, params))
+            tasks.append(task)
+
+        statuses = asyncio.gather(*tasks)
+        await statuses
+
+    return statuses
+
+
+@log_duration
+def main(count):
+    loop = asyncio.get_event_loop()
+    future = asyncio.ensure_future(run(count))
+    statuses = loop.run_until_complete(future)
+
+    assert all(200 == x for x in statuses), 'Some requests failed'
+
+
+if __name__ == '__main__':
+    # TODO: take some params.
+    main(10000)
