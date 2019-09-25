@@ -3,6 +3,7 @@ import sys
 import shutil
 import logging
 import threading
+import time
 
 from tempfile import NamedTemporaryFile
 
@@ -15,7 +16,10 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(inpath, outpath=None):
+def convert(inpath, outpath=None, retry=3):
+    """
+    Use unoconv as a library.
+    """
     # We use a unique identifier for this module. We want concurrency and each
     # time we import it needs to be "private" to the caller. If the identifier
     # is static, Python import will return the same module each time (cache).
@@ -83,16 +87,38 @@ def convert(inpath, outpath=None):
     if outpath:
         args.insert(0, '--output=%s' % outpath)
     unoconv.op = unoconv.Options(args)
+    unoconv.convertor = None
 
     try:
-        try:
-            convertor = unoconv.Convertor()
 
-        except SystemExit:
-            raise Exception('Could not initialize unoconv')
+        while True:
+            retry -= 1
 
-        if outpath:
-            convertor.convert(inpath)
+            try:
+                convertor = unoconv.convertor = unoconv.Convertor()
+                if outpath:
+                    convertor.convert(inpath)
+
+                return
+
+            except (AttributeError, DisposedException, SystemExit) as e:
+                LOGGER.debug(e, exc_info=True)
+
+                # Don't retry.
+                if retry <= 0:
+                    raise
+
+                # soffice seems to need to "warm up" on the first few requests.
+                # I have no idea why it throws AttributeError.
+                #
+                # ...
+                #    File "/usr/local/bin/unoconv", line 961, in convert
+                #     document = self.desktop.loadComponentFromURL(
+                #         inputurl , "_blank", 0, inputprops )
+                # AttributeError: loadComponentFromURL
+                time.sleep(0.2)
+                LOGGER.info('Retrying...')
+                continue
 
     finally:
         # Don't leak modules.

@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import asyncio
 import logging
@@ -9,6 +10,8 @@ from preview.utils import log_duration
 
 
 URL = os.environ.get('URL', 'http://localhost:3000/preview/')
+TOTAL = 10000
+CONCURRENT = 20
 PATHS = [
     'agreement.docx', 'candea.pptx', 'sample.doc', 'sample.odt', 'bg.png',
     'Quicktime_Video.mov', 'sample.docx', 'sample.pdf',
@@ -18,9 +21,9 @@ LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.StreamHandler())
 
 
-async def run(r):
+async def run(total, concurrent):
     # create instance of Semaphore
-    sem = asyncio.Semaphore(20)
+    sem = asyncio.Semaphore(concurrent)
     tasks = []
 
     async def fetch(i, params):
@@ -34,7 +37,7 @@ async def run(r):
     # Create client session that will ensure we dont open new connection
     # per each request.
     async with ClientSession() as session:
-        for i in range(r):
+        for i in range(total):
             params = {
                 'path': random.choice(PATHS),
             }
@@ -48,14 +51,15 @@ async def run(r):
 
 
 @log_duration
-def main(count):
+def main(count, concurrent):
     loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(run(count))
+    future = asyncio.ensure_future(run(count, concurrent))
     statuses = loop.run_until_complete(future)
 
     assert all(200 == x for x in statuses), 'Some requests failed'
 
 
 if __name__ == '__main__':
-    # TODO: take some params.
-    main(10000)
+    total = int(sys.argv[1]) if len(sys.argv) > 1 else TOTAL
+    concurrent = int(sys.argv[2]) if len(sys.argv) > 2 else CONCURRENT
+    main(total, concurrent)

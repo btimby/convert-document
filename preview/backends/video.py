@@ -44,6 +44,8 @@ class VideoBackend(BaseBackend):
     @log_duration
     def preview(self, path, width, height):
         with NamedTemporaryFile(suffix='.apng') as t:
+            # TODO: assure this produces proper sized images and maintains
+            # aspect ratio.
             filter = \
                 '[0:v]scale=%i:%i[bg]; ' \
                 '[1:v]scale=%ix%i[ovl];[bg][ovl]overlay=0:0' % (width, height,
@@ -54,9 +56,9 @@ class VideoBackend(BaseBackend):
                 '-plays', '0', '-t', FF_FRAMES, '-r', FF_FPS, t.name
             ]
             LOGGER.debug(' '.join(cmd))
-            process = Popen(cmd, stderr=PIPE)
-            _, stderr = process.communicate()
+            _, stderr = Popen(cmd, stderr=PIPE).communicate()
             LOGGER.debug(stderr)
+
             if b'Output file is empty' in stderr:
                 raise Exception('Could not grab frame')
 
