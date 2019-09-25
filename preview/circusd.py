@@ -1,13 +1,12 @@
-from easy_circus.client import Client
+import subprocess
 
 
 def send_command(cmd_name, watcher):
-    print('Sending %s to %s' % (cmd_name, watcher))
-    client = Client(host='127.0.0.1', port=5555, timeout=15)
-    cmd = getattr(client, cmd_name)
-    if not callable(cmd):
-        raise ValueError('Invalid cmd_name %s' % cmd_name)
-    cmd(watcher=watcher)
+    # Don't wait or you deadlock.
+    subprocess.Popen([
+        'circusctl', '--timeout=30', '--endpoint=tcp://127.0.0.1:5555',
+        cmd_name, watcher
+    ])
 
 
 def after_start(watcher, arbiter, hook_name, **kwargs):

@@ -36,4 +36,4 @@ COPY fixtures/ /app/fixtures/
 EXPOSE 3000/tcp
 
 # USER nobody:nogroup
-CMD ["/usr/bin/circusd", "/etc/circus/circusd.ini"]
+CMD ["/usr/local/bin/circusd", "/etc/circus/circusd.ini"]

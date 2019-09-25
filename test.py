@@ -4,18 +4,17 @@ import random
 import asyncio
 import logging
 
-from aiohttp import ClientSession
+from time import time
 
-from preview.utils import log_duration
+from aiohttp import ClientSession
+from aiohttp.client_exceptions import ClientConnectorError, \
+    ServerDisconnectedError
 
 
 URL = os.environ.get('URL', 'http://localhost:3000/preview/')
 TOTAL = 10000
 CONCURRENT = 20
-PATHS = [
-    'agreement.docx', 'candea.pptx', 'sample.doc', 'sample.odt', 'bg.png',
-    'Quicktime_Video.mov', 'sample.docx', 'sample.pdf',
-]
+PATHS = os.listdir('fixtures')
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.StreamHandler())
@@ -29,10 +28,14 @@ async def run(total, concurrent):
     async def fetch(i, params):
         # Getter function with semaphore.
         async with sem:
-            async with session.get(URL, params=params) as response:
-                res = await response.read()
-                print(i, response.status, len(res), res[:20])
-                return response.status
+            try:
+                async with session.get(URL, params=params) as response:
+                    res = await response.read()
+                    print(i, response.status, len(res), res[:20])
+                    return response.status
+
+            except (ClientConnectorError, ServerDisconnectedError):
+                return None
 
     # Create client session that will ensure we dont open new connection
     # per each request.
@@ -50,13 +53,18 @@ async def run(total, concurrent):
     return statuses
 
 
-@log_duration
 def main(count, concurrent):
+    start = time()
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(run(count, concurrent))
     statuses = loop.run_until_complete(future)
 
-    assert all(200 == x for x in statuses), 'Some requests failed'
+    duration = time() - start
+    failures = len([x for x in statuses.result() if x != 200])
+    successes = len([x for x in statuses.result() if x == 200])
+
+    print('Total duration: %i, RPS: %i' % (duration, duration / count))
+    print('Failures: %i Successes: %i' % (failures, successes))
 
 
 if __name__ == '__main__':
