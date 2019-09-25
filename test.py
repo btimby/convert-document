@@ -63,7 +63,7 @@ def main(count, concurrent):
     failures = len([x for x in statuses.result() if x != 200])
     successes = len([x for x in statuses.result() if x == 200])
 
-    print('Total duration: %i, RPS: %i' % (duration, duration / count))
+    print('Total duration: %f, RPS: %f' % (duration, duration / count))
     print('Failures: %i Successes: %i' % (failures, successes))
 
 
