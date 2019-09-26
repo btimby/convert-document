@@ -57,16 +57,18 @@ async def run(total, concurrent):
     return statuses, time() - start
 
 
-def main(count, concurrent):
+def main(total, concurrent):
+    print('Testing: %s with %i requests, max concurrency of %i' % (URL, total,
+                                                                   concurrent))
     loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(run(count, concurrent))
+    future = asyncio.ensure_future(run(total, concurrent))
     statuses, duration = loop.run_until_complete(future)
 
     failures = len([x for x in statuses.result() if x != 200])
     successes = len([x for x in statuses.result() if x == 200])
 
     print('\n', end='')
-    print('Total duration: %f, RPS: %f' % (duration, count / duration))
+    print('Total duration: %f, RPS: %f' % (duration, total / duration))
     print('Failures: %i Successes: %i' % (failures, successes))
 
     if failures:
