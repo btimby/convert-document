@@ -5,6 +5,7 @@ from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
 
 import uvloop
+import asyncio
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_prometheus import setup_metrics
