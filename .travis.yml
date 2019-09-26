@@ -13,8 +13,8 @@ install:
   - pip3 install aiohttp
 
 before_script:
-  - docker pull btimby/preview-server:latest || true
-  - docker build --cache-from btimby/preview-server:latest -t btimby/preview-server .
+  - docker pull btimby/preview-server || true
+  - docker build --cache-from btimby/preview-server -t btimby/preview-server .
 
 script:
   - docker run --name preview-server -d -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server
