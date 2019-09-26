@@ -4,7 +4,7 @@
     </head>
 
     <body>
-        <form action="http://localhost:3000/preview/" method="POST" enctype="multipart/form-data">
+        <form action="http://localhost:3000/preview/" method="POST" enctype="multipart/form-data" id="form">
             <input type="file" name="file" placeholder="file"/>
             or
             <input type="text" name="url" placeholder="url"/>
@@ -12,6 +12,7 @@
             &nbsp;&nbsp;&nbsp;&nbsp;
             <label for="width">Resolution</label>
             <select id="res" name="res">
+                <option value="800x600">800x600</option>
                 <option value="640x480">640x480</option>
                 <option value="480x360">480x360</option>
                 <option value="400x300">400x300</option>
@@ -20,6 +21,8 @@
                 <option value="240x180">240x180</option>
                 <option value="160x120">160x120</option>
             </select>
+            <input type="hidden" name="width" id="width"/>
+            <input type="hidden" name="height" id="height"/>
         </form><br/>
 
         <div id="images"></div>
@@ -48,6 +51,9 @@
             function renderImages() {
                 var res = $('#res').val();
                 var [w, h] = res.split('x');
+
+                $('#width').val(w);
+                $('#height').val(h);
 
                 $('#images').empty();
                 $(images).each(function(index, obj) {
