@@ -21,7 +21,7 @@ script:
   - python3.6 test.py 100 10
 
 after_script:
-  - docker log preview-server
+  - docker logs preview-server
   - docker kill preview-server
 
 after_success:
