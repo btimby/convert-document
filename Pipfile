@@ -13,3 +13,4 @@ img2pdf = "*"
 aiohttp-prometheus = {git = "https://github.com/amitsaha/aiohttp-prometheus.git"}
 unoconv = "*"
 ghostscript = {git = "https://gitlab.com/btimby/python-ghostscript.git"}
+uvloop = "*"

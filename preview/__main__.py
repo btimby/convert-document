@@ -4,6 +4,7 @@ import logging
 from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
 
+import uvloop
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_prometheus import setup_metrics
@@ -142,6 +143,7 @@ def main():
 
     # TODO: port from command line.
     # TODO: figure out how to wait for pending requests before exiting.
+    asyncio.set_event_loop(uvloop.new_event_loop())
     web.run_app(app, port=3000, handle_signals=True)
 
 

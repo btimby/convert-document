@@ -69,6 +69,9 @@ def main(count, concurrent):
     print('Total duration: %f, RPS: %f' % (duration, count / duration))
     print('Failures: %i Successes: %i' % (failures, successes))
 
+    if failures:
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     total = int(sys.argv[1]) if len(sys.argv) > 1 else TOTAL
