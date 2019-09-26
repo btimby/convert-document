@@ -31,13 +31,14 @@ async def run(total, concurrent):
             try:
                 async with session.get(URL, params=params) as response:
                     res = await response.read()
-                    print('\033[K', i, response.status, len(res), res[:20], end='\r')
+                    print('\033[K', i, response.status, len(res), res[:20],
+                          end='\r')
                     if response.status != 200:
                         print('\n', end='')
                     return response.status
 
-            except (ClientConnectorError, ServerDisconnectedError):
-                return None
+            except (ClientConnectorError, ServerDisconnectedError) as e:
+                print(e)
 
     # Create client session that will ensure we dont open new connection
     # per each request.
