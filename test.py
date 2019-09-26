@@ -31,7 +31,9 @@ async def run(total, concurrent):
             try:
                 async with session.get(URL, params=params) as response:
                     res = await response.read()
-                    print(i, response.status, len(res), res[:20])
+                    print('\033[K', i, response.status, len(res), res[:20], end='\r')
+                    if response.status != 200:
+                        print('\n', end='')
                     return response.status
 
             except (ClientConnectorError, ServerDisconnectedError):
@@ -63,7 +65,8 @@ def main(count, concurrent):
     failures = len([x for x in statuses.result() if x != 200])
     successes = len([x for x in statuses.result() if x == 200])
 
-    print('Total duration: %f, RPS: %f' % (duration, duration / count))
+    print('\n', end='')
+    print('Total duration: %f, RPS: %f' % (duration, count / duration))
     print('Failures: %i Successes: %i' % (failures, successes))
 
 

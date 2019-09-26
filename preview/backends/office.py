@@ -134,12 +134,14 @@ class OfficeBackend(BaseBackend):
     ]
 
     def __init__(self):
-        pass
+        # Limit concurrent access to LibreOffice.
+        self.semaphore = threading.Semaphore(20)
 
     @log_duration
     def preview(self, path, width, height):
         with NamedTemporaryFile(suffix='.pdf') as t:
-            convert(path, t.name)
+            with self.semaphore:
+                convert(path, t.name)
             return PdfBackend().preview(t.name, width, height)
 
     def check(self):

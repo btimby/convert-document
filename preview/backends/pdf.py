@@ -11,7 +11,6 @@ from preview.backends.image import ImageBackend
 from preview.utils import log_duration
 
 
-GS_LOCK = Lock()
 LOGGER = logging.getLogger(__name__)
 
 
@@ -30,18 +29,10 @@ class PdfBackend(BaseBackend):
                 bytes(path, 'utf8'),
             ]
 
-            # TODO: gs can be configured with GS_THREADSAFE defined.
-            #
-            # https://www.ghostscript.com/doc/current/API.htm
-            #
-            # If our version of gs has this flag, then we _should_ be able to
-            # do away with the lock. This is a source of contention as it is
-            # used for PDF files as well as office documents.
-            with GS_LOCK:
-                try:
-                    gs = ghostscript.Ghostscript(*args)
+            try:
+                gs = ghostscript.Ghostscript(*args)
 
-                finally:
-                    gs.exit()
+            finally:
+                gs.exit()
 
             return ImageBackend().preview(t.name, width, height)

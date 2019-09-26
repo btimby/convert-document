@@ -4,7 +4,6 @@ import logging
 from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
 
-import asyncio
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_prometheus import setup_metrics
@@ -28,7 +27,7 @@ HEIGHT = os.environ.get('HEIGHT', 240)
 MAX_WIDTH = os.environ.get('MAX_WIDTH', 800)
 MAX_HEIGHT = os.environ.get('MAX_HEIGHT', 600)
 DEFAULT_FORMAT = os.environ.get('DEFAULT_FORMAT', 'image')
-LOGLEVEL = getattr(logging, os.environ.get('LOGLEVEL', 'INFO'))
+LOGLEVEL = getattr(logging, os.environ.get('LOGLEVEL', 'WARNING'))
 HTTP_LOGLEVEL = getattr(logging, os.environ.get('HTTP_LOGLEVEL', 'INFO'))
 
 LOGGER = logging.getLogger()
@@ -142,7 +141,8 @@ def main():
         [web.post('/preview/', preview), web.get('/preview/', preview)])
 
     # TODO: port from command line.
-    web.run_app(app, port=3000)
+    # TODO: figure out how to wait for pending requests before exiting.
+    web.run_app(app, port=3000, handle_signals=True)
 
 
 main()

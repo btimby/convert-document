@@ -1,30 +1,72 @@
 <html>
     <head>
-    <style>
-        /* This will default the background image to your animation */
-        img.spinner {
-            background: url("spinner.png") no-repeat center;
-            width: 320px;
-            height: 240px;
-        }
-    </style>
+    <style></style>
     </head>
 
     <body>
         <form action="http://localhost:3000/preview/" method="POST" enctype="multipart/form-data">
             <input type="file" name="file"/>
             <input type="submit" value="Upload"/>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <label for="width">Resolution</label>
+            <select id="res" name="res">
+                <option value="640x480">640x480</option>
+                <option value="480x360">480x360</option>
+                <option value="400x300">400x300</option>
+                <option value="320x240" selected>320x240</option>
+                <option value="280x210">280x210</option>
+                <option value="240x180">240x180</option>
+                <option value="160x120">160x120</option>
+            </select>
         </form><br/>
 
-        <img src="http://localhost:3000/preview/?path=Quicktime_Video.mov" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=sample.odt" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=sample.pdf" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=sample.doc" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=sample.docx" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=candea.pptx" class="spinner"/>
-        <img src="http://localhost:3000/preview/?path=bg.png" class="spinner"/>
-        <img src="http://localhost:3000/preview/?url=https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG" class="spinner"/>
-        <img src="http://localhost:3000/preview/?url=http://www.pdf995.com/samples/pdf.pdf" class="spinner"/>
-        <img src="http://localhost:3000/preview/?url=https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4" class="spinner"/>
+        <div id="images"></div>
     </body>
-</html>
+    <script
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(function() {
+            var baseUrl = 'http://localhost:3000/preview/';
+            var images = [
+                { path: 'Quicktime_Video.mov' },
+                { path: 'sample.odt' },
+                { path: 'sample.pdf' },
+                { path: 'sample.doc' },
+                { path: 'sample.docx' },
+                { path: 'candea.pptx' },
+                { path: 'bg.png' },
+                { url: 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG' },
+                { url: 'http://www.pdf995.com/samples/pdf.pdf' },
+                { url: 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4' },
+            ];
+
+            function renderImages() {
+                var res = $('#res').val();
+                var [w, h] = res.split('x');
+
+                $('#images').empty();
+                $(images).each(function(index, obj) {
+                    var img = $('<img/>')
+                        .css('background', 'url("spinner.png") no-repeat center')
+                        .css({width: w, height: h});
+                    if (obj.path) {
+                        var src = baseUrl + '?path=' + obj.path;
+                    } else if (obj.url) {
+                        var src = baseUrl + '?url=' + obj.url;
+                    }
+                    src += '&width=' + w + '&height=' + h;
+                    img.attr('src', src)
+                        .appendTo($('#images'));
+                });
+            }
+
+            $('#res').change(function() {
+                renderImages();
+            });
+
+            renderImages();
+        });
+    </script>
+    </html>
