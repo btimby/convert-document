@@ -24,7 +24,7 @@ class Backends(object):
             if extension in extensions:
                 return obj
 
-        raise Exception('Unsupported file type')
+        raise Exception('Unsupported file type: %s' % extension)
 
     def __iter__(self):
         return iter(self.backends.values())

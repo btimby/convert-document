@@ -49,19 +49,18 @@ async def run(total, concurrent):
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)
 
+        start = time()
         statuses = asyncio.gather(*tasks)
         await statuses
 
-    return statuses
+    return statuses, time() - start
 
 
 def main(count, concurrent):
-    start = time()
     loop = asyncio.get_event_loop()
     future = asyncio.ensure_future(run(count, concurrent))
-    statuses = loop.run_until_complete(future)
+    statuses, duration = loop.run_until_complete(future)
 
-    duration = time() - start
     failures = len([x for x in statuses.result() if x != 200])
     successes = len([x for x in statuses.result() if x == 200])
 

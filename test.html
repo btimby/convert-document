@@ -5,8 +5,10 @@
 
     <body>
         <form action="http://localhost:3000/preview/" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file"/>
-            <input type="submit" value="Upload"/>
+            <input type="file" name="file" placeholder="file"/>
+            or
+            <input type="text" name="url" placeholder="url"/>
+            <input type="submit" value="Generate" />
             &nbsp;&nbsp;&nbsp;&nbsp;
             <label for="width">Resolution</label>
             <select id="res" name="res">
