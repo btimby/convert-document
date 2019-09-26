@@ -4,8 +4,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-COPY debs/ghostscript*.deb /app/
-COPY debs/libgs*.deb /app/
+COPY docker/debs/ghostscript*.deb /app/
+COPY docker/debs/libgs*.deb /app/
 
 RUN apt-get update \
     #&& apt-get -y install software-properties-common \
@@ -33,9 +33,9 @@ COPY Pipfile* /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
 
-COPY unoconv /app/
-COPY circusd.ini /etc/circus/circusd.ini
-COPY ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
+COPY docker/unoconv /app/
+COPY docker/circusd.ini /etc/circus/circusd.ini
+COPY docker/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 
 COPY preview/ /app/preview/
 COPY images/ /app/images/
