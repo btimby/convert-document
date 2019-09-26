@@ -12,10 +12,12 @@ install:
   - echo "${TRAVIS_BRANCH}"
   - pip3 install aiohttp
   - docker build -t btimby/preview-server .
-  - docker run --name preview-server -d -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
 
 script:
+  - docker run --name preview-server -d -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
   - python3.6 test.py 100 10
+
+after_script:
   - docker kill preview-server
 
 after_success:
