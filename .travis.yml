@@ -18,6 +18,7 @@ before_script:
 
 script:
   - docker run --name preview-server -d -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
+  - sleep 10
   - python3.6 test.py 100 10
 
 after_script:
