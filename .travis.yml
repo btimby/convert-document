@@ -3,8 +3,8 @@ sudo: required
 services:
   - docker
 
-python:
-  - "3.6"
+before_install:
+  - sudo apt-get -y install python3.6
 
 install:
   - echo "${TRAVIS_BRANCH}"
