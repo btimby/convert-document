@@ -10,12 +10,12 @@ services:
 
 install:
   - echo "${TRAVIS_BRANCH}"
-  - pip3 install aiohttp
+  - pipenv install
   - docker build -t btimby/preview-server .
   - docker run --name preview-server -d -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
 
 script:
-  - python3.6 test.py 100 10
+  - pipenv run python3 test.py 100 10
   - docker kill preview-server
 
 after_success:
