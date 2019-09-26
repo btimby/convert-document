@@ -33,7 +33,7 @@ COPY Pipfile* /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
 
-COPY docker/unoconv /app/
+COPY docker/soffice-wrapper /app/
 COPY docker/circusd.ini /etc/circus/circusd.ini
 COPY docker/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 

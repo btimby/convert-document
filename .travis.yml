@@ -12,7 +12,7 @@ install:
   - docker run --name preview-server -d -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
 
 script:
-  - python3 test.py 100 10
+  - python3.6 test.py 100 10
   - docker kill preview-server
 
 after_success:
