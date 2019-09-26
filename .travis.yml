@@ -5,9 +5,10 @@ services:
 install:
   - echo "${TRAVIS_BRANCH}"
   - docker build -t btimby/preview-server .
+  - docker run -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files
 
 script:
-  - sleep 1
+  - python3 test.py 100 10
 
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
