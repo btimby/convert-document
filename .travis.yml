@@ -4,15 +4,16 @@ services:
   - docker
 
 python:
-  - "3"
+  - "3.6"
 
 install:
   - echo "${TRAVIS_BRANCH}"
   - docker build -t btimby/preview-server .
-  - docker run -d -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
+  - docker run --name preview-server -d -p 3000:3000 --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files btimby/preview-server
 
 script:
   - python3 test.py 100 10
+  - docker kill preview-server
 
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
