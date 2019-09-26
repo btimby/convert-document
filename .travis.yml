@@ -1,6 +1,10 @@
 sudo: required
+
 services:
   - docker
+
+python:
+  - "3"
 
 install:
   - echo "${TRAVIS_BRANCH}"
