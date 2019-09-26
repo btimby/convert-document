@@ -46,6 +46,8 @@ class VideoBackend(BaseBackend):
         with NamedTemporaryFile(suffix='.apng') as t:
             # TODO: assure this produces proper sized images and maintains
             # aspect ratio.
+            # TODO: convert this to avpy, example here:
+            # https://bitbucket.org/sydh/avpy/src/master/examples/encoding/encodeImage.py
             filter = \
                 '[0:v]scale=%i:%i[bg]; ' \
                 '[1:v]scale=%ix%i[ovl];[bg][ovl]overlay=0:0' % (width, height,

@@ -121,7 +121,7 @@ async def preview(request):
         response = web.StreamResponse()
         response.content_length = len(blob)
         response.content_type = 'image/png'
-        response.headers['Cache-Control'] = 'max-age=300, public'
+        response.headers['Cache-Control'] = 'max-age=600, public'
         await response.prepare(request)
         await response.write(blob)
 
