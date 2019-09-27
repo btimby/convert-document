@@ -8,8 +8,6 @@ COPY docker/debs/ghostscript*.deb /app/
 COPY docker/debs/libgs*.deb /app/
 
 RUN apt-get update \
-    #&& apt-get -y install software-properties-common \
-    #&& add-apt-repository ppa:libreoffice/libreoffice-6-3 \
     && apt-get -y update \
     && apt-get -y install /app/libgs9_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_amd64.deb \
     /app/libgs9-common_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_all.deb \
@@ -30,6 +28,7 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY Pipfile* /app/
+COPY docker/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
 
@@ -42,6 +41,14 @@ COPY images/ /app/images/
 COPY fixtures/ /app/fixtures/
 
 EXPOSE 3000/tcp
+
+# Configuration, TODO: make args.
+ENV PREVIEW_LOGLEVEL=DEBUG
+ENV PREVIEW_STORE=/mnt/store
+# TODO: accpt M, G, etc.
+# 100MB
+ENV PREVIEW_STORE_SIZE=1G
+ENV PREVIEW_STORE_CLEANUP_INTERVAL=1
 
 # USER nobody:nogroup
 CMD ["/usr/bin/circusd", "/etc/circus/circusd.ini"]

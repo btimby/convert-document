@@ -3,9 +3,12 @@ pylint = "*"
 flake8 = "*"
 
 [packages]
-aiohttp = "*"
 Wand = ">=0.5.6"
 aiohttp-prometheus = {git = "https://github.com/amitsaha/aiohttp-prometheus.git"}
 unoconv = "*"
 ghostscript = {git = "https://gitlab.com/btimby/python-ghostscript.git"}
 uvloop = "*"
+async-generator = "*"
+humanfriendly = "*"
+avpy = "*"
+aiohttp = {path = "./aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}

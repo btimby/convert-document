@@ -46,6 +46,8 @@ async def run(total, concurrent):
         for i in range(total):
             params = {
                 'path': random.choice(PATHS),
+                'width': random.randint(100, 800),
+                'height': random.randint(100, 800),
             }
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)

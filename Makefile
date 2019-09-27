@@ -12,4 +12,4 @@ shell: build
 	docker run -ti ${TAG} sh
 
 run: build
-	docker run -p 3000:3000 --rm --name preview-server --tmpfs /tmp -v ${CURDIR}/fixtures:/mnt/files -ti ${TAG}
+	docker run -p 3000:3000 --rm --name preview-server --tmpfs /tmp --tmpfs /mnt/store -v ${CURDIR}/fixtures:/mnt/files -ti ${TAG}

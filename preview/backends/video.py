@@ -43,7 +43,7 @@ class VideoBackend(BaseBackend):
 
     @log_duration
     def preview(self, path, width, height):
-        with NamedTemporaryFile(suffix='.apng') as t:
+        with NamedTemporaryFile(delete=False, suffix='.apng') as t:
             # TODO: assure this produces proper sized images and maintains
             # aspect ratio.
             # TODO: convert this to avpy, example here:
@@ -64,7 +64,7 @@ class VideoBackend(BaseBackend):
             if b'Output file is empty' in stderr:
                 raise Exception('Could not grab frame')
 
-            return t.read()
+            return t.name
 
     def check(self):
         return which('ffmpeg') is not None

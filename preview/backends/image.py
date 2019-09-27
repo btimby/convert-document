@@ -1,4 +1,5 @@
 import logging
+import tempfile
 
 from wand.image import Image, Color
 
@@ -29,4 +30,7 @@ class ImageBackend(BaseBackend):
                 left = (bg.width - d.width) // 2
                 top = (bg.height - d.height) // 2
                 bg.composite(d, left, top, operator='over')
-                return bg.make_blob('png')
+                with tempfile.NamedTemporaryFile(delete=False,
+                                                 suffix='.png') as t:
+                    bg.save(filename=t.name)
+                    return t.name

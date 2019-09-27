@@ -98,7 +98,6 @@ def convert(inpath, outpath=None, retry=3):
                 convertor = unoconv.convertor = unoconv.Convertor()
                 if outpath:
                     convertor.convert(inpath)
-
                 return
 
             except (AttributeError, DisposedException, SystemExit) as e:
@@ -117,7 +116,7 @@ def convert(inpath, outpath=None, retry=3):
                 #         inputurl , "_blank", 0, inputprops )
                 # AttributeError: loadComponentFromURL
                 time.sleep(0.2)
-                LOGGER.info('Retrying...')
+                LOGGER.warning('Retrying...')
                 continue
 
     finally:
@@ -133,15 +132,10 @@ class OfficeBackend(BaseBackend):
         'odt', 'ods', 'odp'
     ]
 
-    def __init__(self):
-        # Limit concurrent access to LibreOffice.
-        self.semaphore = threading.Semaphore(20)
-
     @log_duration
     def preview(self, path, width, height):
         with NamedTemporaryFile(suffix='.pdf') as t:
-            with self.semaphore:
-                convert(path, t.name)
+            convert(path, t.name)
             return PdfBackend().preview(t.name, width, height)
 
     def check(self):

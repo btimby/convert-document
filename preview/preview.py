@@ -6,33 +6,40 @@ from preview.backends.office import OfficeBackend
 from preview.backends.image import ImageBackend
 from preview.backends.video import VideoBackend
 from preview.backends.pdf import PdfBackend
+from preview import storage
 
 
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.NullHandler())
 
 
-class Backends(object):
-    def __init__(self):
-        self.backends = {}
-        for backend in [OfficeBackend, ImageBackend, VideoBackend, PdfBackend]:
-            obj = backend()
-            self.backends[tuple(obj.extensions)] = obj
+class UnsupportedTypeError(Exception):
+    pass
 
-    def get(self, extension):
-        for extensions, obj in self.backends.items():
+
+class Backend(object):
+    backends = {
+        tuple(obj.extensions): obj
+        for obj in [
+            OfficeBackend(), ImageBackend(), VideoBackend(), PdfBackend()]
+    }
+
+    @staticmethod
+    def get(path):
+        extension = splitext(path)[1].lower()[1:]
+
+        for extensions, obj in Backend.backends.items():
             if extension in extensions:
                 return obj
 
-        raise Exception('Unsupported file type: %s' % extension)
-
-    def __iter__(self):
-        return iter(self.backends.values())
-
-
-BACKENDS = Backends()
+        raise UnsupportedTypeError('Unsupported file type: %s' % extension)
 
 
 def generate(path, format, width, height):
-    extension = splitext(path)[1].lower()[1:]
-    return BACKENDS.get(extension).preview(path, width, height)
+    store_key, store_path = storage.get(path, format, width, height)
+
+    if store_path is None:
+        store_path = Backend.get(path).preview(path, width, height)
+        store_path = storage.put(store_key, path, store_path)
+
+    return store_path
