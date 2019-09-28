@@ -85,7 +85,7 @@
         },
         "ghostscript": {
             "git": "https://gitlab.com/btimby/python-ghostscript.git",
-            "ref": "8a39e6592bbf0cda35a9599d4f5ea3c9d40b48a9"
+            "ref": "b4da64d5ee2d2677aed1999710b655796221bcad"
         },
         "humanfriendly": {
             "hashes": [

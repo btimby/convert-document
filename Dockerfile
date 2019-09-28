@@ -28,7 +28,7 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY Pipfile* /app/
-COPY docker/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl /app/
+COPY aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
 
