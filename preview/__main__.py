@@ -26,6 +26,7 @@ BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
 
 # Configuration
+CACHE_CONTROL = os.environ.get('PREVIEW_CACHE_CONTROL')
 FILE_ROOT = os.environ.get('PREVIEW_FILES', '/mnt/files')
 WIDTH = os.environ.get('PREVIEW_WIDTH', 320)
 HEIGHT = os.environ.get('PREVIEW_HEIGHT', 240)
@@ -146,7 +147,10 @@ async def preview(request):
             try:
                 path = await generate(path, format, width, height)
                 response = DeleteFileResponse(path, status=200)
-                response.headers['Cache-Control'] = 'max-age=600, public'
+                if CACHE_CONTROL:
+                    max_age = 60 * int(CACHE_DURATION)
+                    response.headers['Cache-Control'] = \
+                        'max-age=%i, public' % max_age
 
             except Exception as e:
                 # NOTE: we send 203 to indicate that the content is not exactly
