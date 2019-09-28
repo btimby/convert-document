@@ -72,5 +72,5 @@ def safe_makedirs(path):
     try:
         os.makedirs(path)
 
-    except FileExistsError:
+    except FileExistsError as e:
         LOGGER.warning(e, exc_info=True)
