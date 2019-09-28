@@ -139,7 +139,7 @@ class DeleteFileResponse(web.FileResponse):
         finally:
             if is_temp(str(self._path)):
                 try:
-                    os.remove(self._path)
+                    await run_in_executor(os.remove)(self._path)
 
                 except FileNotFoundError:
                     pass

@@ -85,10 +85,7 @@ def put(key, path, src_path):
 def cleanup(loop):
     if ((BASE_PATH is None or MAX_STORAGE_SIZE is None
             or CLEANUP_INTERVAL is None)):
-        LOGGER.debug('cleanup() aborted')
         return
-
-    LOGGER.debug('cleanup() started')
 
     # walk storage location
     files = []
@@ -108,15 +105,10 @@ def cleanup(loop):
     file_count = len(files)
 
     LOGGER.info(
-        'cleanup() Found: %i files totaling %i bytes' % (file_count,
-                                                         total_size))
+        'cleanup() Found: %i files totaling %i bytes', file_count, total_size)
 
-    if total_size <= MAX_STORAGE_SIZE:
-        LOGGER.debug('cleanup() under-size')
-
-    else:
+    if total_size > MAX_STORAGE_SIZE:
         # prune oldest atimes until we are under-size
-        LOGGER.debug('cleanup() pruning')
         while total_size > MAX_STORAGE_SIZE:
             _, size, path = files.pop(0)
             try:
@@ -127,10 +119,10 @@ def cleanup(loop):
 
             total_size -= size
             file_count -= 1
-            LOGGER.debug('cleanup() size now %i, %i', file_count, total_size)
+        LOGGER.debug(
+            'cleanup() now %i files totaling %i bytes', file_count, total_size)
 
     sleepy = CLEANUP_INTERVAL * 60
-    LOGGER.debug('cleanup() sleeping for %is...', sleepy)
     loop.call_later(sleepy, lambda: cleanup(loop))
 
 

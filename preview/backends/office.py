@@ -116,7 +116,7 @@ def convert(inpath, outpath=None, retry=3):
                 #         inputurl , "_blank", 0, inputprops )
                 # AttributeError: loadComponentFromURL
                 time.sleep(0.2)
-                LOGGER.warning('Retrying...')
+                LOGGER.warning('LibreOffice conversion failed, Retrying...')
                 continue
 
     finally:

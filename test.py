@@ -15,6 +15,18 @@ URL = os.environ.get('URL', 'http://localhost:3000/preview/')
 TOTAL = 10000
 CONCURRENT = 20
 PATHS = os.listdir('fixtures')
+RESOLUTIONS = [
+    (800, 600),
+    (720, 540),
+    (640, 480),
+    (480, 360),
+    (400, 300),
+    (320, 240),
+    (280, 210),
+    (240, 180),
+    (160, 120),
+]
+
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.StreamHandler())
@@ -44,10 +56,11 @@ async def run(total, concurrent):
     # per each request.
     async with ClientSession() as session:
         for i in range(total):
+            width, height = random.choice(RESOLUTIONS)
             params = {
                 'path': random.choice(PATHS),
-                'width': random.randint(100, 800),
-                'height': random.randint(100, 800),
+                'width': width,
+                'height': height,
             }
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)
