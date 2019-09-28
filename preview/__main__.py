@@ -26,7 +26,7 @@ BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
 
 # Configuration
-FILE_ROOT = os.environ.get('PREVIEW_FILE_ROOT', '/mnt/files')
+FILE_ROOT = os.environ.get('PREVIEW_FILES', '/mnt/files')
 WIDTH = os.environ.get('PREVIEW_WIDTH', 320)
 HEIGHT = os.environ.get('PREVIEW_HEIGHT', 240)
 MAX_WIDTH = os.environ.get('PREVIEW_MAX_WIDTH', 800)

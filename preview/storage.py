@@ -12,7 +12,7 @@ from preview.utils import run_in_executor, safe_delete, safe_makedirs
 
 
 BASE_PATH = os.environ.get('PREVIEW_STORE')
-MAX_STORAGE_SIZE = os.environ.get('PREVIEW_STORE_SIZE')
+MAX_STORAGE_SIZE = os.environ.get('PREVIEW_STORE_MAX_SIZE')
 CLEANUP_INTERVAL = int(os.environ.get('PREVIEW_STORE_CLEANUP_INTERVAL', 0))
 
 LOGGER = logging.getLogger(__name__)
