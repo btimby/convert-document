@@ -17,10 +17,11 @@ docker pull btimby/preview-server
 docker run -p 3000:3000 --tmpfs /tmp -ti btimby/preview-server
 ```
 
-Once the service has initialised, files can be sent to the `/preview` endpoint, and a PNG preview will be returned:
+Once the service has initialised, files, paths, or urls can be sent to the `/preview/` endpoint, and a PNG preview will be returned. Optional `width` and `height` arguments can be sent with the request to control the size of the returned preview image.
 
 ```shell
 curl -o out.png -F 'file=@mydoc.doc' http://localhost:3000/preview
+curl -o out.png -F 'url=http://somedomain.com/some-pdf' http://localhost:3000/preview
 ```
 
 ## Options
@@ -41,7 +42,7 @@ curl -o out.png -F 'path=/path/to/file.doc' \
 
 `PREVIEW_STORE` - By default generated previews are ephemeral. If you wish to store the previews so that they are not regenerated in future requests, you can do so using ththis option.
 
-This can be used as a cache mechanism, for example by using tmpfs. Optionally, you can provide a file system (even a shared file system) for long-term storage.
+This can be used as a cache mechanism, for example by using tmpfs. Optionally, you can provide a file system (even a shared file system) for long-term storage. When combined with `PREVIEW_FILES`, The file's mtime is compared to the preview's mtime. If the source file is newer, the preview is regenerated. This option has no effect for POSTed or downloaded files.
 
 For example, below the host's `/mnt/store` directory or device will be used to store generated previews. The second call to `curl` will be much faster as it will simply return the preview generated in the first call.
 
