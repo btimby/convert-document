@@ -84,7 +84,7 @@ def main(total, concurrent):
 
     print('\n', end='')
     print('Total duration: %f, RPS: %f' % (duration, total / duration))
-    print('Failures: %i Successes: %i' % (failures, successes))
+    print('Failures: %i, Successes: %i' % (failures, successes))
 
     if failures:
         sys.exit(1)

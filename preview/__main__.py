@@ -1,5 +1,6 @@
 import os
 import logging
+import functools
 
 from os.path import normpath, splitext, isfile
 from os.path import join as pathjoin
@@ -14,7 +15,7 @@ from aiohttp_prometheus import setup_metrics
 from async_generator import asynccontextmanager
 
 from preview.preview import Backend
-from preview.utils import run_in_executor, log_duration
+from preview.utils import run_in_executor, log_duration, safe_delete
 from preview.preview import generate, UnsupportedTypeError
 from preview.storage import cleanup, is_temp
 
@@ -110,11 +111,7 @@ async def get_params(request):
 
     finally:
         for path in cleanup:
-            try:
-                os.remove(path)
-
-            except FileNotFoundError as e:
-                LOGGER.warning(e, exc_info=True)
+            await run_in_executor(safe_delete)(path)
 
 
 generate = run_in_executor(generate)
@@ -138,11 +135,7 @@ class DeleteFileResponse(web.FileResponse):
 
         finally:
             if is_temp(str(self._path)):
-                try:
-                    await run_in_executor(os.remove)(self._path)
-
-                except FileNotFoundError:
-                    pass
+                await run_in_executor(safe_delete)(self._path)
 
 
 async def preview(request):
@@ -156,7 +149,7 @@ async def preview(request):
                 response.headers['Cache-Control'] = 'max-age=600, public'
 
             except Exception as e:
-                # NOTE: we send 206 to indicate that the content is not exactly
+                # NOTE: we send 203 to indicate that the content is not exactly
                 # what was requested. This helps our tools / tests determine
                 # if an error occurred. We also disable caching in the case of
                 # an error response.
@@ -184,12 +177,14 @@ def main():
     app.add_routes(
         [web.post('/preview/', preview), web.get('/preview/', preview)])
 
-    # TODO: port from command line.
-    # TODO: figure out how to wait for pending requests before exiting.
     loop = uvloop.new_event_loop()
-    # TODO: probably a better way...
     asyncio.set_event_loop(loop)
-    loop.call_soon(run_in_executor(lambda: cleanup(loop)))
+
+    # TODO: probably a better way...
+    loop.call_soon(run_in_executor(functools.partial(cleanup, loop)))
+
+    # TODO: figure out how to wait for pending requests before exiting.
+    # TODO: port from command line.
     web.run_app(app, port=3000, handle_signals=True)
 
 

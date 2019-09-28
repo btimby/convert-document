@@ -1,3 +1,4 @@
+import os
 import functools
 import asyncio
 import logging
@@ -57,3 +58,19 @@ def log_duration(f):
                 level, '%s took %fs', fstr(f, args, kwargs), duration)
 
     return inner
+
+
+def safe_delete(path):
+    try:
+        os.remove(path)
+
+    except FileNotFoundError as e:
+        LOGGER.warning(e, exc_info=True)
+
+
+def safe_makedirs(path):
+    try:
+        os.makedirs(path)
+
+    except FileExistsError:
+        LOGGER.warning(e, exc_info=True)
