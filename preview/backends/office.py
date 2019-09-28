@@ -101,7 +101,7 @@ def convert(inpath, outpath=None, retry=3):
                 return
 
             except (AttributeError, DisposedException, SystemExit) as e:
-                LOGGER.debug(e, exc_info=True)
+                LOGGER.debug('Ignoring: %s' % e, exc_info=True)
 
                 # Don't retry.
                 if retry <= 0:

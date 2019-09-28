@@ -65,7 +65,7 @@ def safe_delete(path):
         os.remove(path)
 
     except FileNotFoundError as e:
-        LOGGER.warning(e, exc_info=True)
+        LOGGER.debug('Ignoring: %s' % e, exc_info=True)
 
 
 def safe_makedirs(path):
@@ -73,4 +73,4 @@ def safe_makedirs(path):
         os.makedirs(path)
 
     except FileExistsError as e:
-        LOGGER.warning(e, exc_info=True)
+        LOGGER.debug('Ignoring: %s' % e, exc_info=True)
