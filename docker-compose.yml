@@ -1,7 +1,7 @@
 version: '3'
 services:
   preview-server:
-    image: btimby/preview-server
+    image: btimby/preview-preview
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
@@ -13,19 +13,11 @@ services:
       - PVS_STORE=/mnt/store
       - PVS_UID=101
       - PVS_GID=101
-      - PVS_LOGLEVEL=DEBUG
+      - PVS_LOGLEVEL=INFO
       - PVS_SOFFICE_ADDR=haproxy
 
-  soffice-server0:
-    image: btimby/preview-server
-    container_name: soffice-server0
-    volumes:
-      - ./fixtures:/mnt/files:ro
-    command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
-
-  soffice-server1:
-    image: btimby/preview-server
-    container_name: soffice-server1
+  soffice-server:
+    image: btimby/preview-soffice
     volumes:
       - ./fixtures:/mnt/files:ro
     command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0

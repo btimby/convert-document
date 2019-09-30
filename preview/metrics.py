@@ -34,23 +34,26 @@ STORAGE = Counter(
     'pvs_storage_operations', 'Storage operations', ['operation'])
 STORAGE_BYTES = Gauge('pvs_storage_bytes_total', 'Total bytes in store')
 STORAGE_FILES = Gauge('pvs_storage_files_total', 'Total files in store')
+TRANSFER_LATENCY = Summary(
+    'pvs_transfer_latency', 'Uploads or downloads of files', [
+    'operation'])
+TRANSFERS_IN_PROGRESS = Gauge(
+    'pvs_transfers_in_progress', 'Concurrent uploads / downloads', [
+        'operation'])
 
 
 def metrics_middleware():
     @web.middleware
     async def middleware_handler(request, handler):
-        REQUEST_IN_PROGRESS.labels(request.path, request.method).inc()
-        try:
-            with REQUEST_LATENCY.labels(request.path).time():
-                response = await handler(request)
+        rip = REQUEST_IN_PROGRESS.labels(request.path, request.method)
+        rl = REQUEST_LATENCY.labels(request.path)
+        with rip.track_inprogress(), rl.time():
+            response = await handler(request)
 
-            REQUEST_TOTAL.labels(
-                request.path, request.method, response.status).inc()
+        REQUEST_TOTAL.labels(
+            request.path, request.method, response.status).inc()
 
-            return response
-
-        finally:
-            REQUEST_IN_PROGRESS.labels(request.path, request.method).dec()
+        return response
 
     return middleware_handler
 

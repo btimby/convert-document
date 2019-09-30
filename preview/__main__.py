@@ -3,22 +3,24 @@ import logging
 import functools
 import pathlib
 
-from os.path import normpath, splitext, isfile
+from os.path import normpath, isfile
 from os.path import join as pathjoin
 
 from tempfile import NamedTemporaryFile
 
 import uvloop
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 from async_generator import asynccontextmanager
 
-from preview.preview import Backend
-from preview.utils import run_in_executor, log_duration, safe_delete
+from preview.utils import run_in_executor, log_duration, safe_delete, \
+                          get_extension
 from preview.preview import generate, UnsupportedTypeError
 from preview.storage import is_temp, BASE_PATH
-from preview.metrics import metrics_handler, metrics_middleware
+from preview.metrics import metrics_handler, metrics_middleware, \
+                            TRANSFER_LATENCY, TRANSFERS_IN_PROGRESS
 
 
 # Limits
@@ -50,30 +52,42 @@ logging.getLogger('aiohttp').setLevel(HTTP_LOGLEVEL)
 
 @log_duration
 async def upload(upload):
-    extension = splitext(upload.filename)[1]
-    with NamedTemporaryFile(delete=False, suffix=extension) as t:
-        while True:
-            data = await run_in_executor(upload.file.read)(BUFFER_SIZE)
-            if not data:
-                break
-            await run_in_executor(t.write)(data)
-    return t.name
+    extension = get_extension(upload.filename)
+    tip = TRANSFERS_IN_PROGRESS.labels('upload')
+    tl = TRANSFER_LATENCY.labels('upload')
+
+    with tl.time(), tip.track_inprogress():
+        with NamedTemporaryFile(delete=False, suffix='.%s' % extension) as t:
+            while True:
+                data = await run_in_executor(upload.file.read)(BUFFER_SIZE)
+                if not data:
+                    break
+                await run_in_executor(t.write)(data)
+        return t.name
 
 
 @log_duration
 async def download(url):
-    extension = splitext(url)[1]
-    async with ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                raise web.HTTPBadRequest(
-                    reason='Could not download: %s, %s' % (
-                        url, resp.reason))
+    extension = get_extension(url)
+    tip = TRANSFERS_IN_PROGRESS.labels('download')
+    tl = TRANSFER_LATENCY.labels('download')
 
-            with NamedTemporaryFile(
-                    delete=False, suffix=extension) as t:
-                await run_in_executor(t.write)(await resp.read())
-                return t.name
+    with tl.time(), tip.track_inprogress():
+        async with ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    raise web.HTTPBadRequest(
+                        reason='Could not download: %s, %s' % (
+                            url, resp.reason))
+
+                with NamedTemporaryFile(
+                        delete=False, suffix='.%s' % extension) as t:
+                    while True:
+                        data = await resp.content.read(BUFFER_SIZE)
+                        if not data:
+                            break
+                        await run_in_executor(t.write)(data)
+                    return t.name
 
 
 @asynccontextmanager
@@ -202,6 +216,8 @@ def main():
     app.add_routes([web.get('/metrics/', metrics_handler)])
 
     loop = uvloop.new_event_loop()
+    # Conversion backends are blocking and run in the following executor.
+    loop.set_default_executor(ThreadPoolExecutor(max_workers=40))
     asyncio.set_event_loop(loop)
 
     # TODO: figure out how to wait for pending requests before exiting.
