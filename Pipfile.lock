@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "844e7f4cc90d44c21d8f8f490e93568fa5b56f522b65410b28cae4e8b1c852fe"
+            "sha256": "83ef5023669943642e711ecb230dbee184bce01abbd3eb4c6c1593984c7997bf"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -64,6 +64,13 @@
                 "sha256:f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399"
             ],
             "version": "==19.1.0"
+        },
+        "avpy": {
+            "hashes": [
+                "sha256:28463dc47596b4af569a671a5571907adc9ac0a2a7b443d4dfd596c51cd68d8e"
+            ],
+            "index": "pypi",
+            "version": "==0.1.3"
         },
         "chardet": {
             "hashes": [

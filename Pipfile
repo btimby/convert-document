@@ -10,3 +10,4 @@ async-generator = "*"
 aiohttp = {path = "./packages/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}
 ghostscript = {path = "./packages/ghostscript-0.7.dev0-py2.py3-none-any.whl"}
 prometheus-client = "*"
+avpy = "*"

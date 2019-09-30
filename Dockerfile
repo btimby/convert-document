@@ -21,7 +21,9 @@ RUN apt-get update \
         fonts-f500 fonts-fanwood fonts-freefont-ttf fonts-liberation fonts-lmodern \
         fonts-lyx fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
         python3-uno python3-lxml python3-icu curl imagemagick  libmagickwand-dev \
-        ffmpeg python-setuptools git \
+        ffmpeg python-setuptools git pkg-config python3-dev libavformat-dev \
+        libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libswresample-dev \
+        libavfilter-dev \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
