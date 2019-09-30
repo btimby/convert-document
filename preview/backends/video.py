@@ -74,9 +74,6 @@ class VideoBackend(BaseBackend):
             with CONVERSIONS.labels('video', extension).time():
                 return grab_frames(path, width, height)
 
-        except:
+        except Exception:
             CONVERSION_ERRORS.labels('video', extension).inc()
             raise
-
-    def check(self):
-        return which('ffmpeg') is not None

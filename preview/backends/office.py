@@ -150,15 +150,6 @@ class OfficeBackend(BaseBackend):
 
                 return PdfBackend().preview(t.name, width, height)
 
-        except:
+        except Exception:
             CONVERSION_ERRORS.labels('office', extension).inc()
             raise
-
-    def check(self):
-        try:
-            convert('fixtures/sample.docx')
-            return True
-
-        except Exception as e:
-            LOGGER.exception(e)
-            return False

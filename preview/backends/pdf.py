@@ -38,6 +38,6 @@ class PdfBackend(BaseBackend):
 
                 return ImageBackend().preview(t.name, width, height)
 
-        except:
+        except Exception:
             CONVERSION_ERRORS.labels('pdf', extension).inc()
             raise

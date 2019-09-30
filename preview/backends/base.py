@@ -10,6 +10,3 @@ class BaseBackend(ABC):
     @abstractmethod
     def preview(self, path, width, height):
         pass
-
-    def check(self):
-        return True

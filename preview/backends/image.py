@@ -23,10 +23,9 @@ def resize_image(path, width, height):
             left = (bg.width - d.width) // 2
             top = (bg.height - d.height) // 2
             bg.composite(d, left, top, operator='over')
-            with tempfile.NamedTemporaryFile(delete=False,
-                                             suffix='.png') as t:
-                bg.save(filename=t.name)
-                return t.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as t:
+            bg.save(filename=t.name)
+            return t.name
 
 
 class ImageBackend(BaseBackend):
@@ -43,6 +42,6 @@ class ImageBackend(BaseBackend):
                 # Create a transparent background image of the requested size.
                 return resize_image(path, width, height)
 
-        except:
+        except Exception:
             CONVERSION_ERRORS.labels('image', extension).inc()
             raise

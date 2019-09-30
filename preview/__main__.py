@@ -124,12 +124,6 @@ generate = run_in_executor(generate)
 
 
 async def info(request):
-    checks = [
-        backend.check() for backend in Backend.backends.values()
-    ]
-    if not all(checks):
-        raise web.HTTPServiceUnavailable()
-
     return web.Response(text="OK")
 
 
@@ -200,9 +194,11 @@ def main():
         client_max_size=MAX_UPLOAD, middlewares=[
             normalize_path_middleware(), metrics_middleware()
             ])
+
     app.add_routes([web.get('/', info)])
-    app.add_routes(
-        [web.post('/preview/', preview), web.get('/preview/', preview)])
+    app.add_routes([
+        web.post('/preview/', preview),
+        web.get('/preview/', preview)])
     app.add_routes([web.get('/metrics/', metrics_handler)])
 
     loop = uvloop.new_event_loop()
