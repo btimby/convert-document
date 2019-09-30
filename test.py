@@ -4,6 +4,7 @@ import random
 import asyncio
 import logging
 
+from os.path import join as pathjoin
 from time import time
 
 from aiohttp import ClientSession
@@ -11,7 +12,7 @@ from aiohttp.client_exceptions import ClientConnectorError, \
     ServerDisconnectedError
 
 
-URL = os.environ.get('URL', 'http://localhost:3000/preview/')
+URL = os.environ.get('URL', 'http://preview:8080/preview/')
 TOTAL = 10000
 CONCURRENT = 20
 PATHS = os.listdir('fixtures')
@@ -56,11 +57,17 @@ async def run(total, concurrent):
     # per each request.
     async with ClientSession() as session:
         for i in range(total):
+            path = random.choice(PATHS)
+            # "touch" a file 10% of the time.
+            if random.random() > 0.9:
+                os.utime(pathjoin('fixtures', path))
             width, height = random.choice(RESOLUTIONS)
             params = {
-                'path': random.choice(PATHS),
+                'path': path,
                 'width': width,
                 'height': height,
+                #'width': random.randint(100, 800),
+                #'height': random.randint(100, 800),
             }
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)

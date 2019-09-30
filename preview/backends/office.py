@@ -1,3 +1,4 @@
+import os
 import imp
 import sys
 import shutil
@@ -9,14 +10,19 @@ from tempfile import NamedTemporaryFile
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
-from preview.utils import log_duration
+from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
+from preview.utils import log_duration, get_extension
 
 
+SOFFICE_ADDR = os.environ.get('PVS_SOFFICE_ADDR', '127.0.0.1')
+SOFFICE_PORT = int(os.environ.get('PVS_SOFFICE_PORT', '2002'))
+CONNECTION = 'socket,host=%s,port=%s,tcpNoDelay=1;urp;' \
+             'StarOffice.ComponentContext'
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(inpath, outpath=None, retry=3):
+def convert(inpath, output=None, retry=3):
     """
     Use unoconv as a library.
     """
@@ -70,10 +76,11 @@ def convert(inpath, outpath=None, retry=3):
             self.closed = 1
 
         def writeBytes(self, seq):
+            LOGGER.debug('Writing data...')
             try:
-                sys.stdout.buffer.write(seq.value)
+                output.write(seq.value)
             except AttributeError:
-                sys.stdout.write(seq.value)
+                output.write(seq.value)
 
         def flush(self):
             pass
@@ -83,9 +90,12 @@ def convert(inpath, outpath=None, retry=3):
     # NOTE: this is a shortcut since I have only one office on my system.
     unoconv.office = unoconv.find_offices()[0]
 
-    args = ['-e', 'PageRange=1-1', inpath]
-    if outpath:
-        args.insert(0, '--output=%s' % outpath)
+    connection = CONNECTION % (SOFFICE_ADDR, SOFFICE_PORT)
+    LOGGER.debug('Using soffice connection: %s', connection)
+
+    args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection, inpath]
+#    if outpath:
+#        args.insert(0, '--output=%s' % outpath)
     unoconv.op = unoconv.Options(args)
     unoconv.convertor = None
 
@@ -96,12 +106,12 @@ def convert(inpath, outpath=None, retry=3):
 
             try:
                 convertor = unoconv.convertor = unoconv.Convertor()
-                if outpath:
+                if output is not None:
                     convertor.convert(inpath)
                 return
 
             except (AttributeError, DisposedException, SystemExit) as e:
-                LOGGER.debug('Ignoring: %s' % e, exc_info=True)
+                LOGGER.warning('Ignoring: %s' % e, exc_info=True)
 
                 # Don't retry.
                 if retry <= 0:
@@ -134,9 +144,17 @@ class OfficeBackend(BaseBackend):
 
     @log_duration
     def preview(self, path, width, height):
-        with NamedTemporaryFile(suffix='.pdf') as t:
-            convert(path, t.name)
-            return PdfBackend().preview(t.name, width, height)
+        extension = get_extension(path)
+        try:
+            with NamedTemporaryFile(suffix='.pdf') as t:
+                with CONVERSIONS.labels('office', extension).time():
+                    convert(path, t)
+
+                return PdfBackend().preview(t.name, width, height)
+
+        except:
+            CONVERSION_ERRORS.labels('office', extension).inc()
+            raise
 
     def check(self):
         try:

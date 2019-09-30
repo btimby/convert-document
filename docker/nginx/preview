@@ -1,0 +1,9 @@
+location /internal/files {
+    internal;
+    alias /mnt/files;
+}
+
+location /internal/preview {
+    internal;
+    alias /mnt/store;
+}

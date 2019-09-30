@@ -11,14 +11,18 @@ shell: build
 run: build
 	docker run -p 3000:3000 --rm --name preview-server --tmpfs /tmp --tmpfs /mnt/store -v ${CURDIR}/fixtures:/mnt/files -ti ${TAG}
 
-.PHONY: pipenv
-pipenv:
+Pipfile: Pipfile.lock
 	pipenv install --dev
+	touch Pipfile
 
 .PHONY: test
-test: pipenv
+test: Pipfile
 	pipenv run python3 test.py
 
 .PHONY: test.html
 test.html:
 	firefox file://${CURDIR}/test.html
+
+.PHONY: demo
+demo:
+	docker-compose -p preview-demo up

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "363f671569c7b091f606648b12f2e4bbeabb8809e05307150b9dc36098ea3eb8"
+            "sha256": "6d662216b7d1f690c8c719121fe68df75351a69f73825a7c00426bb4b42e2c4c"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -40,7 +40,7 @@
                 "sha256:f0c304dcc1494dbc3fc492ebc2e61d0db323be9756a1bb14f407097d8adf82ec",
                 "sha256:fb9c2f27d2db6d709a02421733bb6ad22e16104beb2cf403e1120c24f3cc8668"
             ],
-            "path": "./aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl",
+            "path": "./packages/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl",
             "version": "==4.0.0a0"
         },
         "aiohttp-prometheus": {
@@ -85,7 +85,7 @@
         },
         "ghostscript": {
             "git": "https://gitlab.com/btimby/python-ghostscript.git",
-            "ref": "b4da64d5ee2d2677aed1999710b655796221bcad"
+            "ref": "04537f53234ba329c79e862a70eafe6e8173a053"
         },
         "humanfriendly": {
             "hashes": [

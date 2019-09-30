@@ -28,7 +28,6 @@ def send_command(f, *args):
             except:
                 pass
 
-
     t = threading.Thread(target=_send_command, args=(f, ) + args)
     t.start()
 

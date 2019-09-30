@@ -8,7 +8,8 @@ import ghostscript
 
 from preview.backends.base import BaseBackend
 from preview.backends.image import ImageBackend
-from preview.utils import log_duration
+from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
+from preview.utils import log_duration, get_extension
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,18 +22,22 @@ class PdfBackend(BaseBackend):
 
     @log_duration
     def preview(self, path, width, height):
-        with NamedTemporaryFile(suffix='.png') as t:
-            args = [
-                b'-dFirstPage=1', b'-dLastPage=1',
-                b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-sDEVICE=png16m',
-                b'-q', b'-sOutputFile=%s' % bytes(t.name, 'utf8'),
-                bytes(path, 'utf8'),
-            ]
+        extension = get_extension(path)
+        try:
+            with NamedTemporaryFile(suffix='.png') as t:
+                args = [
+                    b'-dFirstPage=1', b'-dLastPage=1',
+                    b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-sDEVICE=png16m',
+                    b'-q', b'-sOutputFile=%s' % bytes(t.name, 'utf8'),
+                    bytes(path, 'utf8'),
+                ]
 
-            try:
-                gs = ghostscript.Ghostscript(*args)
+                with CONVERSIONS.labels('pdf', extension).time():
+                    with ghostscript.Ghostscript(*args):
+                        pass
 
-            finally:
-                gs.exit()
+                return ImageBackend().preview(t.name, width, height)
 
-            return ImageBackend().preview(t.name, width, height)
+        except:
+            CONVERSION_ERRORS.labels('pdf', extension).inc()
+            raise

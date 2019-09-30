@@ -1,0 +1,93 @@
+version: '3'
+services:
+  preview-server:
+    image: btimby/preview-server
+    volumes:
+      - ./fixtures:/mnt/files:ro
+      - /tmp/preview:/mnt/store
+    command: python3 -m preview
+    environment:
+      - VIRTUAL_HOST=preview
+      - VIRTUAL_PORT=3000
+      - PVS_X_ACCEL_REDIRECT=/internal/preview
+      - PVS_STORE=/mnt/store
+      - PVS_UID=101
+      - PVS_GID=101
+      - PVS_LOGLEVEL=WARNING
+      - PVS_SOFFICE_ADDR=haproxy
+
+  soffice-server0:
+    image: btimby/preview-server
+    container_name: soffice-server0
+    volumes:
+      - ./fixtures:/mnt/files:ro
+      - /tmp/preview:/mnt/store
+    command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
+    environment:
+      - VIRTUAL_HOST=preview
+      - VIRTUAL_PORT=3000
+      - PVS_X_ACCEL_REDIRECT=/internal/preview
+      - PVS_STORE=/mnt/store
+      - PVS_UID=101
+      - PVS_GID=101
+      - PVS_LOGLEVEL=WARNING
+
+  soffice-server1:
+    image: btimby/preview-server
+    container_name: soffice-server1
+    volumes:
+      - ./fixtures:/mnt/files:ro
+      - /tmp/preview:/mnt/store
+    command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
+    environment:
+      - VIRTUAL_HOST=preview
+      - VIRTUAL_PORT=3000
+      - PVS_X_ACCEL_REDIRECT=/internal/preview
+      - PVS_STORE=/mnt/store
+      - PVS_UID=101
+      - PVS_GID=101
+      - PVS_LOGLEVEL=WARNING
+
+  nginx:
+    image: jwilder/nginx-proxy
+    ports:
+      - 8080:80
+    volumes:
+      - ./fixtures:/mnt/files:ro
+      - /tmp/preview:/mnt/store
+      - ./docker/nginx/preview_location:/etc/nginx/vhost.d/preview_location:ro
+      - ./docker/nginx/preview:/etc/nginx/vhost.d/preview:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  haproxy:
+    image: haproxy
+    ports:
+      - 8082:8080
+    volumes:
+      - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+
+  cadvisor:
+    image: google/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./docker/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
+      - ./docker/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./docker/grafana/preview-server-dashboard.json:/etc/grafana/provisioning/dashboards/preview-server-dashboard.json:ro

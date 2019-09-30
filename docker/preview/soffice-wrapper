@@ -1,4 +1,5 @@
 #!/bin/bash
 # wrapper script for unoconv to filter annoying messages from soffice.bin
 
+export HOME=/tmp
 /usr/local/bin/unoconv $@ 2>&1 | grep -v func=xmlSecCheckVersionExt

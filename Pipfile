@@ -11,4 +11,4 @@ uvloop = "*"
 async-generator = "*"
 humanfriendly = "*"
 avpy = "*"
-aiohttp = {path = "./aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}
+aiohttp = {path = "./packages/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}

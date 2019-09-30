@@ -5,7 +5,8 @@ from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
 
 from preview.backends.base import BaseBackend
-from preview.utils import log_duration
+from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
+from preview.utils import log_duration, get_extension
 
 
 LOGGER = logging.getLogger(__name__)
@@ -13,6 +14,31 @@ LOGGER = logging.getLogger(__name__)
 FF_START = '00:00'
 FF_FRAMES = '5'
 FF_FPS = '12'
+
+
+def grab_frames(path, width, height):
+    with NamedTemporaryFile(delete=False, suffix='.apng') as t:
+        # TODO: assure this produces proper sized images and maintains
+        # aspect ratio.
+        # TODO: convert this to avpy, example here:
+        # https://bitbucket.org/sydh/avpy/src/master/examples/encoding/encodeImage.py
+        filter = \
+            '[0:v]scale=%i:%i[bg]; ' \
+            '[1:v]scale=%ix%i[ovl];[bg][ovl]overlay=0:0' % (width, height,
+                                                            width, height)
+        cmd = [
+            'ffmpeg', '-y', '-ss', FF_START, '-i', path, '-i',
+            'images/film-overlay.png', '-filter_complex', filter,
+            '-plays', '0', '-t', FF_FRAMES, '-r', FF_FPS, t.name
+        ]
+        LOGGER.debug(' '.join(cmd))
+        _, stderr = Popen(cmd, stderr=PIPE).communicate()
+        LOGGER.debug(stderr)
+
+        if b'Output file is empty' in stderr:
+            raise Exception('Could not grab frame')
+
+        return t.name
 
 
 class VideoBackend(BaseBackend):
@@ -43,28 +69,14 @@ class VideoBackend(BaseBackend):
 
     @log_duration
     def preview(self, path, width, height):
-        with NamedTemporaryFile(delete=False, suffix='.apng') as t:
-            # TODO: assure this produces proper sized images and maintains
-            # aspect ratio.
-            # TODO: convert this to avpy, example here:
-            # https://bitbucket.org/sydh/avpy/src/master/examples/encoding/encodeImage.py
-            filter = \
-                '[0:v]scale=%i:%i[bg]; ' \
-                '[1:v]scale=%ix%i[ovl];[bg][ovl]overlay=0:0' % (width, height,
-                                                                width, height)
-            cmd = [
-                'ffmpeg', '-y', '-ss', FF_START, '-i', path, '-i',
-                'images/film-overlay.png', '-filter_complex', filter,
-                '-plays', '0', '-t', FF_FRAMES, '-r', FF_FPS, t.name
-            ]
-            LOGGER.debug(' '.join(cmd))
-            _, stderr = Popen(cmd, stderr=PIPE).communicate()
-            LOGGER.debug(stderr)
+        extension = get_extension(path)
+        try:
+            with CONVERSIONS.labels('video', extension).time():
+                return grab_frames(path, width, height)
 
-            if b'Output file is empty' in stderr:
-                raise Exception('Could not grab frame')
-
-            return t.name
+        except:
+            CONVERSION_ERRORS.labels('video', extension).inc()
+            raise
 
     def check(self):
         return which('ffmpeg') is not None

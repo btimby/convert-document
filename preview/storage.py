@@ -1,19 +1,18 @@
 import os
-import time
 import shutil
 import hashlib
-import asyncio
 import logging
-import functools
+
+from time import time
 
 import humanfriendly
 
-from preview.utils import run_in_executor, safe_delete, safe_makedirs
+from preview.utils import safe_delete, safe_makedirs, run_in_executor
+from preview.metrics import STORAGE, STORAGE_BYTES, STORAGE_FILES
 
 
-BASE_PATH = os.environ.get('PREVIEW_STORE')
-MAX_STORAGE_SIZE = os.environ.get('PREVIEW_STORE_MAX_SIZE')
-CLEANUP_INTERVAL = int(os.environ.get('PREVIEW_STORE_CLEANUP_INTERVAL', 0))
+BASE_PATH = os.environ.get('PVS_STORE')
+MAX_STORAGE_SIZE = os.environ.get('PVS_STORE_MAX_SIZE')
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
@@ -25,7 +24,7 @@ def make_key(*args):
 
 
 def make_path(key):
-    return os.path.join(BASE_PATH, key[:2], key[2:4], key)
+    return os.path.join(BASE_PATH, key[:1], key[1:2], key)
 
 
 def get(path, format, width, height):
@@ -44,12 +43,14 @@ def get(path, format, width, height):
         store_mtime = None
 
     if path_mtime == store_mtime:
+        STORAGE.labels('get').inc()
         # touch the atime (used for LRU cleaning)
         LOGGER.info('Serving from storage')
-        os.utime(store_path, (time.time(), store_mtime))
+        os.utime(store_path, (time(), store_mtime))
         return key, store_path
 
     elif os.path.isfile(store_path):
+        STORAGE.labels('del').inc()
         LOGGER.info('Removing stale file from storage')
         try:
             os.remove(store_path)
@@ -65,6 +66,7 @@ def put(key, path, src_path):
         # Storage is disabled.
         return path
 
+    STORAGE.labels('put').inc()
     LOGGER.info('Storing file')
     store_path = make_path(key)
     safe_makedirs(os.path.dirname(store_path))
@@ -75,45 +77,69 @@ def put(key, path, src_path):
     return store_path
 
 
-def cleanup(loop):
-    if ((BASE_PATH is None or MAX_STORAGE_SIZE is None
-            or CLEANUP_INTERVAL is None)):
-        return
+class Cleanup(object):
+    def __init__(self, loop, base_path=BASE_PATH,
+                 max_storage_size=MAX_STORAGE_SIZE):
+        self.loop = loop
+        self.base_path = base_path
+        self.max_storage_size = None
+        if max_storage_size:
+            self.max_storage_size = humanfriendly.parse_size(max_storage_size)
+        self.loop.call_soon(run_in_executor(self.cleanup))
 
-    max_storage_size = humanfriendly.parse_size(MAX_STORAGE_SIZE)
+    def scan(self):
+        # walk storage location
+        files = []
+        for dir, _, filenames in os.walk(BASE_PATH):
+            # enumerate files
+            for fn in filenames:
+                path = os.path.join(BASE_PATH, dir, fn)
+                atime = os.stat(path).st_atime
+                size = os.path.getsize(path)
+                files.append((atime, size, path))
 
-    # walk storage location
-    files = []
-    for dir, _, filenames in os.walk(BASE_PATH):
-        # enumerate files
-        for fn in filenames:
-            path = os.path.join(BASE_PATH, dir, fn)
-            atime = os.stat(path).st_atime
-            size = os.path.getsize(path)
-            files.append((atime, size, path))
+        # sort by atime
+        files.sort(key=lambda x: -x[0])
 
-    # sort by atime
-    files.sort(key=lambda x: x[0])
+        # determine if we are over-size
+        size = sum(x[1] for x in files)
 
-    # determine if we are over-size
-    total_size = sum(x[1] for x in files)
-    file_count = len(files)
+        LOGGER.debug('Found: %i files, totaling %i bytes', len(files), size)
 
-    LOGGER.info(
-        'cleanup() Found: %i files totaling %i bytes', file_count, total_size)
+        STORAGE_FILES.set(len(files))
+        STORAGE_BYTES.set(size)
 
-    if total_size > max_storage_size:
+        return size, files
+
+    def cleanup(self):
+        if self.base_path is None or self.max_storage_size is None:
+            return
+
+        size, files = self.scan()
+
         # prune oldest atimes until we are under-size
-        while total_size > max_storage_size:
-            _, size, path = files.pop(0)
+        removed, removed_size = 0, 0
+        while size > self.max_storage_size:
+            try:
+                _, path_size, path = files.pop(0)
+
+            except IndexError:
+                break
+
             safe_delete(path)
-            total_size -= size
-            file_count -= 1
+            STORAGE.labels('del').inc()
 
-        LOGGER.debug(
-            'cleanup() now %i files totaling %i bytes', file_count, total_size)
+            removed += 1
+            size -= path_size
+            removed_size += path_size
 
-    loop.call_later(CLEANUP_INTERVAL * 60, functools.partial(cleanup, loop))
+            if removed >= 100:
+                break
+
+        LOGGER.debug('Removed: %i files, totaling %i bytes',
+                    removed, removed_size)
+
+        self.loop.call_later(15, self.cleanup)
 
 
 def is_temp(path):
