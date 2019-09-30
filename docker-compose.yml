@@ -21,32 +21,14 @@ services:
     container_name: soffice-server0
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
     command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
-    environment:
-      - VIRTUAL_HOST=preview
-      - VIRTUAL_PORT=3000
-      - PVS_X_ACCEL_REDIRECT=/internal/preview
-      - PVS_STORE=/mnt/store
-      - PVS_UID=101
-      - PVS_GID=101
-      - PVS_LOGLEVEL=WARNING
 
   soffice-server1:
     image: btimby/preview-server
     container_name: soffice-server1
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
     command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
-    environment:
-      - VIRTUAL_HOST=preview
-      - VIRTUAL_PORT=3000
-      - PVS_X_ACCEL_REDIRECT=/internal/preview
-      - PVS_STORE=/mnt/store
-      - PVS_UID=101
-      - PVS_GID=101
-      - PVS_LOGLEVEL=WARNING
 
   nginx:
     image: jwilder/nginx-proxy
