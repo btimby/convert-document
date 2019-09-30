@@ -94,8 +94,6 @@ def convert(inpath, output=None, retry=3):
     LOGGER.debug('Using soffice connection: %s', connection)
 
     args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection, inpath]
-#    if outpath:
-#        args.insert(0, '--output=%s' % outpath)
     unoconv.op = unoconv.Options(args)
     unoconv.convertor = None
 

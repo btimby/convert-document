@@ -17,7 +17,7 @@ from async_generator import asynccontextmanager
 from preview.preview import Backend
 from preview.utils import run_in_executor, log_duration, safe_delete
 from preview.preview import generate, UnsupportedTypeError
-from preview.storage import Cleanup, is_temp, BASE_PATH
+from preview.storage import is_temp, BASE_PATH
 from preview.metrics import metrics_handler, metrics_middleware
 
 
@@ -40,6 +40,7 @@ HTTP_LOGLEVEL = getattr(
 X_ACCEL_REDIR = os.environ.get('PVS_X_ACCEL_REDIRECT')
 UID = os.environ.get('PVS_UID')
 GID = os.environ.get('PVS_GID')
+PORT = int(os.environ.get('PVS_PORT', '3000'))
 
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.StreamHandler())
@@ -203,15 +204,12 @@ def main():
     app.add_routes(
         [web.post('/preview/', preview), web.get('/preview/', preview)])
     app.add_routes([web.get('/metrics/', metrics_handler)])
+
     loop = uvloop.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    # TODO: probably a better way...
-    cleanup = Cleanup(loop)
-
     # TODO: figure out how to wait for pending requests before exiting.
-    # TODO: port from command line.
-    web.run_app(app, port=3000)
+    web.run_app(app, port=PORT)
 
 
 main()

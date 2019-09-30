@@ -4,8 +4,7 @@ from time import time
 
 from aiohttp import web
 
-from aiohttp_prometheus import setup_metrics as _setup_metrics
-from prometheus_client import Counter, Gauge, Histogram, generate_latest, \
+from prometheus_client import Counter, Gauge, generate_latest, \
                               CONTENT_TYPE_LATEST, Summary
 
 
@@ -38,23 +37,22 @@ STORAGE_FILES = Gauge('pvs_storage_files_total', 'Total files in store')
 
 
 def metrics_middleware():
-    async def middleware_factory(app, handler):
-        async def middleware_handler(request):
-            REQUEST_IN_PROGRESS.labels(request.path, request.method).inc()
-            try:
-                with REQUEST_LATENCY.labels(request.path).time():
-                    response = await handler(request)
+    @web.middleware
+    async def middleware_handler(request, handler):
+        REQUEST_IN_PROGRESS.labels(request.path, request.method).inc()
+        try:
+            with REQUEST_LATENCY.labels(request.path).time():
+                response = await handler(request)
 
-                REQUEST_TOTAL.labels(
-                    request.path, request.method, response.status).inc()
+            REQUEST_TOTAL.labels(
+                request.path, request.method, response.status).inc()
 
-                return response
+            return response
 
-            finally:
-                REQUEST_IN_PROGRESS.labels(request.path, request.method).dec()
+        finally:
+            REQUEST_IN_PROGRESS.labels(request.path, request.method).dec()
 
-        return middleware_handler
-    return middleware_factory
+    return middleware_handler
 
 
 async def metrics_handler(request):

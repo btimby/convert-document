@@ -58,18 +58,6 @@ curl -o out.png -F 'path=/path/to/file.doc' http://localhost:3000/preview/
 curl -o out.png -F 'path=/path/to/file.doc' http://localhost:3000/preview/
 ```
 
-`PVS_STORE_MAX_SIZE` & `PVS_STORE_CLEANUP_INTERVAL` - If you utilize durable storage for previews, you can also control how much space is used with these options.
-
-For example, below the storage location will be pruned down to 10G every 15 minutes.
-
-```bash
-docker run -d -p 3000:3000 --tmpfs /tmp \
-    -v /mnt/files:/mnt/files -e PVS_FILES=/mnt/files \
-    -v /mnt/store:/mnt/store -e PVS_STORE=/mnt/store \
-    -e PVS_STORE_MAX_SIZE=10G -e PVS_STORE_CLEANUP_INTERVAL=15 \
-    btimby/preview-server
-```
-
 `PVS_WIDTH` & `PVS_HEIGHT` - These options provide the default width and height of generated PNG previews. If the caller omits `width` and `height` parameters to the service, these defaults are used.
 
 `PVS_MAX_WIDTH` & `PVS_MAX_HEIGHT` - These options provide the maximum allowable `width` and `height` that a user can request.
