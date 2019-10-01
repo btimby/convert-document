@@ -61,7 +61,7 @@ def get(path, format, width, height):
 def put(key, path, src_path):
     if BASE_PATH is None:
         # Storage is disabled.
-        return path
+        return src_path
 
     STORAGE.labels('put').inc()
     LOGGER.info('Storing file')
@@ -75,4 +75,6 @@ def put(key, path, src_path):
 
 
 def is_temp(path):
+    if BASE_PATH is None:
+        return True
     return not path.startswith(BASE_PATH)

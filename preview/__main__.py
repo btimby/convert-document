@@ -155,10 +155,9 @@ async def preview(request):
     async with get_params(request) as params:
         data, path, format, width, height = params
 
-        status = 200
         try:
             try:
-                path = await generate(path, format, width, height)
+                status, path = 200, await generate(path, format, width, height)
 
             except Exception as e:
                 # NOTE: we send 203 to indicate that the content is not exactly
@@ -171,18 +170,16 @@ async def preview(request):
                     path = 'images/unsupported.png'
                 status, path = 203, await generate(path, format, width, height)
 
-            # nginx can't serve our temp files.
-            if is_temp(str(path)):
-                response = DeleteFileResponse(path, status=status)
+            if BASE_PATH is None or is_temp(str(path)):
+                response = web.FileResponse(path, status=status)
 
-            # it can serve stored files.
             elif X_ACCEL_REDIR:
-                response = web.Response()
+                response = web.Response(status=status)
                 response.headers['X-Accel-Redirect'] = str(pathlib.Path(
                     X_ACCEL_REDIR).joinpath(path.relative_to(BASE_PATH)))
 
             else:
-                response = web.FileResponse(path, status=200)
+                response = web.FileResponse(path, status=status)
 
             # Don't cache error responses.
             if status == 200 and CACHE_CONTROL:
@@ -194,7 +191,7 @@ async def preview(request):
             LOGGER.exception(e)
             raise web.HTTPInternalServerError(reason='Unrecoverable error')
 
-        response.content_type = 'image/png'
+        response.content_type = 'image/gif'
         return response
 
 

@@ -64,10 +64,10 @@ async def run(total, concurrent):
             width, height = random.choice(RESOLUTIONS)
             params = {
                 'path': path,
-                'width': width,
-                'height': height,
-                #'width': random.randint(100, 800),
-                #'height': random.randint(100, 800),
+                #'width': width,
+                #'height': height,
+                'width': random.randint(100, 800),
+                'height': random.randint(100, 800),
             }
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)

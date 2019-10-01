@@ -10,11 +10,12 @@ services:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
-      - PVS_STORE=/mnt/store
+#      - PVS_STORE=/mnt/store
       - PVS_UID=101
       - PVS_GID=101
       - PVS_LOGLEVEL=INFO
       - PVS_SOFFICE_ADDR=haproxy
+      - PVS_METRICS=on
 
   soffice-server:
     image: btimby/preview-soffice

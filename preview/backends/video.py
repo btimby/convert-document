@@ -2,7 +2,9 @@ import logging
 
 from shutil import which
 from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE
+
+import av
+from PIL import Image
 
 from preview.backends.base import BaseBackend
 from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
@@ -17,26 +19,29 @@ FF_FPS = '12'
 
 
 def grab_frames(path, width, height):
-    with NamedTemporaryFile(delete=False, suffix='.apng') as t:
-        # TODO: assure this produces proper sized images and maintains
-        # aspect ratio.
-        # TODO: convert this to avpy, example here:
-        # https://bitbucket.org/sydh/avpy/src/master/examples/encoding/encodeImage.py
-        filter = \
-            '[0:v]scale=%i:%i[bg]; ' \
-            '[1:v]scale=%ix%i[ovl];[bg][ovl]overlay=0:0' % (width, height,
-                                                            width, height)
-        cmd = [
-            'ffmpeg', '-y', '-ss', FF_START, '-i', path, '-i',
-            'images/film-overlay.png', '-filter_complex', filter,
-            '-plays', '0', '-t', FF_FRAMES, '-r', FF_FPS, t.name
-        ]
-        LOGGER.debug(' '.join(cmd))
-        _, stderr = Popen(cmd, stderr=PIPE).communicate()
-        LOGGER.debug(stderr)
+    with NamedTemporaryFile(delete=False, suffix='.gif') as t:
+        fg = Image.open('images/film-overlay.png')
+        fg.thumbnail((width, height))
 
-        if b'Output file is empty' in stderr:
-            raise Exception('Could not grab frame')
+        images = []
+        in_ = av.open(path)
+        stream = in_.streams.video[0]
+        duration = stream.duration / stream.time_base.denominator
+        fps = stream.frames / duration
+        nth = fps // 3
+
+        for i, frame in enumerate(in_.decode(video=0)):
+            if i % nth != 0:
+                continue
+            if len(images) == 15:
+                break
+            img = frame.to_image().convert("RGBA")
+            img = img.resize((fg.width, fg.height))
+            images.append(Image.alpha_composite(img, fg))
+
+        frame_duration = duration * 1000 // len(images)
+        images[0].save(t.name, save_all=True, append_images=images[1:],
+                       duration=frame_duration, loop=0, optimize=True)
 
         return t.name
 

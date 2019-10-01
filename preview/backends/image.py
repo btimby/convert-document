@@ -23,7 +23,7 @@ def resize_image(path, width, height):
             left = (bg.width - d.width) // 2
             top = (bg.height - d.height) // 2
             bg.composite(d, left, top, operator='over')
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as t:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.gif') as t:
             bg.save(filename=t.name)
             return t.name
 
