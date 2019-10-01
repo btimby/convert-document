@@ -20,7 +20,7 @@ test.html:
 
 .PHONY: run
 run: build
-	docker-compose -p preview-demo up --scale soffice-server=2
+	docker-compose -p preview-demo up --scale soffice-server=3 --scale preview-server=2
 
 .PHONY: shell
 shell:
