@@ -12,17 +12,16 @@ from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
 from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
 from preview.utils import log_duration, get_extension
+from preview.config import FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT
 
 
-SOFFICE_ADDR = os.environ.get('PVS_SOFFICE_ADDR', '127.0.0.1')
-SOFFICE_PORT = int(os.environ.get('PVS_SOFFICE_PORT', '2002'))
 CONNECTION = 'socket,host=%s,port=%s,tcpNoDelay=1;urp;' \
              'StarOffice.ComponentContext'
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(inpath, output=None, retry=3):
+def convert(path_or_file, output=None, retry=3):
     """
     Use unoconv as a library.
     """
@@ -93,7 +92,14 @@ def convert(inpath, output=None, retry=3):
     connection = CONNECTION % (SOFFICE_ADDR, SOFFICE_PORT)
     LOGGER.debug('Using soffice connection: %s', connection)
 
-    args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection, inpath]
+    args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection]
+    if callable(getattr(path_or_file, 'read', None)):
+        args.insert(0, '--stdin')
+        path_or_file = path_or_file.read()
+
+    else:
+        args.append(path_or_file)
+
     unoconv.op = unoconv.Options(args)
     unoconv.convertor = None
 
@@ -105,7 +111,7 @@ def convert(inpath, output=None, retry=3):
             try:
                 convertor = unoconv.convertor = unoconv.Convertor()
                 if output is not None:
-                    convertor.convert(inpath)
+                    convertor.convert(path_or_file)
                 return
 
             except (AttributeError, DisposedException, SystemExit) as e:
@@ -145,6 +151,9 @@ class OfficeBackend(BaseBackend):
         extension = get_extension(path)
         with NamedTemporaryFile(suffix='.pdf') as t:
             try:
+                if not path.startswith(FILE_ROOT):
+                    path = open(path, 'rb')
+
                 with CONVERSIONS.labels('office', extension).time():
                     convert(path, t)
 

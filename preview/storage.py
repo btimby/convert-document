@@ -7,9 +7,8 @@ from time import time
 
 from preview.utils import safe_delete, safe_makedirs, run_in_executor
 from preview.metrics import STORAGE, STORAGE_BYTES, STORAGE_FILES
+from preview.config import BASE_PATH
 
-
-BASE_PATH = os.environ.get('PVS_STORE')
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())

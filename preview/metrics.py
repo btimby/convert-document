@@ -7,8 +7,8 @@ from aiohttp import web
 from prometheus_client import Counter, Gauge, generate_latest, \
                               CONTENT_TYPE_LATEST, Summary
 
+from preview.config import METRICS
 
-METRICS = os.environ.get('PVS_METRICS')
 
 REQUEST_TOTAL = Counter('aiohttp_request_total', 'Total requests', [
     'endpoint', 'method', 'status',

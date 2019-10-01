@@ -15,18 +15,26 @@ from aiohttp.client_exceptions import ClientConnectorError, \
 URL = os.environ.get('URL', 'http://preview:8080/preview/')
 TOTAL = 10000
 CONCURRENT = 20
-PATHS = os.listdir('fixtures')
 RESOLUTIONS = [
-    (800, 600),
-    (720, 540),
-    (640, 480),
-    (480, 360),
-    (400, 300),
-    (320, 240),
-    (280, 210),
-    (240, 180),
-    (160, 120),
+    ('800', '600'),
+    ('720', '540'),
+    ('640', '480'),
+    ('480', '360'),
+    ('400', '300'),
+    ('320', '240'),
+    ('280', '210'),
+    ('240', '180'),
+    ('160', '120'),
 ]
+FILES = [
+    { 'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG' },
+    { 'url': 'http://www.pdf995.com/samples/pdf.pdf' },
+    { 'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4' },
+    { 'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
+]
+FILES.extend([
+    {'path': path} for path in os.listdir('fixtures')
+])
 
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.WARNING)
@@ -39,10 +47,20 @@ async def run(total, concurrent):
     tasks = []
 
     async def fetch(i, params):
-        # Getter function with semaphore.
+        kwargs = {}
+        # POST the file 1/10th of the time.
+        if 'path' in params and random.random() >= 0.9:
+            method = session.post
+            params['file'] = open('fixtures/%s' % params.pop('path'), 'rb')
+            kwargs['data'] = params
+
+        else:
+            method = session.get
+            kwargs['params'] = params
+
         async with sem:
             try:
-                async with session.get(URL, params=params) as response:
+                async with method(URL, **kwargs) as response:
                     res = await response.read()
                     print('\033[K', i, response.status, len(res), res[:20],
                           end='\r')
@@ -57,18 +75,12 @@ async def run(total, concurrent):
     # per each request.
     async with ClientSession() as session:
         for i in range(total):
-            path = random.choice(PATHS)
-            # "touch" a file 10% of the time.
-            if random.random() > 0.9:
-                os.utime(pathjoin('fixtures', path))
             width, height = random.choice(RESOLUTIONS)
             params = {
-                'path': path,
-                #'width': width,
-                #'height': height,
-                'width': random.randint(100, 800),
-                'height': random.randint(100, 800),
+                'width': width,
+                'height': height,
             }
+            params.update(random.choice(FILES))
             task = asyncio.ensure_future(fetch(i, params))
             tasks.append(task)
 

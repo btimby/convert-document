@@ -21,28 +21,13 @@ from preview.preview import generate, UnsupportedTypeError
 from preview.storage import is_temp, BASE_PATH
 from preview.metrics import metrics_handler, metrics_middleware, \
                             TRANSFER_LATENCY, TRANSFERS_IN_PROGRESS
+from preview.config import *
 
 
 # Limits
 MEGABYTE = 1024 * 1024
 BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
-
-# Configuration
-CACHE_CONTROL = os.environ.get('PVS_CACHE_CONTROL')
-FILE_ROOT = os.environ.get('PVS_FILES', '/mnt/files')
-WIDTH = os.environ.get('PVS_WIDTH', 320)
-HEIGHT = os.environ.get('PVS_HEIGHT', 240)
-MAX_WIDTH = os.environ.get('PVS_MAX_WIDTH', 800)
-MAX_HEIGHT = os.environ.get('PVS_MAX_HEIGHT', 600)
-DEFAULT_FORMAT = os.environ.get('PVS_DEFAULT_FORMAT', 'image')
-LOGLEVEL = getattr(logging, os.environ.get('PVS_LOGLEVEL', 'WARNING'))
-HTTP_LOGLEVEL = getattr(
-    logging, os.environ.get('PVS_HTTP_LOGLEVEL', 'INFO'))
-X_ACCEL_REDIR = os.environ.get('PVS_X_ACCEL_REDIRECT')
-UID = os.environ.get('PVS_UID')
-GID = os.environ.get('PVS_GID')
-PORT = int(os.environ.get('PVS_PORT', '3000'))
 
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.StreamHandler())
@@ -175,8 +160,8 @@ async def preview(request):
 
             elif X_ACCEL_REDIR:
                 response = web.Response(status=status)
-                response.headers['X-Accel-Redirect'] = str(pathlib.Path(
-                    X_ACCEL_REDIR).joinpath(path.relative_to(BASE_PATH)))
+                response.headers['X-Accel-Redirect'] = \
+                    pathjoin(X_ACCEL_REDIR, str(path.relative_to(BASE_PATH)))
 
             else:
                 response = web.FileResponse(path, status=status)
