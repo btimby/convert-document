@@ -1,6 +1,5 @@
 import logging
 
-from shutil import which
 from tempfile import NamedTemporaryFile
 
 import av
@@ -13,35 +12,37 @@ from preview.utils import log_duration, get_extension
 
 LOGGER = logging.getLogger(__name__)
 
-FF_START = '00:00'
-FF_FRAMES = '5'
-FF_FPS = '12'
-
 
 def grab_frames(path, width, height):
+    # Load and resize our foreground image.
+    fg = Image.open('images/film-overlay.png')
+    fg.thumbnail((width, height))
+
+    # Open our video file and determine it's duration and fps.
+    in_ = av.open(path)
+    stream = in_.streams.video[0]
+    duration = stream.duration / stream.time_base.denominator
+    fps = stream.frames / duration
+    # We want to grab 3 frames per second.
+    nth = fps // 3
+
+    images = []
+    for i, frame in enumerate(in_.decode(video=0)):
+        # Grab every nth frame.
+        if i % nth != 0:
+            continue
+        # Grab 15 frames (5 seconds)
+        if len(images) == 15:
+            break
+        img = frame.to_image().convert("RGBA")
+        img = img.resize((fg.width, fg.height))
+        images.append(Image.alpha_composite(img, fg))
+
     with NamedTemporaryFile(delete=False, suffix='.gif') as t:
-        fg = Image.open('images/film-overlay.png')
-        fg.thumbnail((width, height))
-
-        images = []
-        in_ = av.open(path)
-        stream = in_.streams.video[0]
-        duration = stream.duration / stream.time_base.denominator
-        fps = stream.frames / duration
-        nth = fps // 3
-
-        for i, frame in enumerate(in_.decode(video=0)):
-            if i % nth != 0:
-                continue
-            if len(images) == 15:
-                break
-            img = frame.to_image().convert("RGBA")
-            img = img.resize((fg.width, fg.height))
-            images.append(Image.alpha_composite(img, fg))
-
-        frame_duration = duration * 1000 // len(images)
+        # save our animated gif, each frame should display for 1/3rd of a
+        # second.
         images[0].save(t.name, save_all=True, append_images=images[1:],
-                       duration=frame_duration, loop=0, optimize=True)
+                       duration=333, loop=0, optimize=True)
 
         return t.name
 
