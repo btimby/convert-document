@@ -3,8 +3,6 @@ all: test
 .PHONY: build
 build:
 	docker build -f Dockerfile -t btimby/preview-server .
-#	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
-#	docker build -f Dockerfile.preview -t btimby/preview-preview .
 
 Pipfile: Pipfile.lock
 	pipenv install --dev
@@ -20,7 +18,8 @@ test.html:
 
 .PHONY: run
 run: build
-	docker-compose -p preview-demo up --scale soffice-server=3 --scale preview-server=2
+	docker-compose -p preview-demo up \
+		--scale soffice-server=3 --scale preview-server=1
 
 .PHONY: shell
 shell:
