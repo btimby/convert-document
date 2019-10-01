@@ -143,13 +143,13 @@ class OfficeBackend(BaseBackend):
     @log_duration
     def preview(self, path, width, height):
         extension = get_extension(path)
-        try:
-            with NamedTemporaryFile(suffix='.pdf') as t:
+        with NamedTemporaryFile(suffix='.pdf') as t:
+            try:
                 with CONVERSIONS.labels('office', extension).time():
                     convert(path, t)
 
-                return PdfBackend().preview(t.name, width, height)
+            except Exception:
+                CONVERSION_ERRORS.labels('office', extension).inc()
+                raise
 
-        except Exception:
-            CONVERSION_ERRORS.labels('office', extension).inc()
-            raise
+            return PdfBackend().preview(t.name, width, height)

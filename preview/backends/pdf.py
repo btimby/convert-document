@@ -23,8 +23,8 @@ class PdfBackend(BaseBackend):
     @log_duration
     def preview(self, path, width, height):
         extension = get_extension(path)
-        try:
-            with NamedTemporaryFile(suffix='.png') as t:
+        with NamedTemporaryFile(suffix='.png') as t:
+            try:
                 args = [
                     b'-dFirstPage=1', b'-dLastPage=1',
                     b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-sDEVICE=png16m',
@@ -36,8 +36,8 @@ class PdfBackend(BaseBackend):
                     with ghostscript.Ghostscript(*args):
                         pass
 
-                return ImageBackend().preview(t.name, width, height)
+            except Exception:
+                CONVERSION_ERRORS.labels('pdf', extension).inc()
+                raise
 
-        except Exception:
-            CONVERSION_ERRORS.labels('pdf', extension).inc()
-            raise
+            return ImageBackend().preview(t.name, width, height)
