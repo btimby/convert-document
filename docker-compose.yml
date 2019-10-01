@@ -5,7 +5,7 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
-    command: python3 -m preview
+    command: preview
     environment:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000
@@ -21,7 +21,9 @@ services:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-    command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0
+    command: soffice
+    environment:
+      - PVS_SOFFICE_ADDR=0.0.0.0
 
   nginx:
     image: jwilder/nginx-proxy
