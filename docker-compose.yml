@@ -1,7 +1,7 @@
 version: '3'
 services:
   preview-server:
-    image: btimby/preview-preview
+    image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
@@ -18,7 +18,7 @@ services:
       - PVS_METRICS=on
 
   soffice-server:
-    image: btimby/preview-soffice
+    image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
     command: /usr/local/bin/soffice-wrapper --listener --server=0.0.0.0

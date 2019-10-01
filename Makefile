@@ -2,9 +2,9 @@ all: test
 
 .PHONY: build
 build:
-	docker build -f Dockerfile -t btimby/preview-base .
-	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
-	docker build -f Dockerfile.preview -t btimby/preview-preview .
+	docker build -f Dockerfile -t btimby/preview-server .
+#	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
+#	docker build -f Dockerfile.preview -t btimby/preview-preview .
 
 Pipfile: Pipfile.lock
 	pipenv install --dev
@@ -24,4 +24,4 @@ run: build
 
 .PHONY: shell
 shell:
-	docker run -ti btimby/preview-preview bash
+	docker run -ti btimby/preview-server bash
