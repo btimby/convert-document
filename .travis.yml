@@ -19,7 +19,7 @@ before_script:
 script:
   - docker run --name preview-server -d -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server soffice preview
   - sleep 5
-  - python3.6 test.py 100 10
+  - URL=http://localhost:3000/preview/ python3.6 test.py 100 10
 
 after_script:
   - docker logs preview-server
