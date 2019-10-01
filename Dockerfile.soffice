@@ -1,5 +1,0 @@
-FROM btimby/preview-base
-
-COPY docker/preview/soffice-wrapper /usr/local/bin/
-
-CMD ["/usr/local/bin/soffice-wrapper"]
