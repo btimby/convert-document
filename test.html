@@ -22,6 +22,14 @@
                 <option value="240x180">240x180</option>
                 <option value="160x120">160x120</option>
             </select>
+            <label for="width">Refresh</label>
+            <select id="refr" name="res">
+                <option value="" selected>disabled</option>
+                <option value="5">5s</option>
+                <option value="15">15s</option>
+                <option value="30">30s</option>
+                <option value="60">60s</option>
+            </select>
             <input type="hidden" name="width" id="width"/>
             <input type="hidden" name="height" id="height"/>
         </form><br/>
@@ -73,13 +81,25 @@
                 });
             }
 
+            function refresh() {
+                var interval = 1000 * parseInt($('#refr').val());
+                window.setTimeout(function() {
+                    location.reload();
+                }, interval);
+            }
+
             $('#res').change(function() {
                 renderImages();
+            });
+
+            $('#refr').change(function() {
+                refresh();
             });
 
             $('#form').attr('action', baseUrl);
 
             renderImages();
+            refresh();
         });
     </script>
     </html>
