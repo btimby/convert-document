@@ -24,6 +24,7 @@ script:
 
 after_script:
   - docker logs preview-server
+  - docker logs preview-soffice
   - docker kill preview-server
   - docker kill preview-soffice
 
