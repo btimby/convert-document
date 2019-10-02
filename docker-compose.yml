@@ -6,7 +6,7 @@ services:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
     environment:
-      - VIRTUAL_HOST=preview
+      - VIRTUAL_HOST=localhost
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
 #      - PVS_STORE=/mnt/store
@@ -33,8 +33,8 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
-      - ./docker/nginx/preview_location:/etc/nginx/vhost.d/preview_location:ro
-      - ./docker/nginx/preview:/etc/nginx/vhost.d/preview:ro
+      - ./docker/nginx/localhost_location:/etc/nginx/vhost.d/localhost_location:ro
+      - ./docker/nginx/localhost:/etc/nginx/vhost.d/localhost:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
   haproxy:

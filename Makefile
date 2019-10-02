@@ -12,7 +12,6 @@ build-cache:
 	docker build --cache-from btimby/preview-server -f Dockerfile -t btimby/preview-server .
 	docker build --cache-from btimby/preview-soffice -f Dockerfile.soffice -t btimby/preview-soffice .
 
-
 Pipfile: Pipfile.lock
 	pipenv install --dev
 	touch Pipfile
