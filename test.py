@@ -27,10 +27,10 @@ RESOLUTIONS = [
     ('160', '120'),
 ]
 FILES = [
-    { 'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG' },
-    { 'url': 'http://www.pdf995.com/samples/pdf.pdf' },
-    { 'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4' },
-    { 'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
+    {'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG'},
+    {'url': 'http://www.pdf995.com/samples/pdf.pdf'},
+    {'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4'},
+    {'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
 ]
 FILES.extend([
     {'path': path} for path in os.listdir('fixtures')
@@ -41,62 +41,88 @@ LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.StreamHandler())
 
 
-async def run(total, concurrent):
-    # create instance of Semaphore
-    sem = asyncio.Semaphore(concurrent)
-    tasks = []
+class TaskPool(object):
+    def __init__(self, limit):
+        self._semaphore = asyncio.Semaphore(limit)
+        self._tasks = set()
+        self._results = list()
 
-    async def fetch(i, params):
-        kwargs = {}
-        # POST the file 1/10th of the time.
-        if 'path' in params and random.random() >= 0.9:
-            method = session.post
-            params['file'] = open('fixtures/%s' % params.pop('path'), 'rb')
-            kwargs['data'] = params
+    async def put(self, coro):
+        await self._semaphore.acquire()
+        task = asyncio.ensure_future(coro)
+        task.add_done_callback(self._on_task_done)
+        self._tasks.add(task)
 
-        else:
-            method = session.get
-            kwargs['params'] = params
+    def _on_task_done(self, task):
+        self._tasks.remove(task)
+        self._results.append(task.result())
+        self._semaphore.release()
 
-        async with sem:
-            try:
-                async with method(URL, **kwargs) as response:
-                    res = await response.read()
-                    print('\033[K', i, response.status, len(res), res[:20],
-                          end='\r')
-                    if response.status != 200:
-                        print('\n', end='')
-                    return response.status
+    @property
+    def results(self):
+        return self._results
 
-            except (ClientConnectorError, ServerDisconnectedError) as e:
-                print(e)
+    async def join(self):
+        await asyncio.gather(*self._tasks)
 
-    # Create client session that will ensure we dont open new connection
-    # per each request.
-    async with ClientSession() as session:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return self.join()
+
+
+async def do_response(i, response):
+    res = await response.read()
+    print('\033[K', i, response.status, len(res), res[:20],
+          end='\r')
+    if response.status != 200:
+        print('\n', end='')
+    return response.status
+
+
+async def do_get(i, data, session):
+    async with session.get(URL, params=data) as r:
+        return await do_response(i, r)
+
+
+async def do_post(i, data, session):
+    with open('fixtures/%s' % data.pop('path'), 'rb') as f:
+        data['file'] = f
+        async with session.post(URL, data=data) as r:
+            return await do_response(i, r)
+
+
+async def do_request(i, session):
+    width, height = random.choice(RESOLUTIONS)
+    data = {
+        'width': width,
+        'height': height,
+    }
+    data.update(random.choice(FILES))
+
+    # POST 10% of files to server.
+    if 'path' in data and random.random() >= 0.9:
+        return await do_post(i, data, session)
+
+    else:
+        return await do_get(i, data, session)
+
+
+async def amain(total, concurrent):
+    async with ClientSession() as session, TaskPool(concurrent) as tasks:
         for i in range(total):
-            width, height = random.choice(RESOLUTIONS)
-            params = {
-                'width': width,
-                'height': height,
-            }
-            params.update(random.choice(FILES))
-            task = asyncio.ensure_future(fetch(i, params))
-            tasks.append(task)
-
-        start = time()
-        statuses = asyncio.gather(*tasks)
-        await statuses
-
-    return statuses, time() - start
+            await tasks.put(do_request(i, session))
+    return tasks.results
 
 
 def main(total, concurrent):
     print('Testing: %s with %i requests, max concurrency of %i' % (URL, total,
                                                                    concurrent))
     loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(run(total, concurrent))
-    statuses, duration = loop.run_until_complete(future)
+    start = time()
+    statuses = loop.run_until_complete(amain(total, concurrent))
+    duration = time() - start
 
     failures = len([x for x in statuses.result() if x != 200])
     successes = len([x for x in statuses.result() if x == 200])
