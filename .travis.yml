@@ -16,16 +16,13 @@ before_script:
   - make build
 
 script:
-  - make run
+  - docker-compose -p preview-demo -d up
   - sleep 5
   - docker ps
   - URL=http://localhost:3000/preview/ python3.6 test.py 100 10
 
 after_script:
-  - docker logs preview-server
-  - docker logs preview-soffice
-  - docker kill preview-server
-  - docker kill preview-soffice
+  - docker-compose -p preview-demo kill
 
 after_success:
   - make tag
