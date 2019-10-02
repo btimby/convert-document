@@ -16,8 +16,9 @@ before_script:
   - make build
 
 script:
-  - docker run --name preview-soffice -d --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-soffice
-  - docker run --name preview-server -d -e PVS_SOFFICE_ADDR=preview-soffice -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server
+  - docker network create -d bridge local
+  - docker run --network=local --name preview-soffice -d --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-soffice
+  - docker run --network=local --name preview-server -d -e PVS_SOFFICE_ADDR=preview-soffice -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server
   - sleep 5
   - URL=http://localhost:3000/preview/ python3.6 test.py 100 10
 
