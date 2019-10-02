@@ -67,6 +67,11 @@ def convert(path_or_file, output=None, retry=3):
 
     unoconv.UnoProps = UnoProps
 
+    def error(msg, file=None):
+        raise Exception(msg)
+
+    unoconv.error = error
+
     class OutputStream(unohelper.Base, XOutputStream):
         def __init__(self):
             self.closed = 0
