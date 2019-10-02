@@ -5,7 +5,7 @@ build:
 	docker pull btimby/preview-server || true
 	docker pull btimby/preview-soffice || true
 	docker build --cache-from btimby/preview-server -t btimby/preview-server .
-	docker build --cache-from btimby/preview-soffice -t btimby/preview-soffice .
+	docker build --cache-from btimby/preview-soffice -f Dockerfile.soffice -t btimby/preview-soffice .
 
 Pipfile: Pipfile.lock
 	pipenv install --dev
