@@ -9,10 +9,10 @@ RUN apt-get update \
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
 
 COPY docker/monit/monitrc /etc/monitrc
 COPY docker/monit/soffice-wrapper /usr/local/bin/
 COPY docker/monit/soffice-check /usr/local/bin/
 
+ENTRYPOINT ["/tini", "--"]
 CMD [ "monit", "-I", "-d", "10", "-c", "/etc/monitrc"]
