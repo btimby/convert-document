@@ -34,18 +34,10 @@ def convert(path, retry=SOFFICE_RETRY):
 
     while True:
         try:
-            p = subprocess.Popen(
-                cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-            stdout, _ = p.communicate(file_data, timeout=SOFFICE_TIMEOUT)
+            p = subprocess.run(cmd, input=file_data, capture_output=True,
+                               timeout=SOFFICE_TIMEOUT, check=True)
 
-            if not stdout:
-                if not retry:
-                    raise Exception('Empty output from unoconv')
-
-                continue
-
-            return stdout
+            return p.stdout
 
         except Exception as e:
             if not retry:
