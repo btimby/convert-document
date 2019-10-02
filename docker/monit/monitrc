@@ -2,7 +2,7 @@ check process soffice matching "soffice.bin"
     start program = "/usr/local/bin/soffice-wrapper"
     stop program = "/usr/bin/pkill -9 soffice.bin"
     if does not exist then start
-    if total memory > 4000.0 MB for 5 cycles then restart
+    if total memory > 4096.0 MB for 5 cycles then restart
 
 check program sofficecheck with path /usr/local/bin/soffice-check
     every 3 cycles
