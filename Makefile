@@ -2,10 +2,16 @@ all: test
 
 .PHONY: build
 build:
+	docker build -f Dockerfile -t btimby/preview-server .
+	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
+
+.PHONY: build-cache
+build-cache:
 	docker pull btimby/preview-server || true
 	docker pull btimby/preview-soffice || true
-	docker build --cache-from btimby/preview-server -t btimby/preview-server .
+	docker build --cache-from btimby/preview-server -f Dockerfile -t btimby/preview-server .
 	docker build --cache-from btimby/preview-soffice -f Dockerfile.soffice -t btimby/preview-soffice .
+
 
 Pipfile: Pipfile.lock
 	pipenv install --dev

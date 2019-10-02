@@ -13,7 +13,7 @@ install:
   - pip3 install aiohttp
 
 before_script:
-  - make build
+  - make build-cache
 
 script:
   - docker-compose -p preview-demo -d up
