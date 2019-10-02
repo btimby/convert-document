@@ -34,8 +34,9 @@ def convert(path, retry=SOFFICE_RETRY):
 
     while True:
         try:
-            p = subprocess.run(cmd, input=file_data, capture_output=True,
-                               timeout=SOFFICE_TIMEOUT, check=True)
+            p = subprocess.run(cmd, input=file_data, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, timeout=SOFFICE_TIMEOUT,
+                               check=True)
 
             return p.stdout
 
