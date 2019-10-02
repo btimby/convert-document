@@ -21,9 +21,9 @@ before_script:
 
 script:
   - docker-compose -p preview-demo up -d
-  - sleep 5
+  - sleep 30
   - docker ps
-  - URL=http://preview:8080/preview/ python3.6 test.py 100 10
+  - python3.6 test.py 100 10
 
 after_script:
   - docker-compose logs
