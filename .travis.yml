@@ -1,5 +1,9 @@
 language: python
 
+addons:
+  hosts:
+    - preview
+
 python:
   - "3.6"
 
