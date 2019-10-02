@@ -92,12 +92,21 @@ def convert(path_or_file, output=None, retry=3):
     connection = CONNECTION % (SOFFICE_ADDR, SOFFICE_PORT)
     LOGGER.debug('Using soffice connection: %s', connection)
 
+    # Configure arguments for unoconv.
     args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection]
-    if callable(getattr(path_or_file, 'read', None)):
-        args.insert(0, '--stdin')
-        path_or_file = path_or_file.read()
+
+    if type(path_or_file) is tuple:
+        # If path_or_file is a tuple, we need to set the inputfiltername to
+        # help soffice determine the type. The file body will be passed in
+        # place of the path. This is then streamed to the server.
+        extension, path_or_file = path_or_file
+        args.extend(['--stdin', '-I', extension])
+        with path_or_file:
+            path_or_file = path_or_file.read()
 
     else:
+        # Otherwise we just pass the path and soffice will read from shared
+        # storage.
         args.append(path_or_file)
 
     unoconv.op = unoconv.Options(args)
@@ -151,8 +160,10 @@ class OfficeBackend(BaseBackend):
         extension = get_extension(path)
         with NamedTemporaryFile(suffix='.pdf') as t:
             try:
+                # Only FILE_ROOT is shared with soffice. Any paths outside that
+                # directory need to be streamed to soffice.
                 if not path.startswith(FILE_ROOT):
-                    path = open(path, 'rb')
+                    path = (extension, open(path, 'rb'))
 
                 with CONVERSIONS.labels('office', extension).time():
                     convert(path, t)
