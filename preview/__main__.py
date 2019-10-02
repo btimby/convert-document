@@ -15,14 +15,19 @@ from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 from async_generator import asynccontextmanager
 
-from preview.utils import run_in_executor, log_duration, safe_delete, \
-                          get_extension
+from preview.utils import (
+    run_in_executor, log_duration, safe_delete, get_extension
+)
 from preview.preview import generate, UnsupportedTypeError
 from preview.storage import is_temp, BASE_PATH
-from preview.metrics import metrics_handler, metrics_middleware, \
-                            TRANSFER_LATENCY, TRANSFERS_IN_PROGRESS
-from preview.config import *
-
+from preview.metrics import (
+    metrics_handler, metrics_middleware, TRANSFER_LATENCY,
+    TRANSFERS_IN_PROGRESS
+)
+from preview.config import (
+    DEFAULT_FORMAT, WIDTH, HEIGHT, MAX_WIDTH, MAX_HEIGHT, LOGLEVEL,
+    HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID, X_ACCEL_REDIR, PORT
+)
 
 # Limits
 MEGABYTE = 1024 * 1024

@@ -23,12 +23,11 @@ def make_path(key):
     return os.path.join(BASE_PATH, key[:1], key[1:2], key)
 
 
-def get(path, format, width, height):
+def get(key, path):
     if BASE_PATH is None:
         # Storage is disabled.
-        return None, None
+        return
 
-    key = make_key(path, format, width, height)
     store_path = make_path(key)
 
     path_mtime = os.stat(path).st_mtime
@@ -43,7 +42,7 @@ def get(path, format, width, height):
         # touch the atime (used for LRU cleaning)
         LOGGER.info('Serving from storage')
         os.utime(store_path, (time(), store_mtime))
-        return key, store_path
+        return store_path
 
     elif os.path.isfile(store_path):
         STORAGE.labels('del').inc()
@@ -53,8 +52,6 @@ def get(path, format, width, height):
 
         except FileNotFoundError:
             pass
-
-    return key, None
 
 
 def put(key, path, src_path):

@@ -6,8 +6,9 @@ from tempfile import NamedTemporaryFile
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
 from preview.utils import log_duration, get_extension
-from preview.config import FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT, \
-                           SOFFICE_TIMEOUT, SOFFICE_RETRY
+from preview.config import (
+    FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY
+)
 
 
 LOGGER = logging.getLogger(__name__)
