@@ -23,7 +23,7 @@ script:
   - docker-compose -p preview-demo -d up
   - sleep 5
   - docker ps
-  - URL=http://localhost:8080/preview/ python3.6 test.py 100 10
+  - URL=http://preview:8080/preview/ python3.6 test.py 100 10
 
 after_script:
   - docker-compose -p preview-demo kill
