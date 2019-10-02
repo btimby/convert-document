@@ -1,4 +1,3 @@
-import os
 import imp
 import sys
 import shutil
@@ -10,7 +9,6 @@ from tempfile import NamedTemporaryFile
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
-from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
 from preview.utils import log_duration, get_extension
 from preview.config import FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT
 
@@ -118,7 +116,6 @@ def convert(path_or_file, output=None, retry=3):
     unoconv.convertor = None
 
     try:
-
         while True:
             retry -= 1
 
@@ -148,11 +145,11 @@ def convert(path_or_file, output=None, retry=3):
                 continue
 
     finally:
-        # Don't leak modules.
         del sys.modules[module_id]
 
 
 class OfficeBackend(BaseBackend):
+    name = 'office'
     extensions = [
         'dot', 'docm', 'dotx', 'dotm', 'psw', 'doc', 'xls', 'ppt', 'wpd',
         'wps', 'csv', 'sdw', 'sgl', 'vor', 'docx', 'xlsx', 'pptx', 'xlsm',
@@ -161,20 +158,14 @@ class OfficeBackend(BaseBackend):
     ]
 
     @log_duration
-    def preview(self, path, width, height):
+    def _preview(self, path, width, height):
         extension = get_extension(path)
         with NamedTemporaryFile(suffix='.pdf') as t:
-            try:
-                # Only FILE_ROOT is shared with soffice. Any paths outside that
-                # directory need to be streamed to soffice.
-                if not path.startswith(FILE_ROOT):
-                    path = (extension, open(path, 'rb'))
+            # Only FILE_ROOT is shared with soffice. Any paths outside that
+            # directory need to be streamed to soffice.
+            if not path.startswith(FILE_ROOT):
+                path = (extension, open(path, 'rb'))
 
-                with CONVERSIONS.labels('office', extension).time():
-                    convert(path, t)
-
-            except Exception:
-                CONVERSION_ERRORS.labels('office', extension).inc()
-                raise
+            convert(path, t)
 
             return PdfBackend().preview(t.name, width, height)

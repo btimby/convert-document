@@ -10,16 +10,18 @@ RUN apt-get update \
     && apt-get -y update \
     && apt-get -y install \
         /app/packages/libgs9_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_amd64.deb \
-         /app/packages/libgs9-common_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_all.deb \
+        /app/packages/libgs9-common_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_all.deb \
         /app/packages/libgs-dev_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_amd64.deb \
         /app/packages/ghostscript_9.26~dfsg+0-0ubuntu0.18.04.11-threadsafe_amd64.deb \
     && apt-get -y upgrade \
-    && apt-get -y install libreoffice libreoffice-writer ure libreoffice-java-common \
-        libreoffice-core libreoffice-common openjdk-8-jre fonts-opensymbol \
-        hyphen-fr hyphen-de hyphen-en-us hyphen-it hyphen-ru fonts-dejavu \
-        fonts-dejavu-core fonts-dejavu-extra fonts-droid-fallback fonts-dustin \
-        fonts-f500 fonts-fanwood fonts-freefont-ttf fonts-liberation fonts-lmodern \
-        fonts-lyx fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
+    && apt-get -y install \
+        ure libreoffice libreoffice-core libreoffice-java-common libreoffice-common \
+        libreoffice-writer libreoffice-impress libreoffice-calc libreoffice-draw \
+        openjdk-8-jre fonts-opensymbol hyphen-fr hyphen-de hyphen-en-us \
+        hyphen-it hyphen-ru fonts-dejavu fonts-dejavu-core fonts-dejavu-extra \
+        fonts-droid-fallback fonts-dustin fonts-f500 fonts-fanwood \
+        fonts-freefont-ttf fonts-liberation fonts-lmodern fonts-lyx \
+        fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
         python3-uno python3-lxml python3-icu curl imagemagick libmagickwand-dev \
         python-setuptools git libavformat-dev libavcodec-dev libavutil-dev \
         libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev \

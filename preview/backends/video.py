@@ -6,8 +6,7 @@ import av
 from PIL import Image
 
 from preview.backends.base import BaseBackend
-from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
-from preview.utils import log_duration, get_extension
+from preview.utils import log_duration
 
 
 LOGGER = logging.getLogger(__name__)
@@ -48,6 +47,7 @@ def grab_frames(path, width, height):
 
 
 class VideoBackend(BaseBackend):
+    name = 'video'
     extensions = [
         '3g2', '3gp', '4xm', 'a64', 'aac', 'ac3', 'act', 'adf', 'adts', 'adx',
         'aea', 'afc', 'aiff', 'alaw', 'alsa', 'amr', 'anm', 'apc', 'ape',
@@ -74,12 +74,5 @@ class VideoBackend(BaseBackend):
     ]
 
     @log_duration
-    def preview(self, path, width, height):
-        extension = get_extension(path)
-        try:
-            with CONVERSIONS.labels('video', extension).time():
-                return grab_frames(path, width, height)
-
-        except Exception:
-            CONVERSION_ERRORS.labels('video', extension).inc()
-            raise
+    def _preview(self, path, width, height):
+        return grab_frames(path, width, height)

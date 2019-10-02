@@ -4,8 +4,7 @@ import tempfile
 from wand.image import Image, Color
 
 from preview.backends.base import BaseBackend
-from preview.utils import log_duration, get_extension
-from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
+from preview.utils import log_duration
 
 
 LOGGER = logging.getLogger(__name__)
@@ -29,19 +28,12 @@ def resize_image(path, width, height):
 
 
 class ImageBackend(BaseBackend):
+    name = 'image'
     extensions = [
         'bmp', 'dcx', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'tif', 'xbm',
         'xpm'
     ]
 
     @log_duration
-    def preview(self, path, width, height):
-        extension = get_extension(path)
-        try:
-            with CONVERSIONS.labels('image', extension).time():
-                # Create a transparent background image of the requested size.
-                return resize_image(path, width, height)
-
-        except Exception:
-            CONVERSION_ERRORS.labels('image', extension).inc()
-            raise
+    def _preview(self, path, width, height):
+        return resize_image(path, width, height)

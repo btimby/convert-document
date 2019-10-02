@@ -26,12 +26,12 @@ RESOLUTIONS = [
     ('240', '180'),
     ('160', '120'),
 ]
-FILES = []
-#    {'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG'},
-#    {'url': 'http://www.pdf995.com/samples/pdf.pdf'},
-#    {'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4'},
-#    {'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
-#]
+FILES = [
+    {'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG'},
+    {'url': 'http://www.pdf995.com/samples/pdf.pdf'},
+    {'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4'},
+    {'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
+]
 FILES.extend([
     {'path': path} for path in os.listdir('fixtures')
 ])
@@ -102,11 +102,11 @@ async def do_request(i, session):
     data.update(random.choice(FILES))
 
     # POST 10% of files to server.
-    #if 'path' in data and random.random() >= 0.9:
-    #    return await do_post(i, data, session)
+    if 'path' in data and random.random() >= 0.9:
+        return await do_post(i, data, session)
 
-    #else:
-    return await do_get(i, data, session)
+    else:
+        return await do_get(i, data, session)
 
 
 async def amain(total, concurrent):

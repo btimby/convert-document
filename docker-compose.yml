@@ -14,6 +14,7 @@ services:
       - PVS_UID=101
       - PVS_GID=101
       - PVS_LOGLEVEL=INFO
+      - PVS_HTTP_LOGLEVEL=WARNING
       - PVS_SOFFICE_ADDR=haproxy
       - PVS_SOFFICE_PORT=2002
       - PVS_METRICS=on

@@ -23,19 +23,27 @@ PREVIEWS = Summary(
     'pvs_preview', 'Total previews requested', [
         'format', 'width', 'height',
     ])
+PREVIEW_SIZE_IN = Summary(
+    'pvs_preview_in_bytes', 'Size previewed files', [
+        'backend', 'format'
+    ])
+PREVIEW_SIZE_OUT = Summary(
+    'pvs_preview_out_bytes', 'Size of preview image', [
+        'backend', 'format'
+    ])
 CONVERSIONS = Summary(
     'pvs_conversion', 'Total conversions', [
         'backend', 'format',
     ])
 CONVERSION_ERRORS = Counter(
-    'pvs_conversion_errors', 'Total errors during format conversion', [
+    'pvs_conversion_errors_total', 'Total errors during format conversion', [
         'backend', 'format'])
 STORAGE = Counter(
-    'pvs_storage_operations', 'Storage operations', ['operation'])
+    'pvs_storage_operations_total', 'Storage operations', ['operation'])
 STORAGE_BYTES = Gauge('pvs_storage_bytes_total', 'Total bytes in store')
 STORAGE_FILES = Gauge('pvs_storage_files_total', 'Total files in store')
 TRANSFER_LATENCY = Summary(
-    'pvs_transfer_latency', 'Uploads or downloads of files', [
+    'pvs_transfer_latency_secs', 'Uploads or downloads of files', [
     'operation'])
 TRANSFERS_IN_PROGRESS = Gauge(
     'pvs_transfers_in_progress', 'Concurrent uploads / downloads', [
