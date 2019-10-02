@@ -34,7 +34,6 @@ COPY Pipfile* /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
 
-COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/preview/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 
 COPY preview/ /app/preview/
@@ -43,4 +42,4 @@ COPY fixtures/ /app/fixtures/
 
 EXPOSE 3000/tcp
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+CMD [ "/usr/bin/python3", "-m", "preview" ]

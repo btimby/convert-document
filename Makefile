@@ -3,6 +3,7 @@ all: test
 .PHONY: build
 build:
 	docker build -f Dockerfile -t btimby/preview-server .
+	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
 
 Pipfile: Pipfile.lock
 	pipenv install --dev

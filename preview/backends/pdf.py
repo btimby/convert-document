@@ -1,7 +1,6 @@
-import shutil
 import logging
 
-from threading import Lock
+from os.path import getsize
 from tempfile import NamedTemporaryFile
 
 import ghostscript
@@ -22,6 +21,12 @@ class PdfBackend(BaseBackend):
 
     @log_duration
     def _preview(self, path, width, height):
+        # An empty file is apparently a valid file as far as ghostscript is
+        # concerned. However, it produces an empty image file, which causes
+        # errors download. Detect an empty file and raise here.
+        if getsize(path) == 0:
+            raise Exception('Invalid file size 0')
+
         with NamedTemporaryFile(suffix='.png') as t:
             args = [
                 b'-dFirstPage=1', b'-dLastPage=1',

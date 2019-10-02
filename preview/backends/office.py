@@ -1,151 +1,59 @@
-import imp
-import sys
-import shutil
 import logging
-import threading
-import time
+import subprocess
 
 from tempfile import NamedTemporaryFile
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
 from preview.utils import log_duration, get_extension
-from preview.config import FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT
+from preview.config import FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT, \
+                           SOFFICE_TIMEOUT, SOFFICE_RETRY
 
 
-CONNECTION = 'socket,host=%s,port=%s,tcpNoDelay=1;urp;' \
-             'StarOffice.ComponentContext'
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(path_or_file, output=None, retry=3):
-    """
-    Use unoconv as a library.
-    """
-    # We use a unique identifier for this module. We want concurrency and each
-    # time we import it needs to be "private" to the caller. If the identifier
-    # is static, Python import will return the same module each time (cache).
-    module_id = 'unoconv-%i' % threading.get_ident()
-    unoconv = imp.load_source(module_id, shutil.which('unoconv'))
+def convert(path, retry=SOFFICE_RETRY):
+    cmd = [
+        'unoconv', '--server=%s' % SOFFICE_ADDR, '--port=%s' % SOFFICE_PORT,
+        '--stdout'
+    ]
 
-    import uno, unohelper
-
-    unoconv.uno, unoconv.unohelper = uno, unohelper
-
-    from com.sun.star.beans import PropertyValue
-    from com.sun.star.connection import NoConnectException
-    from com.sun.star.document.UpdateDocMode import NO_UPDATE, QUIET_UPDATE
-    from com.sun.star.lang import DisposedException, IllegalArgumentException
-    from com.sun.star.io import IOException, XOutputStream
-    from com.sun.star.script import CannotConvertException
-    from com.sun.star.uno import Exception as UnoException
-    from com.sun.star.uno import RuntimeException
-
-    unoconv.PropertyValue = PropertyValue
-    unoconv.NoConnectException = NoConnectException
-    unoconv.NO_UPDATE = NO_UPDATE
-    unoconv.QUIET_UPDATE = QUIET_UPDATE
-    unoconv.DisposedException = DisposedException
-    unoconv.IllegalArgumentException = IllegalArgumentException
-    unoconv.IOException = IOException
-    unoconv.XOutputStream = XOutputStream
-    unoconv.CannotConvertException = CannotConvertException
-    unoconv.UnoException = UnoException
-    unoconv.RuntimeException = RuntimeException
-
-    def UnoProps(**args):
-        props = []
-        for key in args:
-            prop = PropertyValue()
-            prop.Name = key
-            prop.Value = args[key]
-            props.append(prop)
-        return tuple(props)
-
-    unoconv.UnoProps = UnoProps
-
-    def error(msg, file=None):
-        raise Exception(msg)
-
-    unoconv.error = error
-
-    class OutputStream(unohelper.Base, XOutputStream):
-        def __init__(self):
-            self.closed = 0
-
-        def closeOutput(self):
-            self.closed = 1
-
-        def writeBytes(self, seq):
-            LOGGER.debug('Writing data...')
-            try:
-                output.write(seq.value)
-            except AttributeError:
-                output.write(seq.value)
-
-        def flush(self):
-            pass
-
-    unoconv.OutputStream = OutputStream
-
-    # NOTE: this is a shortcut since I have only one office on my system.
-    unoconv.office = unoconv.find_offices()[0]
-
-    connection = CONNECTION % (SOFFICE_ADDR, SOFFICE_PORT)
-    LOGGER.debug('Using soffice connection: %s', connection)
-
-    # Configure arguments for unoconv.
-    args = ['-e', 'PageRange=1-1', '--stdout', '-c', connection]
-
-    if type(path_or_file) is tuple:
-        # If path_or_file is a tuple, we need to set the inputfiltername to
-        # help soffice determine the type. The file body will be passed in
-        # place of the path. This is then streamed to the server.
-        extension, path_or_file = path_or_file
-        args.extend(['--stdin', '-I', extension])
-        with path_or_file:
-            path_or_file = path_or_file.read()
+    file_data = None
+    if not path.startswith(FILE_ROOT):
+        # Only FILE_ROOT is shared with soffice. Any paths outside that
+        # directory need to be streamed to soffice.
+        extension = get_extension(path)
+        cmd.extend(['-I', extension, '--stdin'])
+        with open(path, 'rb') as f:
+            file_data = f.read()
 
     else:
-        # Otherwise we just pass the path and soffice will read from shared
-        # storage.
-        args.append(path_or_file)
+        cmd.append(path)
 
-    unoconv.op = unoconv.Options(args)
-    unoconv.convertor = None
+    while True:
+        try:
+            p = subprocess.Popen(
+                cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            stdout, _ = p.communicate(file_data, timeout=SOFFICE_TIMEOUT)
 
-    try:
-        while True:
-            retry -= 1
+            if not stdout:
+                if not retry:
+                    raise Exception('Empty output from unoconv')
 
-            try:
-                convertor = unoconv.convertor = unoconv.Convertor()
-                if output is not None:
-                    convertor.convert(path_or_file)
-                return
-
-            except (AttributeError, DisposedException, SystemExit) as e:
-                LOGGER.warning('Ignoring: %s' % e, exc_info=True)
-
-                # Don't retry.
-                if retry <= 0:
-                    raise
-
-                # soffice seems to need to "warm up" on the first few requests.
-                # I have no idea why it throws AttributeError.
-                #
-                # ...
-                #    File "/usr/local/bin/unoconv", line 961, in convert
-                #     document = self.desktop.loadComponentFromURL(
-                #         inputurl , "_blank", 0, inputprops )
-                # AttributeError: loadComponentFromURL
-                time.sleep(0.2)
-                LOGGER.warning('LibreOffice conversion failed, Retrying...')
                 continue
 
-    finally:
-        del sys.modules[module_id]
+            return stdout
+
+        except Exception as e:
+            if not retry:
+                raise
+            LOGGER.debug('unoconv failed, retrying: %s' % e, exc_info=True)
+
+        finally:
+            retry -= 1
 
 
 class OfficeBackend(BaseBackend):
@@ -159,13 +67,8 @@ class OfficeBackend(BaseBackend):
 
     @log_duration
     def _preview(self, path, width, height):
-        extension = get_extension(path)
         with NamedTemporaryFile(suffix='.pdf') as t:
-            # Only FILE_ROOT is shared with soffice. Any paths outside that
-            # directory need to be streamed to soffice.
-            if not path.startswith(FILE_ROOT):
-                path = (extension, open(path, 'rb'))
-
-            convert(path, t)
-
+            data = convert(path)
+            t.write(data)
+            t.flush()
             return PdfBackend().preview(t.name, width, height)

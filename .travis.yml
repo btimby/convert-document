@@ -14,24 +14,33 @@ install:
 
 before_script:
   - docker pull btimby/preview-server || true
+  - docker pull btimby/preview-soffice || true
   - docker build --cache-from btimby/preview-server -t btimby/preview-server .
+  - docker build --cache-from btimby/preview-soffice -t btimby/preview-soffice .
 
 script:
-  - docker run --name preview-server -d -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server soffice preview
+  - docker run --name preview-soffice -d --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-soffice
+  - docker run --name preview-server -d -e PVS_SOFFICE_ADDR=preview-soffice -p 127.0.0.1:3000:3000 --tmpfs /tmp -v ${PWD}/fixtures:/mnt/files btimby/preview-server
   - sleep 5
   - URL=http://localhost:3000/preview/ python3.6 test.py 100 10
 
 after_script:
-  - docker logs preview-server
-  - docker kill preview-server
+  - docker killpreview-server
+  - docker kill preview-soffice
 
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker tag btimby/preview-server btimby/preview-server:$TRAVIS_COMMIT
   - docker push btimby/preview-server:$TRAVIS_COMMIT
   - docker push btimby/preview-server:latest
+  - docker tag btimby/preview-soffice btimby/preview-soffice:$TRAVIS_COMMIT
+  - docker push btimby/preview-soffice:$TRAVIS_COMMIT
+  - docker push btimby/preview-soffice:latest
   - if [[ $TRAVIS_TAG = $TRAVIS_BRANCH ]]; then
       docker push btimby/preview-server:latest;
       docker tag btimby/preview-server btimby/preview-server:$TRAVIS_TAG ;
       docker push btimby/preview-server:$TRAVIS_TAG ;
+      docker push btimby/preview-soffice:latest;
+      docker tag btimby/preview-soffice btimby/preview-soffice:$TRAVIS_TAG ;
+      docker push btimby/preview-soffice:$TRAVIS_TAG ;
     fi

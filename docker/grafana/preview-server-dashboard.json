@@ -231,7 +231,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(aiohttp_request_latency_sum{endpoint='/preview/'}) / sum(aiohttp_request_latency_count{endpoint='/preview/'})",
+          "expr": "rate(aiohttp_request_latency_sum{endpoint='/preview/'}[1m]) / rate(aiohttp_request_latency_count{endpoint='/preview/'}[1m])",
           "legendFormat": "Latency",
           "refId": "A"
         }
@@ -586,7 +586,7 @@
       }
     }
   ],
-  "refresh": "5s",
+  "refresh": "",
   "schemaVersion": 19,
   "style": "dark",
   "tags": [],
@@ -594,12 +594,12 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Preview server",
   "uid": "F58qQi2Zz",
-  "version": 9
+  "version": 10
 }

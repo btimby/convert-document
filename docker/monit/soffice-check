@@ -1,0 +1,5 @@
+#!/bin/bash
+
+timeout 10 bash -c "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"
+
+exit $?

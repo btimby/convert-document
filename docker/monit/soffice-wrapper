@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PVS_UID=${PVS_UID:-"0"}
+PVS_SOFFICE_ADDR=${PVS_SOFFICE_ADDR:-"127.0.0.1"}
+PVS_SOFFICE_PORT=${PVS_SOFFICE_PORT:-"2002"}
+PVS_USER="$(id -un ${PVS_UID})"
+HOME=/tmp
+
+# dconf complains when LibreOffice starts...
+mkdir -p ${HOME}/.cache/dconf
+chown -R ${PVS_UID} ${HOME}/.cache
+
+/bin/su -p -s /bin/bash - ${PVS_USER} -c "/usr/local/bin/unoconv --listener --server=${PVS_SOFFICE_ADDR} --port=${PVS_SOFFICE_PORT} >> /var/log/unoconv.log 2>&1" &
