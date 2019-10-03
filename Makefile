@@ -20,7 +20,7 @@ Pipfile: Pipfile.lock
 	touch Pipfile
 
 .PHONY: start-test-server
-test-server:
+start-test-server:
 	docker run -d --rm --name preview-server-test -v ${CURDIR}/docker/monit/monitrc.test:/etc/monitrc btimby/preview-server
 
 .PHONY: test
