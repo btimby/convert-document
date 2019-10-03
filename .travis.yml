@@ -20,7 +20,7 @@ before_script:
   - make build-cache
 
 script:
-  - docker-compose -p preview-demo up -d
+  - docker-compose -p preview-demo up -d --scale preview-soffice=3
   - sleep 30
   - docker ps
   - python3.6 test.py 100 10

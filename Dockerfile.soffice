@@ -15,4 +15,4 @@ COPY docker/monit/soffice-wrapper /usr/local/bin/
 COPY docker/monit/soffice-check /usr/local/bin/
 
 ENTRYPOINT ["/tini", "--"]
-CMD [ "monit", "-I", "-d", "10", "-c", "/etc/monitrc"]
+CMD [ "monit", "-I", "-d", "1", "-c", "/etc/monitrc"]

@@ -82,7 +82,10 @@
             }
 
             function refresh() {
-                var interval = 1000 * parseInt($('#refr').val());
+                var interval = 1000 * $('#refr').val();
+                if (interval == '')
+                    return;
+                interval = parseInt(interval);
                 window.setTimeout(function() {
                     location.reload();
                 }, interval);
