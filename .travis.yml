@@ -22,7 +22,8 @@ before_script:
 script:
   - docker-compose -f test.yml -p preview-demo up -d --scale preview-soffice=3
   - sleep 30
-  - docker ps
+  - docker-compose -f test.yml -p preview-demo ps
+  - docker-compose -f test.yml -p preview-demo logs soffice-server
   - python3.6 test.py 100 10
 
 after_script:
