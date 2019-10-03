@@ -18,9 +18,9 @@ REQUEST_IN_PROGRESS = Gauge(
         'endpoint', 'method',
     ])
 REQUEST_LATENCY = Summary(
-    'aiohttp_request_latency', 'Request latency', ['endpoint'])
+    'aiohttp_request_latency_secs', 'Request latency', ['endpoint'])
 PREVIEWS = Summary(
-    'pvs_preview', 'Total previews requested', [
+    'pvs_preview_time_secs', 'Preview generation time', [
         'format', 'width', 'height',
     ])
 PREVIEW_SIZE_IN = Summary(
@@ -32,7 +32,7 @@ PREVIEW_SIZE_OUT = Summary(
         'backend', 'format'
     ])
 CONVERSIONS = Summary(
-    'pvs_conversion', 'Total conversions', [
+    'pvs_conversion_time_secs', 'Backend conversion time', [
         'backend', 'format',
     ])
 CONVERSION_ERRORS = Counter(
