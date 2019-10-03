@@ -10,7 +10,7 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-COPY docker/monit/monitrc /etc/monitrc
+COPY docker/monit/monitrc.soffice /etc/monitrc
 COPY docker/monit/soffice-wrapper /usr/local/bin/
 COPY docker/monit/soffice-check /usr/local/bin/
 
