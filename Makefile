@@ -19,9 +19,17 @@ Pipfile: Pipfile.lock
 	pipenv install --dev
 	touch Pipfile
 
+.PHONY: start-test-server
+test-server:
+	docker run -d --rm --name preview-server-test -v ${CURDIR}/docker/monit/monitrc.test:/etc/monitrc btimby/preview-server
+
 .PHONY: test
 test: Pipfile
 	pipenv run python3 test.py
+
+.PHONY: stop-test-server
+stop-test-server:
+	docker kill preview-server-test
 
 .PHONY: test.html
 test.html:
@@ -41,15 +49,24 @@ shell:
 
 .PHONY: tag
 tag: login
-	docker tag btimby/preview-base btimby/preview-base:$TRAVIS_COMMIT
-	docker tag btimby/preview-soffice btimby/preview-soffice:$TRAVIS_COMMIT
-	docker tag btimby/preview-server btimby/preview-server:$TRAVIS_COMMIT
+	docker tag btimby/preview-base btimby/preview-base:latest
+	docker tag btimby/preview-server btimby/preview-server:latest
+	docker tag btimby/preview-soffice btimby/preview-soffice:latest
+
+.PHONY: tag
+tag-travis: tag
+	docker tag btimby/preview-base btimby/preview-base:${TRAVIS_COMMIT}
+	docker tag btimby/preview-server btimby/preview-server:${TRAVIS_COMMIT}
+	docker tag btimby/preview-soffice btimby/preview-soffice:${TRAVIS_COMMIT}
 
 .PHONY: push
 push: login
-	docker push btimby/preview-base:$TRAVIS_COMMIT
+	docker push btimby/preview-base:latest
 	docker push btimby/preview-server:latest
-	docker push btimby/preview-server:latest
-	docker push btimby/preview-base:$TRAVIS_COMMIT
 	docker push btimby/preview-soffice:latest
-	docker push btimby/preview-server:latest
+
+.PHONY: push-travis
+push-travis: push
+	docker push btimby/preview-base:${TRAVIS_COMMIT}
+	docker push btimby/preview-server:${TRAVIS_COMMIT}
+	docker push btimby/preview-soffice:${TRAVIS_COMMIT}

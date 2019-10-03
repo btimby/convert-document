@@ -1,0 +1,6 @@
+set pidfile /tmp/monit.pid
+
+check process preview matching "preview"
+    start program = "/usr/local/bin/preview-wrapper"
+    stop program = "/usr/bin/pkill -9 preview"
+    if does not exist then start

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd /app
+
+exec -a preview /usr/bin/python3 -m preview &

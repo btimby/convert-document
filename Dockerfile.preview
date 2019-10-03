@@ -2,4 +2,7 @@ FROM btimby/preview-base
 
 EXPOSE 3000/tcp
 
-CMD [ "/usr/bin/python3", "-m", "preview" ]
+COPY docker/monit/monitrc.preview /etc/monitrc
+
+ENTRYPOINT ["/tini", "--"]
+CMD [ "monit", "-Iv", "-d", "1", "-c", "/etc/monitrc"]

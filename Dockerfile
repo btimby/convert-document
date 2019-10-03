@@ -24,10 +24,16 @@ RUN apt-get update \
         fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
         python3-uno python3-lxml python3-icu curl imagemagick libmagickwand-dev \
         python-setuptools git libavformat-dev libavcodec-dev libavutil-dev \
-        libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev \
+        libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev monit \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+COPY docker/bin/* /usr/local/bin/
 
 WORKDIR /app
 COPY Pipfile* /app/

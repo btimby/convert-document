@@ -1,4 +1,4 @@
-set pidfile /dev/null
+set pidfile /tmp/monit.pid
 
 check process soffice matching "soffice.bin"
     start program = "/usr/local/bin/soffice-wrapper"
@@ -9,3 +9,8 @@ check process soffice matching "soffice.bin"
 check program sofficecheck with path /usr/local/bin/soffice-check
     every 30 cycles
     if status != 0 then exec "/usr/bin/monit restart soffice"
+
+check process preview matching "preview"
+    start program = "/usr/local/bin/preview-wrapper"
+    stop program = "/usr/bin/pkill -9 preview"
+    if does not exist then start
