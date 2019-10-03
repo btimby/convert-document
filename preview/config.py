@@ -2,6 +2,10 @@ import os
 import logging
 
 
+def boolean(s):
+    return s in ('1', 'on', 'yes', 'true')
+
+
 # Configuration
 CACHE_CONTROL = os.environ.get('PVS_CACHE_CONTROL')
 FILE_ROOT = os.environ.get('PVS_FILES', '/mnt/files')
@@ -22,4 +26,4 @@ SOFFICE_ADDR = os.environ.get('PVS_SOFFICE_ADDR', '127.0.0.1')
 SOFFICE_PORT = int(os.environ.get('PVS_SOFFICE_PORT', '2002'))
 SOFFICE_TIMEOUT = int(os.environ.get('PVS_SOFFICE_TIMEOUT', '12'))
 SOFFICE_RETRY = int(os.environ.get('PVS_SOFFICE_RETRY', '3'))
-METRICS = os.environ.get('PVS_METRICS')
+METRICS = boolean(os.environ.get('PVS_METRICS'))
