@@ -20,14 +20,14 @@ before_script:
   - make build-cache
 
 script:
-  - docker-compose -p preview-demo up -d --scale preview-soffice=3
-  - sleep 30
+  - docker-compose -f test.yml -p preview-demo up -d --scale preview-soffice=3
+  - sleep 5
   - docker ps
   - python3.6 test.py 100 10
 
 after_script:
-  - docker-compose logs
-  - docker-compose -p preview-demo kill
+  - docker-compose -f test.yml logs preview-server
+  - docker-compose -f test.yml -p preview-demo kill
 
 after_success:
   - make tag

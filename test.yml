@@ -9,14 +9,13 @@ services:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
-#      - PVS_STORE=/mnt/store
       - PVS_UID=101
       - PVS_GID=101
       - PVS_LOGLEVEL=ERROR
       - PVS_HTTP_LOGLEVEL=WARNING
       - PVS_SOFFICE_ADDR=haproxy
       - PVS_SOFFICE_PORT=2002
-      - PVS_METRICS=on
+      - PVS_METRICS=off
 
   soffice-server:
     image: btimby/preview-soffice
@@ -43,29 +42,3 @@ services:
       - 8082:8080
     volumes:
       - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-
-  cadvisor:
-    image: google/cadvisor
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - 9090:9090
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - 3000:3000
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - ./docker/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
-      - ./docker/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
-      - ./docker/grafana/preview-server-dashboard.json:/etc/grafana/provisioning/dashboards/preview-server-dashboard.json:ro

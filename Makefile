@@ -26,7 +26,7 @@ test.html:
 
 .PHONY: run
 run: build
-	docker-compose -p preview-demo up \
+	docker-compose -f run.yml -p preview-demo up \
 		--scale soffice-server=3 --scale preview-server=1
 
 .PHONY: shell
