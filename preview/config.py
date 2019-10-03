@@ -3,7 +3,7 @@ import logging
 
 
 def boolean(s):
-    return s in ('1', 'on', 'yes', 'true')
+    return s.lower() not in ('1', 'off', 'no', 'false', 'none', '')
 
 
 # Configuration
@@ -27,3 +27,4 @@ SOFFICE_PORT = int(os.environ.get('PVS_SOFFICE_PORT', '2002'))
 SOFFICE_TIMEOUT = int(os.environ.get('PVS_SOFFICE_TIMEOUT', '12'))
 SOFFICE_RETRY = int(os.environ.get('PVS_SOFFICE_RETRY', '3'))
 METRICS = boolean(os.environ.get('PVS_METRICS'))
+PROFILE_PATH = os.environ.get('PVS_PROFILE_PATH')

@@ -13,8 +13,8 @@ from aiohttp.client_exceptions import ClientConnectorError, \
 
 
 URL = os.environ.get('URL', 'http://preview:8080/preview/')
-TOTAL = 10000
-CONCURRENT = 20
+TOTAL = int(os.environ.get('TOTAL', '10000'))
+CONCURRENT = int(os.environ.get('CONCURRENT', '20'))
 RESOLUTIONS = [
     ('800', '600'),
     ('720', '540'),

@@ -30,7 +30,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 12,
+      "id": 18,
       "legend": {
         "avg": false,
         "current": false,
@@ -56,21 +56,16 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(aiohttp_request_in_progress{endpoint='/preview/'})",
-          "legendFormat": "Requests in progress",
+          "expr": "sum(rate(pvs_conversion_time_secs_count[1m])) by (format)",
+          "legendFormat": "{{format}}",
           "refId": "A"
-        },
-        {
-          "expr": "sum(rate(aiohttp_request_total{endpoint='/preview/'}[1m]))",
-          "legendFormat": "Requests",
-          "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Preview requests",
+      "title": "Conversions by format",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -146,7 +141,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(pvs_conversion_sum[1m])) by (format) / sum(rate(pvs_conversion_count[1m])) by (format)",
+          "expr": "sum(rate(pvs_conversion_time_secs_sum[1m])) by (format) / sum(rate(pvs_conversion_time_secs_count[1m])) by (format)",
           "legendFormat": "{{format}}",
           "refId": "A"
         }
@@ -205,7 +200,7 @@
         "x": 0,
         "y": 8
       },
-      "id": 4,
+      "id": 16,
       "legend": {
         "avg": false,
         "current": false,
@@ -231,8 +226,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(aiohttp_request_latency_secs_sum{endpoint='/preview/'}[1m]) / rate(aiohttp_request_latency_secs_count{endpoint='/preview/'}[1m])",
-          "legendFormat": "Latency",
+          "expr": "sum(rate(pvs_conversion_time_secs_count[1m])) by (backend)",
+          "legendFormat": "{{backend}}",
           "refId": "A"
         }
       ],
@@ -240,7 +235,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Preview request latency",
+      "title": "Conversions by backend",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -363,59 +358,6 @@
       }
     },
     {
-      "gridPos": {
-        "h": 8,
-        "w": 5,
-        "x": 0,
-        "y": 16
-      },
-      "id": 2,
-      "options": {
-        "fieldOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "override": {},
-          "values": false
-        },
-        "orientation": "auto",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "pluginVersion": "6.3.6",
-      "targets": [
-        {
-          "expr": "sum(pvs_storage_bytes_total) / 1024 / 1024",
-          "legendFormat": "MiB",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(pvs_storage_files_total)",
-          "legendFormat": "files",
-          "refId": "B"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Store usage",
-      "type": "gauge"
-    },
-    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -424,11 +366,11 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
-        "w": 7,
-        "x": 5,
+        "w": 12,
+        "x": 0,
         "y": 16
       },
-      "id": 10,
+      "id": 12,
       "legend": {
         "avg": false,
         "current": false,
@@ -454,16 +396,21 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(pvs_storage_operations_total[1m])) by (operation)",
-          "legendFormat": "{{operation}}",
+          "expr": "sum(aiohttp_request_in_progress{endpoint='/preview/'})",
+          "legendFormat": "Requests in progress",
           "refId": "A"
+        },
+        {
+          "expr": "sum(rate(aiohttp_request_total{endpoint='/preview/'}[1m]))",
+          "legendFormat": "Requests",
+          "refId": "B"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Storage operations",
+      "title": "Preview requests",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -584,9 +531,232 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "avg without(instance) (rate(aiohttp_request_latency_secs_sum{endpoint='/preview/'}[1m]) / rate(aiohttp_request_latency_secs_count{endpoint='/preview/'}[1m]))",
+          "legendFormat": "Latency",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Preview request latency",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 12,
+        "y": 24
+      },
+      "id": 10,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(rate(pvs_storage_operations_total[1m])) by (operation)",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Storage operations",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 24
+      },
+      "id": 2,
+      "options": {
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.3.6",
+      "targets": [
+        {
+          "expr": "sum(pvs_storage_bytes_total) / 1024 / 1024",
+          "legendFormat": "MiB",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(pvs_storage_files_total)",
+          "legendFormat": "files",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Store usage",
+      "type": "gauge"
     }
   ],
-  "refresh": "",
+  "refresh": "5s",
   "schemaVersion": 19,
   "style": "dark",
   "tags": [],
@@ -594,12 +764,12 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Preview server",
   "uid": "F58qQi2Zz",
-  "version": 1
+  "version": 3
 }

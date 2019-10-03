@@ -5,14 +5,17 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
+    tmpfs:
+      - /tmp
+    command: ['python3', '-m', 'preview']
     environment:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
-      - PVS_STORE=/mnt/store
+      # - PVS_STORE=/mnt/store
       - PVS_UID=101
       - PVS_GID=101
-      - PVS_LOGLEVEL=ERROR
+      - PVS_LOGLEVEL=WARNING
       - PVS_HTTP_LOGLEVEL=WARNING
       - PVS_SOFFICE_ADDR=haproxy
       - PVS_SOFFICE_PORT=2002
@@ -22,6 +25,8 @@ services:
     image: btimby/preview-soffice
     volumes:
       - ./fixtures:/mnt/files:ro
+    tmpfs:
+      - /tmp
     environment:
       - PVS_SOFFICE_ADDR=0.0.0.0
       - PVS_SOFFICE_PORT=2002

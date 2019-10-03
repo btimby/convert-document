@@ -5,6 +5,8 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
+    tmpfs:
+      - /tmp
     environment:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000
@@ -21,6 +23,8 @@ services:
     image: btimby/preview-soffice
     volumes:
       - ./fixtures:/mnt/files:ro
+    tmpfs:
+      - /tmp
     environment:
       - PVS_SOFFICE_ADDR=0.0.0.0
       - PVS_SOFFICE_PORT=2002
