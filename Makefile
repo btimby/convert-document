@@ -2,15 +2,18 @@ all: test
 
 .PHONY: build
 build:
-	docker build -f Dockerfile -t btimby/preview-server .
+	docker build -f Dockerfile -t btimby/preview-base .
 	docker build -f Dockerfile.soffice -t btimby/preview-soffice .
+	docker build -f Dockerfile.preview -t btimby/preview-server .
 
 .PHONY: build-cache
 build-cache:
-	docker pull btimby/preview-server || true
+	docker pull btimby/preview-base || true
 	docker pull btimby/preview-soffice || true
-	docker build --cache-from btimby/preview-server -f Dockerfile -t btimby/preview-server .
+	docker pull btimby/preview-server || true
+	docker build --cache-from btimby/preview-base -f Dockerfile -t btimby/preview-base .
 	docker build --cache-from btimby/preview-soffice -f Dockerfile.soffice -t btimby/preview-soffice .
+	docker build --cache-from btimby/preview-server -f Dockerfile.preview -t btimby/preview-server .
 
 Pipfile: Pipfile.lock
 	pipenv install --dev
@@ -38,12 +41,15 @@ shell:
 
 .PHONY: tag
 tag: login
-	docker tag btimby/preview-server btimby/preview-server:$TRAVIS_COMMIT
+	docker tag btimby/preview-base btimby/preview-base:$TRAVIS_COMMIT
 	docker tag btimby/preview-soffice btimby/preview-soffice:$TRAVIS_COMMIT
+	docker tag btimby/preview-server btimby/preview-server:$TRAVIS_COMMIT
 
 .PHONY: push
 push: login
-	docker push btimby/preview-server:$TRAVIS_COMMIT
+	docker push btimby/preview-base:$TRAVIS_COMMIT
 	docker push btimby/preview-server:latest
-	docker push btimby/preview-soffice:$TRAVIS_COMMIT
+	docker push btimby/preview-server:latest
+	docker push btimby/preview-base:$TRAVIS_COMMIT
 	docker push btimby/preview-soffice:latest
+	docker push btimby/preview-server:latest

@@ -39,7 +39,3 @@ COPY docker/preview/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 COPY preview/ /app/preview/
 COPY images/ /app/images/
 COPY fixtures/ /app/fixtures/
-
-EXPOSE 3000/tcp
-
-CMD [ "/usr/bin/python3", "-m", "preview" ]

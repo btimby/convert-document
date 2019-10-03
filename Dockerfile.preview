@@ -1,0 +1,5 @@
+FROM btimby/preview-base
+
+EXPOSE 3000/tcp
+
+CMD [ "/usr/bin/python3", "-m", "preview" ]
