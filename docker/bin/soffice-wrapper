@@ -10,4 +10,4 @@ HOME=/tmp
 mkdir -p ${HOME}/.cache/dconf
 chown -R ${PVS_UID} ${HOME}/.cache
 
-/bin/su -p -s /bin/bash - ${PVS_USER} -c "/usr/local/bin/unoconv --listener --server=${PVS_SOFFICE_ADDR} --port=${PVS_SOFFICE_PORT} >> /var/log/unoconv.log 2>&1" &
+/bin/su -p -s /bin/bash - ${PVS_USER} -c "/usr/local/bin/unoconv --listener --server=${PVS_SOFFICE_ADDR} --port=${PVS_SOFFICE_PORT} 1> /proc/1/fd/1 2> /proc/1/fd/2 " &
