@@ -33,12 +33,12 @@ ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-COPY docker/bin/* /usr/local/bin/
-
 WORKDIR /app
 COPY Pipfile* /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
+
+COPY docker/bin/* /usr/local/bin/
 
 COPY docker/preview/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 
