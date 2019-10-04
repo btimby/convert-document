@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c9efa7f092111ac60527266b59f3e523b4e8ee293cbe73c7416d4320831301ac"
+            "sha256": "18579ea4940e3e4c37b71b9d098200d7ec62cb6825cdc7b941e6f091be5154f4"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -99,6 +99,13 @@
             ],
             "markers": "python_version < '3.7'",
             "version": "==1.1.0"
+        },
+        "img2pdf": {
+            "hashes": [
+                "sha256:9d77c17ee65a736abe92ef8cba9cca009c064ea4ed74492c01aea596e41856cf"
+            ],
+            "index": "pypi",
+            "version": "==0.3.3"
         },
         "multidict": {
             "hashes": [

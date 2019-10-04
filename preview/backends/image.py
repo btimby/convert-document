@@ -1,6 +1,10 @@
 import logging
 import tempfile
 
+from io import BytesIO
+
+import img2pdf
+
 from wand.image import Image, Color
 
 from preview.backends.base import BaseBackend
@@ -28,6 +32,20 @@ def resize_image(path, width, height):
             return t.name
 
 
+def convert(path):
+    data = BytesIO()
+    with Image(filename=path, resolution=300) as img:
+        img.background_color = Color("white")
+        img.alpha_channel = 'deactivate'
+        img.format = 'png'
+        img.save(file=data)
+
+    data.seek(0)
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as t:
+        img2pdf.convert(data, outputstream=t)
+        return t.name
+
+
 class ImageBackend(BaseBackend):
     name = 'image'
     extensions = [
@@ -35,10 +53,15 @@ class ImageBackend(BaseBackend):
         'xpm'
     ]
     formats = [
-        'image',
+        'image', 'pdf',
     ]
 
     @log_duration
     def _preview(self, obj):
-        path = resize_image(obj.src.path, obj.width, obj.height)
-        obj.dst = PathModel(path)
+        if obj.format == 'image':
+            path = resize_image(obj.src.path, obj.width, obj.height)
+            obj.dst = PathModel(path)
+
+        elif obj.format == 'pdf':
+            path = convert(obj.src.path)
+            obj.dst = PathModel(path)
