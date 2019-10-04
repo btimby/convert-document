@@ -45,10 +45,11 @@ shell:
 	docker run -ti btimby/preview-server bash
 
 .PHONY: login
-	echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+login:
+	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
 .PHONY: tag
-tag: login
+tag:
 	docker tag btimby/preview-base btimby/preview-base:latest
 	docker tag btimby/preview-server btimby/preview-server:latest
 	docker tag btimby/preview-soffice btimby/preview-soffice:latest
