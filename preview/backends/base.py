@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-from preview.utils import get_extension
 from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
 
 
@@ -12,15 +11,14 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def _preview(self, path, width, height):
-        pass
+    def _preview(self, obj):
+        raise NotImplementedError()
 
-    def preview(self, path, width, height):
-        extension = get_extension(path)
+    def preview(self, obj):
         try:
-            with CONVERSIONS.labels(self.name, extension).time():
-                return self._preview(path, width, height)
+            with CONVERSIONS.labels(self.name, obj.extension).time():
+                return self._preview(obj)
 
         except Exception:
-            CONVERSION_ERRORS.labels(self.name, extension).inc()
+            CONVERSION_ERRORS.labels(self.name, obj.extension).inc()
             raise

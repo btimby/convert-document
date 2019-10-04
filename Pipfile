@@ -6,7 +6,6 @@ flake8 = "*"
 Wand = ">=0.5.6"
 unoconv = "*"
 uvloop = "*"
-async-generator = "*"
 aiohttp = {path = "./packages/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}
 ghostscript = {path = "./packages/ghostscript-0.7.dev0-py2.py3-none-any.whl"}
 prometheus-client = "*"
@@ -14,3 +13,4 @@ av = "*"
 numpy = "*"
 pillow = "*"
 yappi = "*"
+cached-property = "*"

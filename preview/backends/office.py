@@ -5,33 +5,31 @@ from tempfile import NamedTemporaryFile
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
-from preview.utils import log_duration, get_extension
+from preview.utils import log_duration
 from preview.config import (
-    FILE_ROOT, SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY
+    SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY
 )
+from preview.models import PathModel
 
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(path, retry=SOFFICE_RETRY):
+def convert(obj, retry=SOFFICE_RETRY):
     cmd = [
         'unoconv', '--server=%s' % SOFFICE_ADDR, '--port=%s' % SOFFICE_PORT,
         '--stdout'
     ]
 
     file_data = None
-    if not path.startswith(FILE_ROOT):
-        # Only FILE_ROOT is shared with soffice. Any paths outside that
-        # directory need to be streamed to soffice.
-        extension = get_extension(path)
-        cmd.extend(['-I', extension, '--stdin'])
-        with open(path, 'rb') as f:
-            file_data = f.read()
+    if obj.src.is_shared:
+        cmd.append(obj.src.path)
 
     else:
-        cmd.append(path)
+        cmd.extend(['-I', obj.src.extension, '--stdin'])
+        with open(obj.src.path, 'rb') as f:
+            file_data = f.read()
 
     while True:
         try:
@@ -60,9 +58,9 @@ class OfficeBackend(BaseBackend):
     ]
 
     @log_duration
-    def _preview(self, path, width, height):
-        with NamedTemporaryFile(suffix='.pdf') as t:
-            data = convert(path)
-            t.write(data)
-            t.flush()
-            return PdfBackend().preview(t.name, width, height)
+    def _preview(self, obj):
+        with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
+            t.write(convert(obj))
+            obj.src = PathModel(t.name)
+
+        PdfBackend().preview(obj)

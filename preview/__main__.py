@@ -13,22 +13,23 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
-from async_generator import asynccontextmanager
 
 from preview.utils import (
     run_in_executor, log_duration, safe_delete, get_extension
 )
 from preview.preview import generate, UnsupportedTypeError
-from preview.storage import is_temp, BASE_PATH
+from preview.storage import BASE_PATH
 from preview.metrics import (
     metrics_handler, metrics_middleware, TRANSFER_LATENCY,
     TRANSFERS_IN_PROGRESS
 )
 from preview.config import (
-    DEFAULT_FORMAT, WIDTH, HEIGHT, MAX_WIDTH, MAX_HEIGHT, LOGLEVEL,
-    HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID, X_ACCEL_REDIR, PORT,
-    PROFILE_PATH
+    DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH, MAX_HEIGHT,
+    LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID, X_ACCEL_REDIR,
+    PORT, PROFILE_PATH
 )
+from preview.models import PreviewModel
+
 
 # Limits
 MEGABYTE = 1024 * 1024
@@ -81,7 +82,6 @@ async def download(url):
                     return t.name
 
 
-@asynccontextmanager
 async def get_params(request):
     """
     """
@@ -91,38 +91,39 @@ async def get_params(request):
     else:
         data = request.query
 
-    path, file, url = data.get('path'), data.get('file'), data.get('url')
+    path = data.get('path')
+    file = data.get('file')
+    url = data.get('url')
+    name = data.get('name')
+    content_type = data.get('content_type')
+
     format = data.get('format', DEFAULT_FORMAT)
-    width = int(data.get('width', WIDTH))
-    height = int(data.get('height', HEIGHT))
+    width = int(data.get('width', DEFAULT_WIDTH))
+    height = int(data.get('height', DEFAULT_HEIGHT))
     width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
-    cleanup = []
 
-    try:
-        if path:
-            # TODO: sanitize this path, ensure it is rooted in FILE_ROOT
-            path = normpath(path)
-            path = pathjoin(FILE_ROOT, path)
+    if path:
+        # TODO: sanitize this path, ensure it is rooted in FILE_ROOT
+        origin = path
+        path = normpath(path)
+        path = pathjoin(FILE_ROOT, path)
 
-        elif file:
-            path = await upload(file)
-            cleanup.append(path)
+    elif file:
+        origin = None
+        path = await upload(file)
 
-        elif url:
-            path = await download(url)
-            cleanup.append(path)
+    elif url:
+        origin = url
+        path = await download(url)
 
-        else:
-            raise web.HTTPBadRequest(reason='No path, file or url provided')
+    else:
+        raise web.HTTPBadRequest(reason='No path, file or url provided')
 
-        if not isfile(path):
-            raise web.HTTPNotFound()
+    if not isfile(path):
+        raise web.HTTPNotFound()
 
-        yield (data, path, format, width, height)
-
-    finally:
-        for path in cleanup:
-            await run_in_executor(safe_delete)(path)
+    return PreviewModel(path, width, height, format, origin=origin,
+                        name=name, content_type=content_type)
 
 
 generate = run_in_executor(generate)
@@ -132,58 +133,65 @@ async def info(request):
     return web.Response(text="OK")
 
 
-class DeleteFileResponse(web.FileResponse):
+class PreviewResponse(web.FileResponse):
+    def __init__(self, obj, *args, **kwargs):
+        self._obj = obj
+        super(PreviewResponse, self).__init__(obj.dst.path, *args, **kwargs)
+        self.content_type = obj.dst.content_type
+
     async def prepare(self, *args, **kwargs):
         try:
-            return await super(DeleteFileResponse, self).prepare(
+            return await super(PreviewResponse, self).prepare(
                 *args, **kwargs)
 
         finally:
-            await run_in_executor(safe_delete)(self._path)
+            await run_in_executor(self._obj.cleanup)()
 
 
 async def preview(request):
-    async with get_params(request) as params:
-        data, path, format, width, height = params
-
+    obj = await get_params(request)
+    try:
         try:
-            try:
-                status, path = 200, await generate(path, format, width, height)
-
-            except Exception as e:
-                # NOTE: we send 203 to indicate that the content is not exactly
-                # what was requested. This helps our tools / tests determine
-                # if an error occurred. We also disable caching in the case of
-                # an error response.
-                LOGGER.exception(e)
-                path = 'images/error.png'
-                if isinstance(e, UnsupportedTypeError):
-                    path = 'images/unsupported.png'
-                status, path = 203, await generate(path, format, width, height)
-
-            if BASE_PATH is None or is_temp(str(path)):
-                response = web.FileResponse(path, status=status)
-
-            elif X_ACCEL_REDIR:
-                response = web.Response(status=status)
-                response.headers['X-Accel-Redirect'] = \
-                    pathjoin(X_ACCEL_REDIR, str(path.relative_to(BASE_PATH)))
-
-            else:
-                response = web.FileResponse(path, status=status)
-
-            # Don't cache error responses.
-            if status == 200 and CACHE_CONTROL:
-                max_age = 60 * int(CACHE_CONTROL)
-                response.headers['Cache-Control'] = \
-                    'max-age=%i, public' % max_age
+            await generate(obj)
+            status = 200
 
         except Exception as e:
+            # NOTE: we send 203 to indicate that the content is not exactly
+            # what was requested. This helps our tools / tests determine
+            # if an error occurred. We also disable caching in the case of
+            # an error response.
             LOGGER.exception(e)
-            raise web.HTTPInternalServerError(reason='Unrecoverable error')
+            path = 'images/error.png'
+            if isinstance(e, UnsupportedTypeError):
+                path = 'images/unsupported.png'
+            obj.cleanup()
+            obj = PreviewModel(path, obj.width, obj.height, obj.format)
+            await generate(obj)
+            status = 203
 
-        response.content_type = 'image/gif'
-        return response
+        if BASE_PATH is None or obj.dst.is_temp:
+            response = PreviewResponse(obj, status=status)
+
+        elif X_ACCEL_REDIR:
+            response = web.Response(status=status)
+            response.headers['X-Accel-Redirect'] = \
+                obj.dst.chroot(BASE_PATH, X_ACCEL_REDIR)
+            response.content_type = obj.dst.content_type
+
+        else:
+            response = PreviewResponse(obj, status=status)
+
+        # Don't cache error responses.
+        if status == 200 and CACHE_CONTROL:
+            max_age = 60 * int(CACHE_CONTROL)
+            response.headers['Cache-Control'] = \
+                'max-age=%i, public' % max_age
+
+    except Exception as e:
+        LOGGER.exception(e)
+        raise web.HTTPInternalServerError(reason='Unrecoverable error')
+
+    return response
 
 
 def main():

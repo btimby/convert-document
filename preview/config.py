@@ -3,14 +3,16 @@ import logging
 
 
 def boolean(s):
+    if s is None:
+        return
     return s.lower() not in ('1', 'off', 'no', 'false', 'none', '')
 
 
 # Configuration
 CACHE_CONTROL = os.environ.get('PVS_CACHE_CONTROL')
 FILE_ROOT = os.environ.get('PVS_FILES', '/mnt/files')
-WIDTH = os.environ.get('PVS_WIDTH', 320)
-HEIGHT = os.environ.get('PVS_HEIGHT', 240)
+DEFAULT_WIDTH = os.environ.get('PVS_DEFAULT_WIDTH', 320)
+DEFAULT_HEIGHT = os.environ.get('PVS_DEFAULT_HEIGHT', 240)
 MAX_WIDTH = os.environ.get('PVS_MAX_WIDTH', 800)
 MAX_HEIGHT = os.environ.get('PVS_MAX_HEIGHT', 600)
 DEFAULT_FORMAT = os.environ.get('PVS_DEFAULT_FORMAT', 'image')

@@ -5,6 +5,7 @@ from wand.image import Image, Color
 
 from preview.backends.base import BaseBackend
 from preview.utils import log_duration
+from preview.models import PathModel
 
 
 LOGGER = logging.getLogger(__name__)
@@ -35,5 +36,6 @@ class ImageBackend(BaseBackend):
     ]
 
     @log_duration
-    def _preview(self, path, width, height):
-        return resize_image(path, width, height)
+    def _preview(self, obj):
+        path = resize_image(obj.src.path, obj.width, obj.height)
+        obj.dst = PathModel(path)

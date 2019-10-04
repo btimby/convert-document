@@ -3,11 +3,15 @@ import shutil
 import hashlib
 import logging
 
+from os import stat
 from time import time
 
-from preview.utils import safe_delete, safe_makedirs, run_in_executor
-from preview.metrics import STORAGE, STORAGE_BYTES, STORAGE_FILES
+from os.path import isfile
+
+from preview.utils import safe_delete, safe_makedirs
+from preview.metrics import STORAGE
 from preview.config import BASE_PATH
+from preview.models import PathModel
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,54 +27,45 @@ def make_path(key):
     return os.path.join(BASE_PATH, key[:1], key[1:2], key)
 
 
-def get(key, path):
+def _is_newer(left, right):
+    if not isfile(right):
+        return True
+
+    return stat(left).st_mtime > stat(right).st_mtime
+
+
+def get(key, obj):
     if BASE_PATH is None:
         # Storage is disabled.
         return
 
     store_path = make_path(key)
 
-    path_mtime = os.stat(path).st_mtime
-    if os.path.isfile(store_path):
-        store_mtime = os.stat(path).st_mtime
+    if _is_newer(obj.src.path, store_path):
+        LOGGER.info('Removing stale file from storage')
+        STORAGE.labels('del').inc()
+        safe_delete(store_path)
 
     else:
-        store_mtime = None
-
-    if path_mtime == store_mtime:
-        STORAGE.labels('get').inc()
-        # touch the atime (used for LRU cleaning)
         LOGGER.info('Serving from storage')
-        os.utime(store_path, (time(), store_mtime))
-        return store_path
-
-    elif os.path.isfile(store_path):
-        STORAGE.labels('del').inc()
-        LOGGER.info('Removing stale file from storage')
-        try:
-            os.remove(store_path)
-
-        except FileNotFoundError:
-            pass
+        STORAGE.labels('get').inc()
+        # update atime, possible LRU...
+        os.utime(store_path, (time(), stat(store_path).st_mtime))
+        obj.dst = PathModel(store_path)
 
 
-def put(key, path, src_path):
+def put(key, obj):
     if BASE_PATH is None:
         # Storage is disabled.
-        return src_path
+        return
 
     STORAGE.labels('put').inc()
     LOGGER.info('Storing file')
+
     store_path = make_path(key)
     safe_makedirs(os.path.dirname(store_path))
-    shutil.move(src_path, store_path)
+    shutil.move(obj.src.path, store_path)
 
-    path_mtime = os.stat(path).st_mtime
+    path_mtime = stat(obj.src.path).st_mtime
     os.utime(store_path, (path_mtime, path_mtime))
-    return store_path
-
-
-def is_temp(path):
-    if BASE_PATH is None:
-        return True
-    return not path.startswith(BASE_PATH)
+    obj.dst = PathModel(store_path)

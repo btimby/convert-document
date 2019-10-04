@@ -7,6 +7,7 @@ from PIL import Image
 
 from preview.backends.base import BaseBackend
 from preview.utils import log_duration
+from preview.models import PathModel
 
 
 LOGGER = logging.getLogger(__name__)
@@ -74,5 +75,6 @@ class VideoBackend(BaseBackend):
     ]
 
     @log_duration
-    def _preview(self, path, width, height):
-        return grab_frames(path, width, height)
+    def _preview(self, obj):
+        path = grab_frames(obj.src.path, obj.width, obj.height)
+        obj.dst = PathModel(path)

@@ -21,17 +21,14 @@ class UnsupportedTypeError(Exception):
     pass
 
 
-def _preview(obj, path, width, height):
-    extension = get_extension(path)
+def _preview(be, obj):
     PREVIEW_SIZE_IN.labels(
-        obj.name, extension).observe(getsize(path))
+        be.name, obj.extension).observe(obj.src.size)
 
-    with PREVIEWS.labels(extension, width, height).time():
-        path = obj.preview(path, width, height)
+    with PREVIEWS.labels(obj.extension, obj.width, obj.height).time():
+        be.preview(obj)
         PREVIEW_SIZE_OUT.labels(
-            obj.name, extension).observe(getsize(path))
-
-        return path
+            be.name, obj.extension).observe(obj.src.size)
 
 
 class Backend(object):
@@ -42,23 +39,22 @@ class Backend(object):
     }
 
     @staticmethod
-    def preview(path, width, height):
-        extension = get_extension(path)
-        for extensions, obj in Backend.backends.items():
-            if extension in extensions:
-                return _preview(obj, path, width, height)
+    def preview(obj):
+        for extensions, be in Backend.backends.items():
+            if obj.extension in extensions:
+                return _preview(be, obj)
 
-        raise UnsupportedTypeError('Unsupported file type: %s' % extension)
+        raise UnsupportedTypeError('Unsupported file type: %s' % obj.extension)
 
 
-def generate(path, format, width, height):
-    use_store = path.startswith(FILE_ROOT)
-    store_key = storage.make_key(path, format, width, height)
-    store_path = storage.get(store_key, path) if use_store else None
+def generate(obj):
+    use_store = not obj.src.is_temp
+    store_key = storage.make_key(obj)
 
-    if not store_path:
-        store_path = Backend.preview(path, width, height)
-        if use_store:
-            store_path = storage.put(store_key, path, store_path)
+    if use_store and storage.get(store_key, obj):
+        return
 
-    return pathlib.Path(store_path)
+    Backend.preview(obj)
+
+    if use_store:
+        storage.put(store_key, obj)
