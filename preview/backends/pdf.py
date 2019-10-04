@@ -18,6 +18,9 @@ class PdfBackend(BaseBackend):
     extensions = [
         'pdf', 'eps', 'ps',
     ]
+    formats = [
+        'image', 'pdf',
+    ]
 
     @log_duration
     def _preview(self, obj):
@@ -27,17 +30,34 @@ class PdfBackend(BaseBackend):
         if not obj.src.size:
             raise Exception('Invalid file size 0')
 
-        with NamedTemporaryFile(delete=False, suffix='.png') as t:
+        suffix = '.pdf' if obj.format == 'pdf' else '.png'
+        with NamedTemporaryFile(delete=False, suffix=suffix) as t:
             args = [
                 b'-dFirstPage=1', b'-dLastPage=1',
-                b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-sDEVICE=png16m',
-                b'-q', b'-sOutputFile=%s' % bytes(t.name, 'utf8'),
-                bytes(obj.src.path, 'utf8'),
+                b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-q',
             ]
 
+            if obj.format == 'pdf':
+                args.append(b'-sDEVICE=png16m')
+
+            else:
+                args.append(b'-sDEVICE=pdfwriter')
+
+            args.extend([
+                b'-sOutputFile=%s' % bytes(t.name, 'utf8'),
+                bytes(obj.src.path, 'utf8'),
+            ])
+
+            # TODO: fix this bullshit lib. You cannot clean up the object with
+            # try / except if __init__() raises.
             with ghostscript.Ghostscript(*args):
                 pass
 
-            obj.src = PathModel(t.name)
+            if obj.format == 'pdf':
+                obj.dst = PathModel(t.name)
+                return
+
+            else:
+                obj.src = PathModel(t.name)
 
         ImageBackend().preview(obj)

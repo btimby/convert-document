@@ -38,7 +38,7 @@ test.html:
 .PHONY: run
 run: build
 	docker-compose -f run.yml -p preview-demo up \
-		--scale soffice-server=3 --scale preview-server=1
+		--scale soffice-server=5 --scale preview-server=1
 
 .PHONY: shell
 shell:

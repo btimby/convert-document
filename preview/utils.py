@@ -4,6 +4,8 @@ import asyncio
 import logging
 
 from os.path import splitext
+from os.path import join as pathjoin
+
 from time import time
 
 
@@ -76,5 +78,13 @@ def safe_makedirs(path):
     except FileExistsError as e:
         LOGGER.debug('Ignoring: %s' % e, exc_info=True)
 
+
 def get_extension(path):
     return splitext(path)[1].lower()[1:]
+
+
+def chroot(path, fr, to):
+    'Changes the root (parent) from one directory to another.'
+    assert path.startswith(fr), \
+        'Path %s not rooted in %s' % (path, fr)
+    return pathjoin(to, path[len(fr):].lstrip('/'))

@@ -19,7 +19,7 @@ LOGGER.addHandler(logging.NullHandler())
 def convert(obj, retry=SOFFICE_RETRY):
     cmd = [
         'unoconv', '--server=%s' % SOFFICE_ADDR, '--port=%s' % SOFFICE_PORT,
-        '--stdout'
+        '--stdout', '-e', 'PageRange=1-1',
     ]
 
     file_data = None
@@ -54,13 +54,23 @@ class OfficeBackend(BaseBackend):
         'dot', 'docm', 'dotx', 'dotm', 'psw', 'doc', 'xls', 'ppt', 'wpd',
         'wps', 'csv', 'sdw', 'sgl', 'vor', 'docx', 'xlsx', 'pptx', 'xlsm',
         'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
-        'odt', 'ods', 'odp'
+        'odt', 'ods', 'odp', 'log', 'txt',
+    ]
+    formats = [
+        'image', 'pdf',
     ]
 
     @log_duration
     def _preview(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
             t.write(convert(obj))
+
+            if obj.format == 'pdf':
+                # If the user requested a pdf, send them one.
+                obj.dst = PathModel(t.name)
+                return
+
+            # Otherwise, use the PDF as input for the next step.
             obj.src = PathModel(t.name)
 
         PdfBackend().preview(obj)

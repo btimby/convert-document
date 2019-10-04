@@ -15,7 +15,7 @@ from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
 from preview.utils import (
-    run_in_executor, log_duration, safe_delete, get_extension
+    run_in_executor, log_duration, safe_delete, get_extension, chroot
 )
 from preview.preview import generate, UnsupportedTypeError
 from preview.storage import BASE_PATH
@@ -173,9 +173,9 @@ async def preview(request):
             response = PreviewResponse(obj, status=status)
 
         elif X_ACCEL_REDIR:
+            x_accel_path = chroot(obj.dst.path, BASE_PATH, X_ACCEL_REDIR)
             response = web.Response(status=status)
-            response.headers['X-Accel-Redirect'] = \
-                obj.dst.chroot(BASE_PATH, X_ACCEL_REDIR)
+            response.headers['X-Accel-Redirect'] = x_accel_path
             response.content_type = obj.dst.content_type
 
         else:

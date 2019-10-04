@@ -15,6 +15,9 @@ class BaseBackend(ABC):
         raise NotImplementedError()
 
     def preview(self, obj):
+        if obj.format not in self.formats:
+            raise Exception('Unsupported output format: %s' % obj.format)
+
         try:
             with CONVERSIONS.labels(self.name, obj.extension).time():
                 return self._preview(obj)

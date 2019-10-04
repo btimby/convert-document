@@ -34,6 +34,9 @@ class ImageBackend(BaseBackend):
         'bmp', 'dcx', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'tif', 'xbm',
         'xpm'
     ]
+    formats = [
+        'image',
+    ]
 
     @log_duration
     def _preview(self, obj):

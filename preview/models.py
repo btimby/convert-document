@@ -43,12 +43,6 @@ class PathModel(object):
     def safe_delete(self):
         safe_delete(self._path)
 
-    def chroot(self, fr, to):
-        assert self._path.startswith(fr), \
-            'Invalid root path: %s for: %s' % (fr, self._path)
-        rel = self._path[:len(fr)]
-        return pathjoin(to.lstrip('/'), rel)
-
     def cleanup(self):
         if self.is_temp:
             self.safe_delete()

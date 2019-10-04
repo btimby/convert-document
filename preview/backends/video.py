@@ -73,6 +73,9 @@ class VideoBackend(BaseBackend):
         'webvtt', 'wmv', 'wsaud', 'wsvqa', 'wtv', 'wv', 'xa', 'xbin', 'xmv',
         'xwma', 'yop'
     ]
+    formats = [
+        'image',
+    ]
 
     @log_duration
     def _preview(self, obj):

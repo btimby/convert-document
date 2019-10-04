@@ -6,7 +6,8 @@ import logging
 from os import stat
 from time import time
 
-from os.path import isfile
+from os.path import isfile, dirname
+from os.path import join as pathjoin
 
 from preview.utils import safe_delete, safe_makedirs
 from preview.metrics import STORAGE
@@ -24,7 +25,7 @@ def make_key(*args):
 
 
 def make_path(key):
-    return os.path.join(BASE_PATH, key[:1], key[1:2], key)
+    return pathjoin(BASE_PATH, key[:1], key[1:2], key)
 
 
 def _is_newer(left, right):
@@ -63,9 +64,9 @@ def put(key, obj):
     LOGGER.info('Storing file')
 
     store_path = make_path(key)
-    safe_makedirs(os.path.dirname(store_path))
-    shutil.move(obj.src.path, store_path)
+    safe_makedirs(dirname(store_path))
+    shutil.move(obj.dst.path, store_path)
 
-    path_mtime = stat(obj.src.path).st_mtime
-    os.utime(store_path, (path_mtime, path_mtime))
+    src_mtime = stat(obj.src.path).st_mtime
+    os.utime(store_path, (src_mtime, src_mtime))
     obj.dst = PathModel(store_path)
