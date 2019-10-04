@@ -58,7 +58,7 @@ curl -o out.png -F 'path=/path/to/file.doc' http://localhost:3000/preview/
 curl -o out.png -F 'path=/path/to/file.doc' http://localhost:3000/preview/
 ```
 
-`PVS_WIDTH` & `PVS_HEIGHT` - These options provide the default width and height of generated PNG previews. If the caller omits `width` and `height` parameters to the service, these defaults are used.
+`PVS_DEFAULT_WIDTH` & `PVS_DEFAULT_HEIGHT` - These options provide the default width and height of generated PNG previews. If the caller omits `width` and `height` parameters to the service, these defaults are used.
 
 `PVS_MAX_WIDTH` & `PVS_MAX_HEIGHT` - These options provide the maximum allowable `width` and `height` that a user can request.
 
