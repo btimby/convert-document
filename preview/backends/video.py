@@ -28,7 +28,7 @@ def grab_frames(path, width, height, start=0, count=15):
     # We want to grab 3 frames per second.
     nth = fps // 3
 
-    if start = -1:
+    if start == -1:
         # Flag to start in the middle.
         start = stream.frames // 2
 

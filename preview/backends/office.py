@@ -14,7 +14,9 @@ from preview.models import PathModel
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
-
+TEXT_FORMATS = [
+    'log',
+]
 
 def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
     cmd = [
@@ -30,7 +32,11 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
         cmd.append(obj.src.path)
 
     else:
-        cmd.extend(['-I', obj.src.extension, '--stdin'])
+        format = obj.src.extension
+        if format in TEXT_FORMATS:
+            format = 'txt'
+
+        cmd.extend(['-I', format, '--stdin'])
         with open(obj.src.path, 'rb') as f:
             file_data = f.read()
 
@@ -44,10 +50,19 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
 
             return p.stdout
 
+        except subprocess.CalledProcessError as e:
+            LOGGER.warning(e.stdout)
+            LOGGER.warning(e.stderr)
+            if not retry:
+                raise
+            LOGGER.debug(
+                'unoconv failed with (retrying): %i; %s\n%s',
+                e.returncode, e.stdout, e.stderr)
+
         except Exception as e:
             if not retry:
                 raise
-            LOGGER.debug('unoconv failed, retrying: %s' % e, exc_info=True)
+            LOGGER.debug('unoconv failed, retrying: %s', e, exc_info=True)
 
         finally:
             retry -= 1
@@ -72,6 +87,7 @@ class OfficeBackend(BaseBackend):
 
     @log_duration
     def _preview_image(self, obj):
-        self._preview_pdf(obj)
-        obj.src = obj.dst
+        with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
+            t.write(convert(obj, pages=(1, 1)))
+            obj.src = PathModel(t.name)
         PdfBackend()._preview_image(obj)

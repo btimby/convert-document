@@ -15,9 +15,9 @@ class BaseBackend(object):
             raise Exception('Unsupported output format: %s' % obj.format)
 
         try:
-            with CONVERSIONS.labels(self.name, obj.extension).time():
+            with CONVERSIONS.labels(self.name, obj.extension, obj.format).time():
                 return method(obj)
 
         except Exception:
-            CONVERSION_ERRORS.labels(self.name, obj.extension).inc()
+            CONVERSION_ERRORS.labels(self.name, obj.extension, obj.format).inc()
             raise
