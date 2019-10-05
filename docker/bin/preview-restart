@@ -5,7 +5,7 @@ RESTART_FLAG=/tmp/restart
 touch ${RESTART_FLAG}
 
 read -d '' CMD << EOF
-inotifywait -mqr -e close_write "/app" | while read line
+inotifywait -mqr -e close_write "/app/preview" | while read line
 do
     echo "Application code changed, touching ${RESTART_FLAG}"
     touch -m ${RESTART_FLAG}
