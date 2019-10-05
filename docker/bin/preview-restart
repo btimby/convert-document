@@ -1,0 +1,17 @@
+#!/bin/bash
+
+RESTART_FLAG=/tmp/restart
+
+touch ${RESTART_FLAG}
+
+read -d '' CMD << EOF
+inotifywait -mqr -e close_write "/app" | while read line
+do
+    echo "Application code changed, touching ${RESTART_FLAG}"
+    touch -m ${RESTART_FLAG}
+done
+EOF
+
+echo "Starting preview-restart" > /proc/1/fd/1
+
+exec -a restart bash -c "${CMD} 1> /proc/1/fd/1 2> /proc/1/fd/2" &

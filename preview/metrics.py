@@ -21,15 +21,15 @@ REQUEST_LATENCY = Summary(
     'aiohttp_request_latency_secs', 'Request latency', ['endpoint'])
 PREVIEWS = Summary(
     'pvs_preview_time_secs', 'Preview generation time', [
-        'format', 'width', 'height',
+        'extension', 'format'
     ])
 PREVIEW_SIZE_IN = Summary(
     'pvs_preview_in_bytes', 'Size previewed files', [
-        'backend', 'format'
+        'backend', 'extension', 'format'
     ])
 PREVIEW_SIZE_OUT = Summary(
     'pvs_preview_out_bytes', 'Size of preview image', [
-        'backend', 'format'
+        'backend', 'extension', 'format'
     ])
 CONVERSIONS = Summary(
     'pvs_conversion_time_secs', 'Backend conversion time', [

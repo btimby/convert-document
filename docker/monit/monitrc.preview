@@ -1,6 +1,15 @@
 set pidfile /tmp/monit.pid
+set httpd unixsocket /tmp/monit.sock
+    allow user:pass
 
 check process preview matching "preview"
     start program = "/usr/local/bin/preview-wrapper"
-    stop program = "/usr/bin/pkill -9 preview"
+    stop program = "/usr/bin/pkill -9 -f preview"
     if does not exist then start
+
+check process restart matching "restart"
+    start program = "/usr/local/bin/preview-restart"
+    if does not exist then start
+
+check file restart_flag with path "/tmp/restart"
+    if changed timestamp then exec "/usr/bin/monit restart preview"

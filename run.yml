@@ -5,9 +5,9 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
+      - ./:/app:ro
     tmpfs:
       - /tmp
-    command: ['python3', '-m', 'preview']
     environment:
       - VIRTUAL_HOST=preview
       - VIRTUAL_PORT=3000

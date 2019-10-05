@@ -23,12 +23,12 @@ class UnsupportedTypeError(Exception):
 
 def _preview(be, obj):
     PREVIEW_SIZE_IN.labels(
-        be.name, obj.extension).observe(obj.src.size)
+        be.name, obj.extension, obj.format).observe(obj.src.size)
 
-    with PREVIEWS.labels(obj.extension, obj.width, obj.height).time():
+    with PREVIEWS.labels(obj.extension, obj.format).time():
         be.preview(obj)
         PREVIEW_SIZE_OUT.labels(
-            be.name, obj.extension).observe(obj.src.size)
+            be.name, obj.extension, obj.format).observe(obj.src.size)
 
 
 class Backend(object):

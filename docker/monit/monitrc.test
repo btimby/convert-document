@@ -1,8 +1,10 @@
 set pidfile /tmp/monit.pid
+set httpd unixsocket /tmp/monit.sock
+    allow user:pass
 
-check process soffice matching "soffice.bin"
+check process soffice matching "unoconv"
     start program = "/usr/local/bin/soffice-wrapper"
-    stop program = "/usr/bin/pkill -9 soffice.bin"
+    stop program = "/usr/bin/pkill -9 -f unoconv"
     if does not exist then start
     if total memory > 4096.0 MB for 64 cycles then restart
 
