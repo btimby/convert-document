@@ -49,7 +49,8 @@ class Backend(object):
 
 def generate(obj):
     use_store = not obj.src.is_temp
-    store_key = storage.make_key(obj)
+    store_key = storage.make_key(
+        obj.src.path, obj.format, obj.width, obj.height)
 
     if use_store and storage.get(store_key, obj):
         return

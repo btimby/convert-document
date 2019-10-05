@@ -42,7 +42,10 @@ def get(key, obj):
 
     store_path = make_path(key)
 
-    if _is_newer(obj.src.path, store_path):
+    if not isfile(store_path):
+        return
+
+    elif _is_newer(obj.src.path, store_path):
         LOGGER.info('Removing stale file from storage')
         STORAGE.labels('del').inc()
         safe_delete(store_path)
@@ -50,9 +53,11 @@ def get(key, obj):
     else:
         LOGGER.info('Serving from storage')
         STORAGE.labels('get').inc()
-        # update atime, possible LRU...
+        # update atime, not mtime, possible LRU...
         os.utime(store_path, (time(), stat(store_path).st_mtime))
         obj.dst = PathModel(store_path)
+
+        return True
 
 
 def put(key, obj):
