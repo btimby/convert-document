@@ -1,9 +1,11 @@
 import logging
 
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import av
 from PIL import Image
+import img2pdf
 
 from preview.backends.base import BaseBackend
 from preview.utils import log_duration
@@ -13,7 +15,7 @@ from preview.models import PathModel
 LOGGER = logging.getLogger(__name__)
 
 
-def grab_frames(path, width, height):
+def grab_frames(path, width, height, count=15):
     # Load and resize our foreground image.
     fg = Image.open('images/film-overlay.png')
     fg.thumbnail((width, height))
@@ -32,19 +34,13 @@ def grab_frames(path, width, height):
         if i % nth != 0:
             continue
         # Grab 15 frames (5 seconds)
-        if len(images) == 15:
+        if len(images) == count:
             break
         img = frame.to_image().convert("RGBA")
         img = img.resize((fg.width, fg.height))
         images.append(Image.alpha_composite(img, fg))
 
-    with NamedTemporaryFile(delete=False, suffix='.gif') as t:
-        # save our animated gif, each frame should display for 1/3rd of a
-        # second.
-        images[0].save(t.name, save_all=True, append_images=images[1:],
-                       duration=333, loop=0, optimize=True)
-
-        return t.name
+    return images
 
 
 class VideoBackend(BaseBackend):
@@ -73,11 +69,27 @@ class VideoBackend(BaseBackend):
         'webvtt', 'wmv', 'wsaud', 'wsvqa', 'wtv', 'wv', 'xa', 'xbin', 'xmv',
         'xwma', 'yop'
     ]
-    formats = [
-        'image',
-    ]
 
     @log_duration
-    def _preview(self, obj):
-        path = grab_frames(obj.src.path, obj.width, obj.height)
-        obj.dst = PathModel(path)
+    def _preview_image(self, obj):
+        images = grab_frames(obj.src.path, obj.width, obj.height)
+
+        with NamedTemporaryFile(delete=False, suffix='.gif') as t:
+            # save our animated gif, each frame should display for 1/3rd of a
+            # second.
+            images[0].save(t.name, save_all=True, append_images=images[1:],
+                           duration=333, loop=0, optimize=True)
+            obj.dst = PathModel(t.name)
+
+    @log_duration
+    def _preview_pdf(self, obj):
+        data = BytesIO()
+        image = grab_frames(obj.src.path, obj.width, obj.height, count=1)[0]
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])
+        background.save(data, 'PNG')
+        data.seek(0)
+
+        with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
+            img2pdf.convert(data, outputstream=t)
+            obj.dst = PathModel(t.name)

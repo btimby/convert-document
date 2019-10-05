@@ -56,21 +56,15 @@ class OfficeBackend(BaseBackend):
         'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
         'odt', 'ods', 'odp', 'log', 'txt',
     ]
-    formats = [
-        'image', 'pdf',
-    ]
 
     @log_duration
-    def _preview(self, obj):
+    def _preview_pdf(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
             t.write(convert(obj))
+            obj.dst = PathModel(t.name)
 
-            if obj.format == 'pdf':
-                # If the user requested a pdf, send them one.
-                obj.dst = PathModel(t.name)
-                return
-
-            # Otherwise, use the PDF as input for the next step.
-            obj.src = PathModel(t.name)
-
-        PdfBackend().preview(obj)
+    @log_duration
+    def _preview_image(self, obj):
+        self._preview_pdf(obj)
+        obj.src = obj.dst
+        PdfBackend()._preview_image(obj)

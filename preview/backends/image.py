@@ -32,7 +32,7 @@ def resize_image(path, width, height):
             return t.name
 
 
-def convert(path):
+def convert_image(path):
     data = BytesIO()
     with Image(filename=path, resolution=300) as img:
         img.background_color = Color("white")
@@ -52,16 +52,13 @@ class ImageBackend(BaseBackend):
         'bmp', 'dcx', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'tif', 'xbm',
         'xpm'
     ]
-    formats = [
-        'image', 'pdf',
-    ]
 
     @log_duration
-    def _preview(self, obj):
-        if obj.format == 'image':
-            path = resize_image(obj.src.path, obj.width, obj.height)
-            obj.dst = PathModel(path)
+    def _preview_image(self, obj):
+        path = resize_image(obj.src.path, obj.width, obj.height)
+        obj.dst = PathModel(path)
 
-        elif obj.format == 'pdf':
-            path = convert(obj.src.path)
-            obj.dst = PathModel(path)
+    @log_duration
+    def _preview_pdf(self, obj):
+        path = convert_image(obj.src.path)
+        obj.dst = PathModel(path)
