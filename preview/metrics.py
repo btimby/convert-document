@@ -33,11 +33,11 @@ PREVIEW_SIZE_OUT = Summary(
     ])
 CONVERSIONS = Summary(
     'pvs_conversion_time_secs', 'Backend conversion time', [
-        'backend', 'format',
+        'backend', 'extension', 'format',
     ])
 CONVERSION_ERRORS = Counter(
     'pvs_conversion_errors_total', 'Total errors during format conversion', [
-        'backend', 'format'])
+        'backend', 'extension', 'format'])
 STORAGE = Counter(
     'pvs_storage_operations_total', 'Storage operations', ['operation'])
 STORAGE_BYTES = Gauge('pvs_storage_bytes_total', 'Total bytes in store')
