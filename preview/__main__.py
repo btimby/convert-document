@@ -47,29 +47,6 @@ def check_size(size):
         raise web.HTTPBadRequest(reason='File larger than configured maximum')
 
 
-def parse_pages(pages):
-    if not pages:
-        return (1, 1)
-
-    elif pages == 'all':
-        return (0, MAX_PAGES)
-
-    else:
-        try:
-            first, last = map(int, pages.split('-'))
-
-            # MAX_PAGES == 0 == unlimited, we can let them choose.
-            if MAX_PAGES != 0:
-                # Otherwise limit to MAX_PAGES.
-                last = min(last, first + MAX_PAGES)
-
-            return first, last
-
-        except ValueError as e:
-            LOGGER.debug('Ignoring: %s', e, exc_info=True)
-            raise web.HTTPBadRequest(reason='Pages must be a range n-n')
-
-
 @log_duration
 async def upload(upload):
     extension = get_extension(upload.filename)
@@ -114,6 +91,29 @@ async def download(url):
                         check_size(size)
                         await run_in_executor(t.write)(data)
                     return t.name
+
+
+def parse_pages(pages):
+    if not pages:
+        return (1, 1)
+
+    elif pages == 'all':
+        return (0, MAX_PAGES)
+
+    else:
+        try:
+            first, last = map(int, pages.split('-'))
+
+            # MAX_PAGES == 0 == unlimited, we can let them choose.
+            if MAX_PAGES != 0:
+                # Otherwise limit to MAX_PAGES.
+                last = min(last, first + MAX_PAGES)
+
+            return first, last
+
+        except ValueError as e:
+            LOGGER.debug('Ignoring: %s', e, exc_info=True)
+            raise web.HTTPBadRequest(reason='Pages must be a range n-n')
 
 
 async def get_params(request):
