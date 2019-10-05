@@ -15,7 +15,7 @@ from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
 from preview.utils import (
-    run_in_executor, log_duration, safe_delete, get_extension, chroot
+    run_in_executor, log_duration, get_extension, chroot
 )
 from preview.preview import generate, UnsupportedTypeError
 from preview.storage import BASE_PATH
@@ -224,7 +224,7 @@ async def preview(request):
             response = PreviewResponse(obj, status=status)
 
         # Don't cache error responses.
-        if status == 200 and CACHE_CONTROL:
+        if CACHE_CONTROL and status == 200:
             max_age = 60 * int(CACHE_CONTROL)
             response.headers['Cache-Control'] = \
                 'max-age=%i, public' % max_age
