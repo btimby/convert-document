@@ -3,7 +3,7 @@ import logging
 import functools
 import pathlib
 
-from os.path import normpath, isfile, getsize
+from os.path import normpath, isfile, getsize, dirname
 from os.path import join as pathjoin
 
 from tempfile import NamedTemporaryFile
@@ -35,6 +35,7 @@ from preview.models import PreviewModel
 MEGABYTE = 1024 * 1024
 BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
+ROOT = dirname(__file__)
 
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.StreamHandler())
@@ -171,10 +172,6 @@ async def get_params(request):
 generate = run_in_executor(generate)
 
 
-async def info(request):
-    return web.Response(text="OK")
-
-
 class PreviewResponse(web.FileResponse):
     def __init__(self, obj, *args, **kwargs):
         self._obj = obj
@@ -236,6 +233,14 @@ async def preview(request):
     return response
 
 
+async def info(request):
+    return web.Response(text="OK")
+
+
+async def test(request):
+    return web.FileResponse(pathjoin(ROOT, 'html/test.html'))
+
+
 def main():
     if GID:
         os.setgid(int(GID))
@@ -251,6 +256,7 @@ def main():
     app.add_routes([
         web.post('/preview/', preview),
         web.get('/preview/', preview)])
+    app.add_routes([web.get('/test/', test)])
     app.add_routes([web.get('/metrics/', metrics_handler)])
 
     loop = uvloop.new_event_loop()
