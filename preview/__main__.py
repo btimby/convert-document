@@ -3,7 +3,7 @@ import logging
 import functools
 import pathlib
 
-from os.path import normpath, isfile
+from os.path import normpath, isfile, getsize
 from os.path import join as pathjoin
 
 from tempfile import NamedTemporaryFile
@@ -26,7 +26,7 @@ from preview.metrics import (
 from preview.config import (
     DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH, MAX_HEIGHT,
     LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID, X_ACCEL_REDIR,
-    PORT, PROFILE_PATH
+    PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES
 )
 from preview.models import PreviewModel
 
@@ -42,6 +42,34 @@ LOGGER.setLevel(LOGLEVEL)
 logging.getLogger('aiohttp').setLevel(HTTP_LOGLEVEL)
 
 
+def check_size(size):
+    if MAX_FILE_SIZE and size > MAX_FILE_SIZE:
+        raise web.HTTPBadRequest(reason='File larger than configured maximum')
+
+
+def parse_pages(pages):
+    if not pages:
+        return (1, 1)
+
+    elif pages == 'all':
+        return (0, MAX_PAGES)
+
+    else:
+        try:
+            first, last = map(int, pages.split('-'))
+
+            # MAX_PAGES == 0 == unlimited, we can let them choose.
+            if MAX_PAGES != 0:
+                # Otherwise limit to MAX_PAGES.
+                last = min(last, first + MAX_PAGES)
+
+            return first, last
+
+        except ValueError as e:
+            LOGGER.debug('Ignoring: %s', e, exc_info=True)
+            raise web.HTTPBadRequest(reason='Pages must be a range n-n')
+
+
 @log_duration
 async def upload(upload):
     extension = get_extension(upload.filename)
@@ -50,10 +78,13 @@ async def upload(upload):
 
     with tl.time(), tip.track_inprogress():
         with NamedTemporaryFile(delete=False, suffix='.%s' % extension) as t:
+            size = 0
             while True:
                 data = await run_in_executor(upload.file.read)(BUFFER_SIZE)
                 if not data:
                     break
+                size += len(data)
+                check_size(size)
                 await run_in_executor(t.write)(data)
         return t.name
 
@@ -72,12 +103,15 @@ async def download(url):
                         reason='Could not download: %s, %s' % (
                             url, resp.reason))
 
+                size = 0
                 with NamedTemporaryFile(
                         delete=False, suffix='.%s' % extension) as t:
                     while True:
                         data = await resp.content.read(BUFFER_SIZE)
                         if not data:
                             break
+                        size += len(data)
+                        check_size(size)
                         await run_in_executor(t.write)(data)
                     return t.name
 
@@ -86,7 +120,9 @@ async def get_params(request):
     """
     """
     if request.method == 'POST':
-        data = await request.post()
+        data = {}
+        data.update(request.query)
+        data.update(await request.post())
 
     else:
         data = request.query
@@ -101,12 +137,18 @@ async def get_params(request):
     width = int(data.get('width', DEFAULT_WIDTH))
     height = int(data.get('height', DEFAULT_HEIGHT))
     width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
+    pages = parse_pages(data.get('pages'))
+
+    args = {
+        'pages': pages,
+    }
 
     if path:
         # TODO: sanitize this path, ensure it is rooted in FILE_ROOT
         origin = path
         path = normpath(path)
         path = pathjoin(FILE_ROOT, path)
+        check_size(getsize(path))
 
     elif file:
         origin = None
@@ -123,7 +165,7 @@ async def get_params(request):
         raise web.HTTPNotFound()
 
     return PreviewModel(path, width, height, format, origin=origin,
-                        name=name, content_type=content_type)
+                        name=name, content_type=content_type, args=args)
 
 
 generate = run_in_executor(generate)

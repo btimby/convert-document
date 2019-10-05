@@ -13,23 +13,29 @@ from preview.models import PathModel
 LOGGER = logging.getLogger(__name__)
 
 
-def _run_ghostscript(obj, device, outfile):
+def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
     # An empty file is apparently a valid file as far as ghostscript is
     # concerned. However, it produces an empty image file, which causes
     # errors download. Detect an empty file and raise here.
     if not obj.src.size:
         raise Exception('Invalid file size 0')
 
-    args = [
-        b'-dFirstPage=1', b'-dLastPage=1',
+    args = []
+    if pages != (0, 0):
+        args.extend([
+            b'-dFirstPage=%i' % pages[0], b'-dLastPage=%i' % pages[1]])
+
+    args.extend([
         b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-q',
         b'-sDEVICE=%s' % bytes(device, 'utf8'),
         b'-sOutputFile=%s' % bytes(outfile, 'utf8'),
         bytes(obj.src.path, 'utf8'),
-    ]
+    ])
 
-    # TODO: fix this bullshit lib. You cannot clean up the object with
-    # try / except if __init__() raises.
+    LOGGER.debug('Ghostscript args: %s', args)
+
+    # TODO: fix this lib. You cannot clean up the object with try / except if
+    # __init__() raises.
     with ghostscript.Ghostscript(*args):
         pass
 
@@ -42,8 +48,10 @@ class PdfBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
+        pages = obj.args.get('pages')
+
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            _run_ghostscript(obj, 'pdfwrite', t.name)
+            _run_ghostscript(obj, 'pdfwrite', t.name, pages=pages)
             obj.dst = PathModel(t.name)
 
     @log_duration

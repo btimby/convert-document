@@ -50,7 +50,7 @@ class PathModel(object):
 
 class PreviewModel(object):
     def __init__(self, path, width, height, format, origin=None, name=None,
-                 content_type=None):
+                 content_type=None, args=None):
         self._width = width
         self._height = height
         self._format = format
@@ -58,6 +58,9 @@ class PreviewModel(object):
         self._name = name or basename(path)
         self._src = PathModel(path, content_type=content_type)
         self._dst = None
+        self._args = {}
+        if args:
+            self._args.update(args)
 
     @property
     def origin(self):
@@ -106,6 +109,10 @@ class PreviewModel(object):
         if self._dst is not None:
             self._dst.cleanup()
         self._dst = obj
+
+    @property
+    def args(self):
+        return self._args
 
     def cleanup(self):
         'Removes temporary files.'

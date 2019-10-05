@@ -16,11 +16,14 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def convert(obj, retry=SOFFICE_RETRY):
+def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
     cmd = [
         'unoconv', '--server=%s' % SOFFICE_ADDR, '--port=%s' % SOFFICE_PORT,
-        '--stdout', '-e', 'PageRange=1-1',
+        '--stdout',
     ]
+
+    if pages != (0, 0):
+        cmd.extend(['-e', 'PageRange=%i-%i' % pages])
 
     file_data = None
     if obj.src.is_shared:
@@ -30,6 +33,8 @@ def convert(obj, retry=SOFFICE_RETRY):
         cmd.extend(['-I', obj.src.extension, '--stdin'])
         with open(obj.src.path, 'rb') as f:
             file_data = f.read()
+
+    LOGGER.debug('unoconv cmd: %s' % cmd)
 
     while True:
         try:
@@ -59,8 +64,10 @@ class OfficeBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
+        pages = obj.args.get('pages')
+
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            t.write(convert(obj))
+            t.write(convert(obj, pages=pages))
             obj.dst = PathModel(t.name)
 
     @log_duration
