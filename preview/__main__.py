@@ -114,7 +114,8 @@ def parse_pages(pages):
 
         except ValueError as e:
             LOGGER.debug('Ignoring: %s', e, exc_info=True)
-            raise web.HTTPBadRequest(reason='Pages must be a range n-n')
+            raise web.HTTPBadRequest(
+                reason='Pages must be a range n-n or "all"')
 
 
 async def get_params(request):

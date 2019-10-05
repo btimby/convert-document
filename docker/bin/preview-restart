@@ -2,6 +2,10 @@
 
 RESTART_FLAG=/tmp/restart
 
+if [ "${PVS_RELOAD}" == "" ]; then
+    exit 0
+fi
+
 touch ${RESTART_FLAG}
 
 read -d '' CMD << EOF

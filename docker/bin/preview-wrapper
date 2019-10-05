@@ -4,4 +4,4 @@ cd /app
 
 echo "Starting preview-server" > /proc/1/fd/1
 
-exec -a preview /usr/bin/python3 -m preview 1> /proc/1/fd/1 2> /proc/1/fd/2 &
+/usr/bin/python3 -m preview 1> /proc/1/fd/1 2> /proc/1/fd/2 &

@@ -5,7 +5,6 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
-      - ./:/app:ro
     tmpfs:
       - /tmp
     environment:
@@ -34,7 +33,7 @@ services:
   nginx:
     image: jwilder/nginx-proxy
     ports:
-      - 8080:80
+      - 3000:80
     volumes:
       - ./fixtures:/mnt/files:ro
       - /tmp/preview:/mnt/store
@@ -45,7 +44,7 @@ services:
   haproxy:
     image: haproxy
     ports:
-      - 8082:8080
+      - 3001:8080
     volumes:
       - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
 
@@ -59,7 +58,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - 3000:3000
+      - 3002:3000
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:

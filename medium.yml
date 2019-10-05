@@ -7,14 +7,14 @@ services:
       - /tmp/preview:/mnt/store
     tmpfs:
       - /tmp
+    ports:
+      - 3000:3000
     environment:
-      - VIRTUAL_HOST=preview
-      - VIRTUAL_PORT=3000
-      - PVS_X_ACCEL_REDIRECT=/internal/preview
+      - PVS_STORE=/mnt/store
       - PVS_UID=101
       - PVS_GID=101
-      - PVS_LOGLEVEL=ERROR
-      - PVS_HTTP_LOGLEVEL=WARNING
+      - PVS_LOGLEVEL=WARNING
+      - PVS_HTTP_LOGLEVEL=INFO
       - PVS_SOFFICE_ADDR=haproxy
       - PVS_SOFFICE_PORT=2002
       - PVS_METRICS=off
@@ -29,20 +29,9 @@ services:
       - PVS_SOFFICE_ADDR=0.0.0.0
       - PVS_SOFFICE_PORT=2002
 
-  nginx:
-    image: jwilder/nginx-proxy
-    ports:
-      - 8080:80
-    volumes:
-      - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
-      - ./docker/nginx/preview_location:/etc/nginx/vhost.d/preview_location:ro
-      - ./docker/nginx/preview:/etc/nginx/vhost.d/preview:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-
   haproxy:
     image: haproxy
     ports:
-      - 8082:8080
+      - 3001:8080
     volumes:
       - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro

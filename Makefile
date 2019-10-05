@@ -19,26 +19,25 @@ Pipfile: Pipfile.lock
 	pipenv install --dev
 	touch Pipfile
 
-.PHONY: start-test-server
-start-test-server:
-	docker run -d --rm --name preview-server-test -v ${CURDIR}/docker/monit/monitrc.test:/etc/monitrc btimby/preview-server
-
 .PHONY: test
 test: Pipfile
 	pipenv run python3 test.py
 
-.PHONY: stop-test-server
-stop-test-server:
-	docker kill preview-server-test
+.PHONY: small
+small: build
+	docker-compose -f small.yml -p preview-small up
 
-.PHONY: test.html
-test.html:
-	firefox file://${CURDIR}/test.html
 
-.PHONY: run
-run: build
-	docker-compose -f run.yml -p preview-demo up \
-		--scale soffice-server=5 --scale preview-server=1
+.PHONY: medium
+medium: build
+	docker-compose -f medium.yml -p preview-medium up --scale soffice-server=3
+
+
+.PHONY: large
+large: build
+	docker-compose -f large.yml -p preview-large up \
+		--scale soffice-server=5 --scale preview-server=2
+
 
 .PHONY: shell
 shell:
