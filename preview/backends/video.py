@@ -28,6 +28,10 @@ def grab_frames(path, width, height, start=0, count=15):
     # We want to grab 3 frames per second.
     nth = fps // 3
 
+    if start = -1:
+        # Flag to start in the middle.
+        start = stream.frames // 2
+
     images = []
     for i, frame in enumerate(in_.decode(video=0)):
         if i < start:
@@ -87,7 +91,7 @@ class VideoBackend(BaseBackend):
     def _preview_pdf(self, obj):
         data = BytesIO()
         image = grab_frames(
-            obj.src.path, obj.width, obj.height, start=30, count=1)[0]
+            obj.src.path, obj.width, obj.height, start=-1, count=1)[0]
         background = Image.new("RGB", image.size, (255, 255, 255))
         background.paste(image, mask=image.split()[3])
         background.save(data, 'PNG')
