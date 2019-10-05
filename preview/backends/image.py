@@ -34,13 +34,14 @@ def resize_image(path, width, height):
 
 def convert_image(path):
     data = BytesIO()
+    # Remove alpha channel
     with Image(filename=path, resolution=300) as img:
         img.background_color = Color("white")
         img.alpha_channel = 'deactivate'
         img.format = 'png'
         img.save(file=data)
-
     data.seek(0)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as t:
         img2pdf.convert(data, outputstream=t)
         return t.name
@@ -60,5 +61,6 @@ class ImageBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
-        path = convert_image(obj.src.path)
+        self._preview_image(obj)
+        path = convert_image(obj.dst.path)
         obj.dst = PathModel(path)

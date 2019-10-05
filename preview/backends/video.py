@@ -92,6 +92,8 @@ class VideoBackend(BaseBackend):
         data = BytesIO()
         image = grab_frames(
             obj.src.path, obj.width, obj.height, start=-1, count=1)[0]
+
+        # Remove alpha channel
         background = Image.new("RGB", image.size, (255, 255, 255))
         background.paste(image, mask=image.split()[3])
         background.save(data, 'PNG')

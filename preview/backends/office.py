@@ -18,6 +18,7 @@ TEXT_FORMATS = [
     'log',
 ]
 
+
 def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
     cmd = [
         'unoconv', '--server=%s' % SOFFICE_ADDR, '--port=%s' % SOFFICE_PORT,
@@ -51,6 +52,7 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
             return p.stdout
 
         except subprocess.CalledProcessError as e:
+            LOGGER.warning(e, exc_info=True)
             LOGGER.warning(e.stdout)
             LOGGER.warning(e.stderr)
             if not retry:

@@ -109,11 +109,17 @@ async def do_request(i, session):
     data['format'] = random.choice(FORMATS)
     data.update(random.choice(FILES))
 
-    # POST 10% of files to server.
     if 'path' in data and random.random() >= 0.9:
+        # Touch 10% of the files (simulate modified input file).
+        os.utime('fixtures/%s' % data['path'], (time(), time()))
+        return await do_get(i, data, session)
+
+    elif 'path' in data and random.random() >= 0.9:
+        # POST 10% of files to server.
         return await do_post(i, data, session)
 
     else:
+        # Just do a regular GET request (with path or url).
         return await do_get(i, data, session)
 
 
