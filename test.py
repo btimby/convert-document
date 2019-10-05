@@ -32,6 +32,10 @@ FILES = [
     {'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4'},
     {'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
 ]
+FORMATS = [
+    'pdf',
+    'image',
+]
 FILES.extend([
     {'path': path} for path in os.listdir('fixtures')
 ])
@@ -74,10 +78,12 @@ class TaskPool(object):
 
 async def do_response(i, response):
     res = await response.read()
-    print('\033[K', i, response.status, len(res), res[:20],
-          end='\r')
-    if response.status != 200:
-        print('\n', end='')
+    if response.status == 200:
+        print('\033[K', i, response.status, len(res), res[:20],
+              end='\r')
+
+    else:
+        print('\033[K', i, response.status, len(res), res[:60])
     return response.status
 
 
@@ -99,6 +105,8 @@ async def do_request(i, session):
         'width': width,
         'height': height,
     }
+    # data['format'] = 'image'
+    data['format'] = random.choice(FORMATS)
     data.update(random.choice(FILES))
 
     # POST 10% of files to server.
