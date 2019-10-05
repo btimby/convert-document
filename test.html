@@ -22,6 +22,11 @@
                 <option value="240x180">240x180</option>
                 <option value="160x120">160x120</option>
             </select>
+            <label for="width">Format</label>
+            <select id="format" name="format">
+                <option value="image" selected>Image</option>
+                <option value="pdf">PDF</option>
+            </select>
             <label for="width">Refresh</label>
             <select id="refr" name="res">
                 <option value="" selected>disabled</option>
@@ -35,7 +40,7 @@
             <input type="hidden" name="height" id="height"/>
         </form><br/>
 
-        <div id="images"></div>
+        <div id="previews"></div>
     </body>
     <script
         src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -47,7 +52,7 @@
 
             var refreshHandle = null;
             var baseUrl = 'http://preview:8080/preview/';
-            var images = [
+            var documents = [
                 { path: 'Quicktime_Video.mov' },
                 { path: 'sample.odt' },
                 { path: 'sample.pdf' },
@@ -62,28 +67,37 @@
                 { url: 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
             ];
 
-            function renderImages() {
+            function renderPreviews() {
                 var res = $('#res').val();
                 var [w, h] = res.split('x');
 
                 $('#width').val(w);
                 $('#height').val(h);
 
-                $('#images').empty();
-                $(images).each(function(index, obj) {
-                    var img = $('<img/>')
-                        .css('background', 'url("' + spinner + '") no-repeat center')
-                        .css({width: w, height: h});
+                $('#previews').empty();
+                $(documents).each(function(index, obj) {
+                    var fmt = $('#format').val();
+
+                    if (fmt == 'pdf') {
+                        var elem = $('<iframe/>')
+                            .css({width: w, height: h});
+
+                    } else {
+                        var elem = $('<img/>')
+                            .css('background', 'url("' + spinner + '") no-repeat center')
+                            .css({width: w, height: h});
+                    }
+
                     if (obj.path) {
                         var src = baseUrl + '?path=' + obj.path;
-                        img.attr('title', obj.path);
+                        elem.attr('title', obj.path);
                     } else if (obj.url) {
                         var src = baseUrl + '?url=' + obj.url;
-                        img.attr('title', obj.url);
+                        elem.attr('title', obj.url);
                     }
-                    src += '&width=' + w + '&height=' + h;
-                    img.attr('src', src)
-                        .appendTo($('#images'));
+                    src += '&width=' + w + '&height=' + h + '&format=' + fmt;
+                    elem.attr('src', src)
+                        .appendTo($('#previews'));
                 });
 
                 refresh();
@@ -104,7 +118,11 @@
             }
 
             $('#res').change(function() {
-                renderImages();
+                renderPreviews();
+            });
+
+            $('#format').change(function() {
+                renderPreviews();
             });
 
             $('#refr').change(function() {
@@ -113,7 +131,7 @@
 
             $('#form').attr('action', baseUrl);
 
-            renderImages();
+            renderPreviews();
         });
     </script>
     </html>

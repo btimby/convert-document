@@ -23,9 +23,9 @@ def _run_ghostscript(obj, device, outfile):
     args = [
         b'-dFirstPage=1', b'-dLastPage=1',
         b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-q',
-        b'-sDEVICE=%s' % device.encode('utf8'),
-        b'-sOutputFile=%s' % outfile.encode('utf8'),
-        obj.src.path.encode('utf8'),
+        b'-sDEVICE=%s' % bytes(device, 'utf8'),
+        b'-sOutputFile=%s' % bytes(outfile, 'utf8'),
+        bytes(obj.src.path, 'utf8'),
     ]
 
     # TODO: fix this bullshit lib. You cannot clean up the object with
@@ -43,7 +43,7 @@ class PdfBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            _run_ghostscript(obj, 'pdfwriter', t.name)
+            _run_ghostscript(obj, 'pdfwrite', t.name)
             obj.dst = PathModel(t.name)
 
     @log_duration

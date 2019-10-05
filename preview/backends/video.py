@@ -15,7 +15,7 @@ from preview.models import PathModel
 LOGGER = logging.getLogger(__name__)
 
 
-def grab_frames(path, width, height, count=15):
+def grab_frames(path, width, height, start=0, count=15):
     # Load and resize our foreground image.
     fg = Image.open('images/film-overlay.png')
     fg.thumbnail((width, height))
@@ -30,6 +30,8 @@ def grab_frames(path, width, height, count=15):
 
     images = []
     for i, frame in enumerate(in_.decode(video=0)):
+        if i < start:
+            continue
         # Grab every nth frame.
         if i % nth != 0:
             continue
@@ -84,7 +86,8 @@ class VideoBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         data = BytesIO()
-        image = grab_frames(obj.src.path, obj.width, obj.height, count=1)[0]
+        image = grab_frames(
+            obj.src.path, obj.width, obj.height, start=30, count=1)[0]
         background = Image.new("RGB", image.size, (255, 255, 255))
         background.paste(image, mask=image.split()[3])
         background.save(data, 'PNG')
