@@ -893,10 +893,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -941,5 +937,5 @@
   "timezone": "",
   "title": "Preview server",
   "uid": "F58qQi2Zz",
-  "version": 2
+  "version": 1
 }
