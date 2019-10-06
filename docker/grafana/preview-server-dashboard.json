@@ -930,12 +930,12 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Preview server",
   "uid": "F58qQi2Zz",
-  "version": 1
+  "version": 2
 }

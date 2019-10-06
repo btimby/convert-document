@@ -5,6 +5,7 @@ import logging
 UNIT_VALUES = {
     'd': 86400,
     'h': 3600,
+    'm': 60,
     's': 1,
 }
 
@@ -19,15 +20,17 @@ def interval(s):
     if s is None:
         return
 
+    s = s.lower()
     # Default unit is seconds.
     unit = 1
-    if s[-1] in 'dhs':
+    if s[-1] in UNIT_VALUES.keys():
         unit, s = s[-1], s[:-1]
         try:
             unit = UNIT_VALUES[unit]
 
         except KeyError:
             raise Exception('Interval unit should be d, h, or s')
+
     try:
         seconds = int(s)
 
@@ -61,4 +64,4 @@ METRICS = boolean(os.environ.get('PVS_METRICS'))
 PROFILE_PATH = os.environ.get('PVS_PROFILE_PATH')
 MAX_FILE_SIZE = int(os.environ.get('PVS_MAX_FILE_SIZE', '0'))
 MAX_PAGES = int(os.environ.get('PVS_MAX_PAGES', '0'))
-MAX_STORAGE_AGE = interval(os.environ.get('PVS_MAX_STORAGE_AGE'))
+MAX_STORAGE_AGE = interval(os.environ.get('PVS_STORE_MAX_AGE'))

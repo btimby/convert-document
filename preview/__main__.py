@@ -24,9 +24,9 @@ from preview.metrics import (
     TRANSFERS_IN_PROGRESS
 )
 from preview.config import (
-    DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH, MAX_HEIGHT,
-    LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID, X_ACCEL_REDIR,
-    PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES
+    boolean, DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH,
+    MAX_HEIGHT, LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID,
+    X_ACCEL_REDIR, PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES
 )
 from preview.models import PreviewModel
 
@@ -141,8 +141,13 @@ async def get_params(request):
     width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
     pages = parse_pages(data.get('pages'))
 
+    store = None
+    if 'pvs-store-disabled' in request.headers:
+        store = boolean(request.headers['pvs-store-disabled'])
+
     args = {
         'pages': pages,
+        'store': store,
     }
 
     if path:
