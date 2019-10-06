@@ -12,7 +12,7 @@ from aiohttp.client_exceptions import ClientConnectorError, \
     ServerDisconnectedError
 
 
-URL = os.environ.get('URL', 'http://preview:8080/preview/')
+URL = os.environ.get('URL', 'http://preview:3000/preview/')
 TOTAL = int(os.environ.get('TOTAL', '10000'))
 CONCURRENT = int(os.environ.get('CONCURRENT', '20'))
 RESOLUTIONS = [
@@ -100,7 +100,9 @@ async def do_post(i, data, session):
 
 
 async def do_request(i, session):
-    width, height = random.choice(RESOLUTIONS)
+    # width, height = random.choice(RESOLUTIONS)
+    width = str(random.randint(100, 400))
+    height = str(random.randint(100, 400))
     data = {
         'width': width,
         'height': height,
