@@ -2,6 +2,7 @@ import os
 import shutil
 import hashlib
 import logging
+import errno
 
 from os import stat
 from time import time
@@ -69,8 +70,16 @@ def put(key, obj):
     LOGGER.info('Storing file')
 
     store_path = make_path(key)
-    safe_makedirs(dirname(store_path))
-    shutil.move(obj.dst.path, store_path)
+    try:
+        safe_makedirs(dirname(store_path))
+        shutil.move(obj.dst.path, store_path)
+
+    except IOError as e:
+        if e.errno != errno.ENOSPC:
+            raise
+        # If disk is full, return. The dst path has not yet been modified. The
+        # passed in path will be served.
+        return
 
     src_mtime = stat(obj.src.path).st_mtime
     os.utime(store_path, (src_mtime, src_mtime))
