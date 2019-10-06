@@ -18,7 +18,7 @@ from preview.utils import (
     run_in_executor, log_duration, get_extension, chroot
 )
 from preview.preview import generate, UnsupportedTypeError
-from preview.storage import BASE_PATH
+from preview.storage import BASE_PATH, Cleanup
 from preview.metrics import (
     metrics_handler, metrics_middleware, TRANSFER_LATENCY,
     TRANSFERS_IN_PROGRESS
@@ -264,6 +264,9 @@ def main():
     # Conversion backends are blocking and run in the following executor.
     loop.set_default_executor(ThreadPoolExecutor(max_workers=40))
     asyncio.set_event_loop(loop)
+
+    # TODO: probably a better way...
+    cleanup = Cleanup(loop)
 
     # TODO: figure out how to wait for pending requests before exiting.
     web.run_app(app, port=PORT)

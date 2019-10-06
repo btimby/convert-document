@@ -10,9 +10,9 @@ from time import time
 from os.path import isfile, dirname
 from os.path import join as pathjoin
 
-from preview.utils import safe_delete, safe_makedirs
-from preview.metrics import STORAGE
-from preview.config import BASE_PATH
+from preview.utils import safe_delete, safe_makedirs, run_in_executor
+from preview.metrics import STORAGE, STORAGE_FILES, STORAGE_BYTES
+from preview.config import BASE_PATH, MAX_STORAGE_AGE
 from preview.models import PathModel
 
 
@@ -84,3 +84,56 @@ def put(key, obj):
     src_mtime = stat(obj.src.path).st_mtime
     os.utime(store_path, (src_mtime, src_mtime))
     obj.dst = PathModel(store_path)
+
+
+class Cleanup(object):
+    def __init__(self, loop, base_path=BASE_PATH,
+                 max_storage_age=MAX_STORAGE_AGE):
+        self.loop = loop
+        self.base_path = base_path
+        self.max_storage_age = None
+        self.max_storage_age = max_storage_age
+        self.loop.call_soon(run_in_executor(self.cleanup))
+
+    def scan(self):
+        # walk storage location
+        files = []
+        for dir, _, filenames in os.walk(BASE_PATH):
+            # enumerate files
+            for fn in filenames:
+                path = pathjoin(BASE_PATH, dir, fn)
+                atime = os.stat(path).st_atime
+                size = os.path.getsize(path)
+                files.append((atime, size, path))
+
+        # sort by atime
+        files.sort(key=lambda x: -x[0])
+
+        # determine if we are over-size
+        size = sum(x[1] for x in files)
+
+        LOGGER.debug('Found: %i files, totaling %i bytes', len(files), size)
+
+        STORAGE_FILES.set(len(files))
+        STORAGE_BYTES.set(size)
+
+        return size, files
+
+    def cleanup(self):
+        size, files = self.scan()
+
+        if self.base_path is None or self.max_storage_age is None:
+            return
+
+        # prune files older than max_storage_age
+        removed, removed_size = 0, 0
+        for atime, size, path in files:
+            if time() - atime > self.max_storage_age:
+                removed += 1
+                removed_size += size
+                safe_delete(path)
+
+        LOGGER.debug('Removed: %i files, totaling %i bytes',
+                     removed, removed_size)
+
+        self.loop.call_later(15, self.cleanup)
