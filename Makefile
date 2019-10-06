@@ -38,6 +38,10 @@ large: build
 	docker-compose -f large.yml -p preview-large up \
 		--scale soffice-server=5 --scale preview-server=2
 
+.PHONY: dev
+dev: build
+	docker-compose -f dev.yml -p preview-dev up --scale soffice-server=3
+
 
 .PHONY: shell
 shell:
