@@ -13,6 +13,7 @@ services:
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
       - PVS_STORE=/mnt/store
+      - PVS_STORE_MAX_AGE=1h
       - PVS_UID=101
       - PVS_GID=101
       - PVS_LOGLEVEL=DEBUG
