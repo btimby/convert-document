@@ -3,6 +3,7 @@ import logging
 import functools
 import pathlib
 
+from io import StringIO
 from os.path import normpath, isfile, getsize, dirname
 from os.path import join as pathjoin
 
@@ -17,7 +18,7 @@ from aiohttp.web_middlewares import normalize_path_middleware
 from preview.utils import (
     run_in_executor, log_duration, get_extension, chroot
 )
-from preview.preview import generate, UnsupportedTypeError
+from preview.preview import generate, UnsupportedTypeError, Backend
 from preview.storage import BASE_PATH, Cleanup
 from preview.metrics import (
     metrics_handler, metrics_middleware, TRANSFER_LATENCY,
@@ -239,8 +240,36 @@ async def preview(request):
     return response
 
 
+def extension_list():
+    ext_list = StringIO()
+    ext_list.write('extensions = [')
+    for extensions, obj in Backend.backends.items():
+        ext_list.write('\r\n    # %s backend extensions' % obj.name.title())
+        before, after, llen = '', '', 0
+        for extension in extensions:
+            ext_str = "'%s'," % extension
+
+            if llen == 0 or llen + len(ext_str) + 1 >= 80:
+                llen = 0
+                before, after = '\r\n    ', ''
+
+            else:
+                before, after = ' ', ''
+
+            llen += len(before) + len(ext_str) + len(after)
+
+            ext_list.write(before)
+            ext_list.write(ext_str)
+            ext_list.write(after)
+
+        ext_list.write('\r\n')
+
+    ext_list.write(']\r\n')
+    return ext_list.getvalue()
+
+
 async def info(request):
-    return web.Response(text="OK")
+    return web.Response(text=extension_list())
 
 
 async def test(request):
@@ -271,7 +300,7 @@ def main():
     asyncio.set_event_loop(loop)
 
     # TODO: probably a better way...
-    cleanup = Cleanup(loop)
+    Cleanup(loop)
 
     # TODO: figure out how to wait for pending requests before exiting.
     web.run_app(app, port=PORT)
