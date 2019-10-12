@@ -20,6 +20,7 @@ from preview.models import PathModel
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
+EIGHT_HOURS = 3600 * 8
 
 
 def make_key(*args):
@@ -102,6 +103,8 @@ class Cleanup(object):
         self.loop = loop
         self.base_path = base_path
         self.max_storage_age = max_storage_age
+        self.remove_interval = max(900, max_storage_age or 0 / 2)
+        self.remove_time = 0
         self.loop.call_soon(run_in_executor(self.cleanup))
 
     def scan(self):
@@ -123,26 +126,32 @@ class Cleanup(object):
 
         return size, files
 
+    def should_remove(self):
+        if self.base_path is None or self.max_storage_age is None:
+            return
+
+        if time() - self.remove_time >= self.remove_interval:
+            self.remove_time = time()
+            return True
+
     @log_duration
     def cleanup(self):
         try:
             size, files = self.scan()
-
-            if self.base_path is None or self.max_storage_age is None:
-                return
-
-            # prune files older than max_storage_age
             count = len(files)
-            for atime, file_size, path in files:
-                if time() - atime > self.max_storage_age:
-                    size, count = size - file_size, count - 1
-                    safe_delete(path)
+
+            if self.should_remove():
+                LOGGER.debug('Performing removal')
+                # Prune files older than max_storage_age
+                for atime, file_size, path in files:
+                    if time() - atime > self.max_storage_age:
+                        size, count = size - file_size, count - 1
+                        safe_delete(path)
 
             LOGGER.info('Storage: %i files, totaling %i bytes',
                         count, size)
-
-        finally:
-            self.loop.call_later(60, self.cleanup)
-
             STORAGE_FILES.set(count)
             STORAGE_BYTES.set(size)
+
+        finally:
+            self.loop.call_later(60, run_in_executor(self.cleanup))
