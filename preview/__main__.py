@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
+from preview import icons
 from preview.utils import (
     run_in_executor, log_duration, get_extension, chroot
 )
@@ -156,6 +157,9 @@ async def get_params(request):
         origin = path
         path = normpath(path)
         path = pathjoin(FILE_ROOT, path)
+        if not isfile(path):
+            raise web.HTTPBadRequest(reason='Invalid path')
+
         check_size(getsize(path))
 
     elif file:
@@ -207,11 +211,10 @@ async def preview(request):
             # if an error occurred. We also disable caching in the case of
             # an error response.
             LOGGER.exception(e)
-            path = 'images/error.png'
-            if isinstance(e, UnsupportedTypeError):
-                path = 'images/unsupported.png'
             obj.cleanup()
-            obj = PreviewModel(path, obj.width, obj.height, obj.format)
+            if not icons.get(obj):
+                raise web.HTTPInternalServerError()
+
             await generate(obj)
             status = 203
 
@@ -240,7 +243,7 @@ async def preview(request):
     return response
 
 
-def extension_list():
+async def extension_list():
     ext_list = StringIO()
     ext_list.write('extensions = [')
     for extensions, obj in Backend.backends.items():
@@ -269,7 +272,7 @@ def extension_list():
 
 
 async def info(request):
-    return web.Response(text=extension_list())
+    return web.Response(text=await extension_list())
 
 
 async def test(request):

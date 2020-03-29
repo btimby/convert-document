@@ -44,7 +44,7 @@ class Backend(object):
             if obj.extension in extensions:
                 return _preview(be, obj)
 
-        raise UnsupportedTypeError('Unsupported file type: %s' % obj.extension)
+        raise UnsupportedTypeError('No backend for %s', obj.extension)
 
 
 def generate(obj):
