@@ -23,6 +23,13 @@ services:
     image: btimby/preview-soffice
     volumes:
       - ./fixtures:/mnt/files:ro
+    labels:
+      - autoheal
+    healthcheck:
+      test: ["CMD", "timeout", "10", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 0
     tmpfs:
       - /tmp
     environment:
@@ -35,3 +42,11 @@ services:
       - 3001:8080
     volumes:
       - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+
+  autoheal:
+    image: willfarrell/autoheal
+    restart: always
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

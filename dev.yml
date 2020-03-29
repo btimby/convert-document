@@ -27,6 +27,13 @@ services:
     image: btimby/preview-soffice
     volumes:
       - ./fixtures:/mnt/files:ro
+    labels:
+      - autoheal
+    healthcheck:
+      test: ["CMD", "timeout", "10", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 0
     tmpfs:
       - /tmp
     environment:
@@ -68,3 +75,11 @@ services:
       - ./docker/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
       - ./docker/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
       - ./docker/grafana/preview-server-dashboard.json:/etc/grafana/provisioning/dashboards/preview-server-dashboard.json:ro
+
+  autoheal:
+    image: willfarrell/autoheal
+    restart: always
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -4,11 +4,11 @@ services:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
+      - /tmp/preview:/mnt/store
     ports:
       - 3000:3000
     tmpfs:
       - /tmp
-      - /mnt/store
     environment:
       - PVS_STORE=/mnt/store
       - PVS_UID=101
