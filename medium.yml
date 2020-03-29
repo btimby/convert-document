@@ -1,18 +1,22 @@
 version: '3'
+
+volumes:
+  previews:
+
 services:
   preview-server:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
+      - preview:/mnt/store
     tmpfs:
       - /tmp
     ports:
       - 3000:3000
     environment:
       - PVS_STORE=/mnt/store
-      - PVS_UID=101
-      - PVS_GID=101
+#      - PVS_UID=101
+#      - PVS_GID=101
       - PVS_LOGLEVEL=WARNING
       - PVS_HTTP_LOGLEVEL=INFO
       - PVS_SOFFICE_ADDR=haproxy

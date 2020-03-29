@@ -1,10 +1,14 @@
 version: '3'
+
+volumes:
+  previews:
+
 services:
   preview-server:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
+      - previews:/mnt/store
     tmpfs:
       - /tmp
     environment:
@@ -12,8 +16,8 @@ services:
       - VIRTUAL_PORT=3000
       - PVS_X_ACCEL_REDIRECT=/internal/preview
       - PVS_STORE=/mnt/store
-      - PVS_UID=101
-      - PVS_GID=101
+#      - PVS_UID=101
+#      - PVS_GID=101
       - PVS_LOGLEVEL=WARNING
       - PVS_HTTP_LOGLEVEL=WARNING
       - PVS_SOFFICE_ADDR=haproxy
@@ -43,7 +47,7 @@ services:
       - 3000:80
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
+      - previews:/mnt/store
       - ./docker/nginx/preview_location:/etc/nginx/vhost.d/preview_location:ro
       - ./docker/nginx/preview:/etc/nginx/vhost.d/preview:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
