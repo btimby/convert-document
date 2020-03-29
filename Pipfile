@@ -6,10 +6,10 @@ flake8 = "*"
 Wand = ">=0.5.6"
 unoconv = "*"
 uvloop = "*"
-aiohttp = {path = "./packages/aiohttp-4.0.0a0-cp36-cp36m-linux_x86_64.whl"}
+aiohttp = "*"
 ghostscript = {path = "./packages/ghostscript-0.7.dev0-py2.py3-none-any.whl"}
 prometheus-client = "*"
-av = "*"
+av = "==6.2.0"
 numpy = "*"
 pillow = "*"
 yappi = "*"

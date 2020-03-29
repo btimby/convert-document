@@ -4,11 +4,11 @@ services:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-      - /tmp/preview:/mnt/store
     ports:
       - 3000:3000
     tmpfs:
       - /tmp
+      - /mnt/store
     environment:
       - PVS_STORE=/mnt/store
       - PVS_UID=101
@@ -24,7 +24,7 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
     labels:
-      autoheal
+      - autoheal
     healthcheck:
       test: ["CMD", "timeout", "10", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"]
       interval: 30s

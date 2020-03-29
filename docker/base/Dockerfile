@@ -24,8 +24,7 @@ RUN apt-get update \
         fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
         python3-uno python3-lxml python3-icu curl imagemagick libmagickwand-dev \
         python-setuptools git libavformat-dev libavcodec-dev libavutil-dev \
-        libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev monit \
-        inotify-tools \
+        libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev inotify-tools \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -38,10 +37,6 @@ WORKDIR /app
 COPY Pipfile* /app/
 RUN pip3 install pipenv
 RUN pipenv install --system
-
-COPY docker/bin/* /usr/local/bin/
-
-COPY docker/preview/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml
 
 COPY preview/ /app/preview/
 COPY images/ /app/images/
