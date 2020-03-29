@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [ "$PVS_LOG_LEVEL" = "DEBUG" ]; then
-    echo "Checking soffice server" > /proc/1/fd/1
-fi
-
-timeout 10 bash -c "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"
-
-exit $?
