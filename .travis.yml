@@ -20,15 +20,15 @@ before_script:
   - make build-cache
 
 script:
-  - docker-compose -f test.yml -p preview-demo up -d --scale preview-soffice=3
+  - docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
   - sleep 30
-  - docker-compose -f test.yml -p preview-demo ps
-  - docker-compose -f test.yml -p preview-demo logs soffice-server
+  - docker-compose -f medium.yml -p preview-demo ps
+  - docker-compose -f medium.yml -p preview-demo logs soffice-server
   - python3.6 test.py 100 10
 
 after_script:
-  - docker-compose -f test.yml logs preview-server
-  - docker-compose -f test.yml -p preview-demo kill
+  - docker-compose -f medium.yml logs preview-server
+  - docker-compose -f medium.yml -p preview-demo kill
 
 after_success:
   - make tag
