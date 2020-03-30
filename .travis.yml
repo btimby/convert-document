@@ -21,7 +21,7 @@ before_script:
 
 script:
   - docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
-  - for i in 1 2 3 4 5; do curl http://localhost:3000/ && break || sleep 5; done
+  - for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
   - docker-compose -f medium.yml -p preview-demo ps
   - docker-compose -f medium.yml -p preview-demo logs soffice-server
   - python3.6 test.py 100 10
