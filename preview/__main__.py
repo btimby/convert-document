@@ -135,7 +135,6 @@ async def get_params(request):
     file = data.get('file')
     url = data.get('url')
     name = data.get('name')
-    content_type = data.get('content_type')
 
     format = data.get('format', DEFAULT_FORMAT)
     width = int(data.get('width', DEFAULT_WIDTH))
@@ -177,7 +176,7 @@ async def get_params(request):
         raise web.HTTPNotFound()
 
     return PreviewModel(path, width, height, format, origin=origin,
-                        name=name, content_type=content_type, args=args)
+                        name=name, args=args)
 
 
 class PreviewResponse(web.FileResponse):

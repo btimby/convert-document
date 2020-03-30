@@ -1,7 +1,5 @@
 
 import tempfile
-import mimetypes
-import logging
 
 from os.path import getsize, basename
 from os.path import join as pathjoin
@@ -10,9 +8,6 @@ from cached_property import cached_property
 
 from preview.utils import safe_delete, get_extension
 from preview.config import FILE_ROOT
-
-
-LOGGER = logging.getLogger()
 
 
 class PathModel(object):
@@ -49,7 +44,7 @@ class PathModel(object):
 
 class PreviewModel(object):
     def __init__(self, path, width, height, format, origin=None, name=None,
-                 content_type=None, args=None):
+                 args=None):
         self._width = width
         self._height = height
         self._format = format
