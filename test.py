@@ -5,6 +5,7 @@ import asyncio
 import logging
 
 from os.path import join as pathjoin
+from os.path import basename
 from time import time
 
 from aiohttp import ClientSession
@@ -76,27 +77,30 @@ class TaskPool(object):
         await self.join()
 
 
-async def do_response(i, response):
+async def do_response(path, i, response):
     res = await response.read()
+    ct = response.headers['Content-Type']
     if response.status == 200:
-        print('\033[K', i, response.status, len(res), res[:20],
-              end='\r')
+        print('\033[K', i, response.status, len(res), ct, res[:20], end='\r')
 
     else:
-        print('\033[K', i, response.status, len(res), res[:60])
+        print('\033[K', i, response.status, len(res), ct, res[:60])
+
     return response.status
 
 
 async def do_get(i, data, session):
+    path = data.get('path') or basename(data.get('url'))
     async with session.get(URL, params=data) as r:
-        return await do_response(i, r)
+        return await do_response(path, i, r)
 
 
 async def do_post(i, data, session):
-    with open('fixtures/%s' % data.pop('path'), 'rb') as f:
+    path = data.pop('path')
+    with open('fixtures/%s' % path, 'rb') as f:
         data['file'] = f
         async with session.post(URL, data=data) as r:
-            return await do_response(i, r)
+            return await do_response(path, i, r)
 
 
 async def do_request(i, session):

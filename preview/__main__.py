@@ -184,7 +184,7 @@ class PreviewResponse(web.FileResponse):
     def __init__(self, obj, *args, **kwargs):
         self._obj = obj
         super(PreviewResponse, self).__init__(obj.dst.path, *args, **kwargs)
-        self.content_type = obj.dst.content_type
+        self.content_type = obj.content_type
 
     async def prepare(self, *args, **kwargs):
         try:
@@ -222,7 +222,7 @@ async def preview(request):
             x_accel_path = chroot(obj.dst.path, BASE_PATH, X_ACCEL_REDIR)
             response = web.Response(status=status)
             response.headers['X-Accel-Redirect'] = x_accel_path
-            response.content_type = obj.dst.content_type
+            response.content_type = obj.content_type
 
         else:
             response = PreviewResponse(obj, status=status)

@@ -32,7 +32,7 @@ def resize_image(path, width, height):
             return t.name
 
 
-def convert_image(path):
+def convert_to_pdf(path):
     data = BytesIO()
     # Remove alpha channel
     with Image(filename=path, resolution=300) as img:
@@ -62,5 +62,5 @@ class ImageBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         self._preview_image(obj)
-        path = convert_image(obj.dst.path)
+        path = convert_to_pdf(obj.dst.path)
         obj.dst = PathModel(path)

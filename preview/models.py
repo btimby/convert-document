@@ -1,5 +1,7 @@
 
 import tempfile
+import mimetypes
+import logging
 
 from os.path import getsize, basename
 from os.path import join as pathjoin
@@ -10,19 +12,16 @@ from preview.utils import safe_delete, get_extension
 from preview.config import FILE_ROOT
 
 
+LOGGER = logging.getLogger()
+
+
 class PathModel(object):
-    def __init__(self, path, content_type=None):
-        self._content_type = content_type
+    def __init__(self, path):
         self._path = path
 
     @property
     def path(self):
         return self._path
-
-    @property
-    def content_type(self):
-        'The content_type from caller'
-        return self._content_type
 
     @property
     def size(self):
@@ -56,11 +55,15 @@ class PreviewModel(object):
         self._format = format
         self._origin = origin
         self._name = name or basename(path)
-        self._src = PathModel(path, content_type=content_type)
+        self._src = PathModel(path)
         self._dst = None
         self._args = {}
         if args:
             self._args.update(args)
+
+    @property
+    def content_type(self):
+        return 'application/pdf' if self.format == 'pdf' else 'image/gif'
 
     @property
     def origin(self):
