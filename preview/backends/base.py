@@ -4,6 +4,7 @@ from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
 class BaseBackend(object):
     name = None
     extensions = []
+    executor = None
 
     def __init__(self):
         pass

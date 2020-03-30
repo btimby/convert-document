@@ -2,12 +2,13 @@ import logging
 import subprocess
 
 from tempfile import NamedTemporaryFile
+from concurrent.futures import ThreadPoolExecutor
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
 from preview.utils import log_duration
 from preview.config import (
-    SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY
+    SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY, MAX_OFFICE_WORKERS
 )
 from preview.models import PathModel
 
@@ -78,6 +79,8 @@ class OfficeBackend(BaseBackend):
         'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
         'odt', 'ods', 'odp', 'log', 'txt',
     ]
+    executor = ThreadPoolExecutor(max_workers=MAX_OFFICE_WORKERS) \
+        if MAX_OFFICE_WORKERS else None
 
     @log_duration
     def _preview_pdf(self, obj):

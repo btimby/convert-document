@@ -22,6 +22,7 @@ services:
       - PVS_SOFFICE_ADDR=soffice-server
       - PVS_SOFFICE_PORT=2002
       - PVS_METRICS=off
+      - PVS_MAX_OFFICE_WORKERS=1
 
   soffice-server:
     image: btimby/preview-soffice

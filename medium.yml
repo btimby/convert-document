@@ -8,7 +8,7 @@ services:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-      - preview:/mnt/store
+      - previews:/mnt/store
     tmpfs:
       - /tmp
     ports:
@@ -41,7 +41,7 @@ services:
       - PVS_SOFFICE_PORT=2002
 
   haproxy:
-    image: haproxy
+    image: haproxy:2.1
     ports:
       - 3001:8080
     volumes:

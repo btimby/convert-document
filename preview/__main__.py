@@ -180,9 +180,6 @@ async def get_params(request):
                         name=name, content_type=content_type, args=args)
 
 
-generate = run_in_executor(generate)
-
-
 class PreviewResponse(web.FileResponse):
     def __init__(self, obj, *args, **kwargs):
         self._obj = obj
@@ -298,7 +295,7 @@ def main():
     app.add_routes([web.get('/metrics/', metrics_handler)])
 
     loop = uvloop.new_event_loop()
-    # Conversion backends are blocking and run in the following executor.
+    # Set up a default executor for conversion backends.
     loop.set_default_executor(ThreadPoolExecutor(max_workers=40))
     asyncio.set_event_loop(loop)
 

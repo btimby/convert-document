@@ -13,11 +13,11 @@ LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.NullHandler())
 
 
-def run_in_executor(f):
+def run_in_executor(f, executor=None):
     @functools.wraps(f)
     def inner(*args, **kwargs):
         loop = asyncio.get_event_loop()
-        return loop.run_in_executor(None, functools.partial(f, *args, **kwargs))
+        return loop.run_in_executor(executor, functools.partial(f, *args, **kwargs))
     return inner
 
 

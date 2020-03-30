@@ -3,7 +3,7 @@ import pathlib
 
 from os.path import getsize
 
-from preview.utils import get_extension
+from preview.utils import get_extension, run_in_executor
 from preview.backends.office import OfficeBackend
 from preview.backends.image import ImageBackend
 from preview.backends.video import VideoBackend
@@ -39,15 +39,15 @@ class Backend(object):
     }
 
     @staticmethod
-    def preview(obj):
+    async def preview(obj):
         for extensions, be in Backend.backends.items():
             if obj.extension in extensions:
-                return _preview(be, obj)
+                return await run_in_executor(_preview, be.executor)(be, obj)
 
         raise UnsupportedTypeError('No backend for %s', obj.extension)
 
 
-def generate(obj):
+async def generate(obj):
     use_store = not obj.src.is_temp
     store_key = storage.make_key(
         obj.src.path, obj.format, obj.width, obj.height)
@@ -55,7 +55,7 @@ def generate(obj):
     if use_store and storage.get(store_key, obj):
         return
 
-    Backend.preview(obj)
+    await Backend.preview(obj)
 
     if use_store:
         storage.put(store_key, obj)
