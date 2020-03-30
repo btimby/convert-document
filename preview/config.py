@@ -29,7 +29,8 @@ def interval(s):
             unit = UNIT_VALUES[unit]
 
         except KeyError:
-            raise Exception('Interval unit should be d, h, or s')
+            raise Exception('Interval unit should be one of: %s' % 
+                            (', '.join(UNIT_VALUES.keys())))
 
     try:
         seconds = int(s)
@@ -41,7 +42,7 @@ def interval(s):
 
 
 # Configuration
-CACHE_CONTROL = os.environ.get('PVS_CACHE_CONTROL')
+CACHE_CONTROL = interval(os.environ.get('PVS_CACHE_CONTROL'))
 FILE_ROOT = os.environ.get('PVS_FILES', '/mnt/files')
 DEFAULT_WIDTH = os.environ.get('PVS_DEFAULT_WIDTH', 320)
 DEFAULT_HEIGHT = os.environ.get('PVS_DEFAULT_HEIGHT', 240)

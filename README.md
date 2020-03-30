@@ -50,7 +50,7 @@ $ curl -o out.png -F 'path=/path/to/file.doc' \
     -F 'width=200' -F 'height=100' http://localhost:3000/preview/
 ```
 
-`PVS_CACHE_CONTROL` - This option controls the `Cache-Control` header emitted by the service. When omitted, the header supressed. When present, it controls the number of minutes previews should be cached.
+`PVS_CACHE_CONTROL` - This option controls the `Cache-Control` header emitted by the service. When omitted, the header supressed. When present, it controls the number of minutes previews should be cached. This value should be an interval such as 15m or 1h.
 
 `PVS_STORE` - By default generated previews are ephemeral. If you wish to store the previews so that they are not regenerated in future requests, you can do so using ththis option. This option is required by `PVS_X_ACCEL_REDIR`. The value should be the path to a volume you mount for this purpose.
 
