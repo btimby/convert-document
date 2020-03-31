@@ -12,4 +12,4 @@ chown -R ${PVS_UID} ${HOME}/.cache
 
 echo "Starting unoconv" > /proc/1/fd/1
 
-/bin/su -p -s /bin/bash - ${PVS_USER} -c "/usr/local/bin/unoconv --listener --server=${PVS_SOFFICE_ADDR} --port=${PVS_SOFFICE_PORT} | grep -v func=xmlSecCheckVersionExt 1> /proc/1/fd/1 2> /proc/1/fd/2"
+/bin/su -p -s /bin/bash - ${PVS_USER} -c "/usr/local/bin/unoconv --listener --server=${PVS_SOFFICE_ADDR} --port=${PVS_SOFFICE_PORT} 2>&1 | grep -v func=xmlSecCheckVersionExt 1> /proc/1/fd/1"
