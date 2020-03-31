@@ -31,5 +31,5 @@ after_script:
   - docker-compose -f medium.yml -p preview-demo kill
 
 after_success:
-  - make tag
-  - make push
+  - make tag-travis
+  - make push-travis
