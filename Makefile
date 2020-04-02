@@ -1,4 +1,4 @@
-COMMIT=${TRAVIS_COMMIT::8}
+TAG=latest
 
 all: test
 
@@ -61,27 +61,13 @@ login:
 
 .PHONY: tag
 tag:
-	docker tag btimby/preview-base btimby/preview-base:latest
-	docker tag btimby/preview-server btimby/preview-server:latest
-	docker tag btimby/preview-soffice btimby/preview-soffice:latest
-
-
-.PHONY: tag
-tag-travis: tag
-	docker tag btimby/preview-base btimby/preview-base:${COMMIT}
-	docker tag btimby/preview-server btimby/preview-server:${COMMIT}
-	docker tag btimby/preview-soffice btimby/preview-soffice:${COMMIT}
+	docker tag btimby/preview-base btimby/preview-base:${TAG}
+	docker tag btimby/preview-server btimby/preview-server:${TAG}
+	docker tag btimby/preview-soffice btimby/preview-soffice:${TAG}
 
 
 .PHONY: push
 push: login
-	docker push btimby/preview-base:latest
-	docker push btimby/preview-server:latest
-	docker push btimby/preview-soffice:latest
-
-
-.PHONY: push-travis
-push-travis: push
-	docker push btimby/preview-base:${COMMIT}
-	docker push btimby/preview-server:${COMMIT}
-	docker push btimby/preview-soffice:${COMMIT}
+	docker push btimby/preview-base:${TAG}
+	docker push btimby/preview-server:${TAG}
+	docker push btimby/preview-soffice:${TAG}

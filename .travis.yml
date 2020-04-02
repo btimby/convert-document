@@ -31,5 +31,7 @@ after_script:
   - docker-compose -f medium.yml -p preview-demo kill
 
 after_success:
-  - make tag-travis
-  - make push-travis
+  - make tag TAG=latest
+  - make push TAG=latest
+  - make tag TAG=${TRAVIS_COMMIT::7}
+  - make push TAG=${TRAVIS_COMMIT::7}
