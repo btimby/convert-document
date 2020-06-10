@@ -46,7 +46,7 @@ def interval(s):
 
 def load_plugins(views):
     """
-    HTTP handlers can be specified by /the/path/to/module.callable.
+    HTTP handlers can be specified by /the/path/to/file.py:callable.
     
     A handler should be a callable with "pattern" and "method" attributes. The
     callable should accept request and return a tuple of (path, origin). Origin
@@ -58,7 +58,7 @@ def load_plugins(views):
         if not path:
             continue
 
-        module, _, function = path.rpartition('.')
+        module, _, function = path.rpartition(':')
         module = __import__(module)
 
         try:
