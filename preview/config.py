@@ -62,26 +62,26 @@ def load_plugins(views):
         module = __import__(module)
 
         try:
-            view = getattr(module, function)
+            plugin = getattr(module, function)
 
         except AttributeError as e:
             LOGGER.error('View plugin %s is not valid.', path, exc_info=True)
             continue
 
-        if not callable(view):
+        if not callable(plugin):
             LOGGER.error('View plugin %s is not callable', path)
             continue
 
-        if not hasattr(view, 'pattern'):
+        if not hasattr(plugin, 'pattern'):
             LOGGER.error('View plugin %s must have "pattern" attribute', path)
             continue
 
-        if getattr(view, 'method', '').lower() not in ('get', 'post'):
+        if getattr(plugin, 'method', '').lower() not in ('get', 'post'):
             LOGGER.error('View plugin %s method attribute must be get or post', path)
             continue
 
         # Everything seems good.
-        plugins.append(view)
+        plugins.append(plugin)
 
     return plugins
 
@@ -112,4 +112,4 @@ MAX_FILE_SIZE = int(os.environ.get('PVS_MAX_FILE_SIZE', '0'))
 MAX_PAGES = int(os.environ.get('PVS_MAX_PAGES', '0'))
 MAX_STORAGE_AGE = interval(os.environ.get('PVS_STORE_MAX_AGE'))
 MAX_OFFICE_WORKERS = int(os.environ.get('PVS_MAX_OFFICE_WORKERS', 0))
-VIEWS = load_plugins(os.environ.get('PVS_PLUGINS', ''))
+PLUGINS = load_plugins(os.environ.get('PVS_PLUGINS', ''))

@@ -28,7 +28,7 @@ from preview.metrics import (
 from preview.config import (
     boolean, DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH,
     MAX_HEIGHT, LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID,
-    X_ACCEL_REDIR, PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES, VIEWS,
+    X_ACCEL_REDIR, PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES, PLUGINS,
 )
 from preview.models import PreviewModel
 
@@ -253,7 +253,7 @@ async def preview(obj):
 
 def make_handler(f):
     # Sets up an HTTP handler, uses f to extract parameters. f() is expected
-    # to return a path.
+    # to return a tuple of (path, origin).
     async def handler(request):
         path, origin = await f(request)
         width, height, format, name, args = await get_params(request)
@@ -323,11 +323,11 @@ def main():
     app.add_routes([web.get('/metrics/', metrics_handler)])
 
     # Load and register any plugins.
-    for view in VIEWS:
+    for plugin in PLUGINS:
         # We don't need to do much checking here as the config module validates
-        # the given view plugins.
-        method = getattr(web, view.method.lower())
-        app.add_routes([method(view.pattern, make_handler(view))])
+        # the given plugins.
+        method = getattr(web, plugin.method.lower())
+        app.add_routes([method(plugin.pattern, make_handler(plugin))])
 
     loop = uvloop.new_event_loop()
     # Set up a default executor for conversion backends.
