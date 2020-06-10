@@ -28,7 +28,7 @@ from preview.metrics import (
 from preview.config import (
     boolean, DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH,
     MAX_HEIGHT, LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID,
-    X_ACCEL_REDIR, PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES
+    X_ACCEL_REDIR, PORT, PROFILE_PATH, MAX_FILE_SIZE, MAX_PAGES, VIEWS,
 )
 from preview.models import PreviewModel
 
@@ -120,9 +120,22 @@ def parse_pages(pages):
                 reason='Pages must be a range n-n or "all"')
 
 
-async def get_params(request):
-    """
-    """
+class PreviewResponse(web.FileResponse):
+    def __init__(self, obj, *args, **kwargs):
+        self._obj = obj
+        super(PreviewResponse, self).__init__(obj.dst.path, *args, **kwargs)
+        self.content_type = obj.content_type
+
+    async def prepare(self, *args, **kwargs):
+        try:
+            return await super(PreviewResponse, self).prepare(
+                *args, **kwargs)
+
+        finally:
+            await run_in_executor(self._obj.cleanup)()
+
+
+async def get_path(request):
     if request.method == 'POST':
         data = {}
         data.update(request.query)
@@ -134,22 +147,6 @@ async def get_params(request):
     path = data.get('path')
     file = data.get('file')
     url = data.get('url')
-    name = data.get('name')
-
-    format = data.get('format', DEFAULT_FORMAT)
-    width = int(data.get('width', DEFAULT_WIDTH))
-    height = int(data.get('height', DEFAULT_HEIGHT))
-    width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
-    pages = parse_pages(data.get('pages'))
-
-    store = None
-    if 'pvs-store-disabled' in request.headers:
-        store = boolean(request.headers['pvs-store-disabled'])
-
-    args = {
-        'pages': pages,
-        'store': store,
-    }
 
     if path:
         # TODO: sanitize this path, ensure it is rooted in FILE_ROOT
@@ -175,27 +172,42 @@ async def get_params(request):
     if not isfile(path):
         raise web.HTTPNotFound()
 
-    return PreviewModel(path, width, height, format, origin=origin,
-                        name=name, args=args)
+    return path, origin
 
 
-class PreviewResponse(web.FileResponse):
-    def __init__(self, obj, *args, **kwargs):
-        self._obj = obj
-        super(PreviewResponse, self).__init__(obj.dst.path, *args, **kwargs)
-        self.content_type = obj.content_type
+async def get_params(request):
+    """
+    Retrieve preview parameters (omitting path / file).
+    """
+    if request.method == 'POST':
+        data = {}
+        data.update(request.query)
+        data.update(await request.post())
 
-    async def prepare(self, *args, **kwargs):
-        try:
-            return await super(PreviewResponse, self).prepare(
-                *args, **kwargs)
+    else:
+        data = request.query
 
-        finally:
-            await run_in_executor(self._obj.cleanup)()
+    name = data.get('name')
+
+    format = data.get('format', DEFAULT_FORMAT)
+    width = int(data.get('width', DEFAULT_WIDTH))
+    height = int(data.get('height', DEFAULT_HEIGHT))
+    width, height = min(width, MAX_WIDTH), min(height, MAX_HEIGHT)
+    pages = parse_pages(data.get('pages'))
+
+    store = None
+    if 'pvs-store-disabled' in request.headers:
+        store = boolean(request.headers['pvs-store-disabled'])
+
+    args = {
+        'pages': pages,
+        'store': store,
+    }
+
+    return width, height, format, name, args
 
 
-async def preview(request):
-    obj = await get_params(request)
+async def preview(obj):
     try:
         try:
             await generate(obj)
@@ -239,6 +251,20 @@ async def preview(request):
     return response
 
 
+def make_handler(f):
+    # Sets up an HTTP handler, uses f to extract parameters. f() is expected
+    # to return a path.
+    async def handler(request):
+        path, origin = await f(request)
+        width, height, format, name, args = await get_params(request)
+        obj = PreviewModel(path, width, height, format, origin=origin,
+                           name=name, args=args)
+
+        return await preview(obj)
+
+    return handler
+
+
 async def extension_list():
     ext_list = StringIO()
     ext_list.write('extensions = [')
@@ -262,8 +288,8 @@ async def extension_list():
             ext_list.write(after)
 
         ext_list.write('\r\n')
-
     ext_list.write(']\r\n')
+
     return ext_list.getvalue()
 
 
@@ -286,12 +312,22 @@ def main():
             normalize_path_middleware(), metrics_middleware()
             ])
 
-    app.add_routes([web.get('/', info)])
+    # Register handler for default preview routes.
+    default_handler = make_handler(get_path)
     app.add_routes([
-        web.post('/preview/', preview),
-        web.get('/preview/', preview)])
+        web.post('/preview/', default_handler),
+        web.get('/preview/', default_handler)])
+    # Some views not related to generating previews.
+    app.add_routes([web.get('/', info)])
     app.add_routes([web.get('/test/', test)])
     app.add_routes([web.get('/metrics/', metrics_handler)])
+
+    # Load and register any plugins.
+    for view in VIEWS:
+        # We don't need to do much checking here as the config module validates
+        # the given view plugins.
+        method = getattr(web, view.method.lower())
+        app.add_routes([method(view.pattern, make_handler(view))])
 
     loop = uvloop.new_event_loop()
     # Set up a default executor for conversion backends.

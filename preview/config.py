@@ -2,6 +2,9 @@ import os
 import logging
 
 
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(logging.NullHandler())
+
 UNIT_VALUES = {
     'd': 86400,
     'h': 3600,
@@ -41,6 +44,48 @@ def interval(s):
     return seconds * unit
 
 
+def load_plugins(views):
+    """
+    HTTP handlers can be specified by /the/path/to/module.callable.
+    
+    A handler should be a callable with "pattern" and "method" attributes. The
+    callable should accept request and return a tuple of (path, origin). Origin
+    is a unique path or key that is used to cache the preview.
+    """
+    plugins, paths = [], views.split(';')
+    for path in paths:
+        # Empty string, skip...
+        if not path:
+            continue
+
+        module, _, function = path.rpartition('.')
+        module = __import__(module)
+
+        try:
+            view = getattr(module, function)
+
+        except AttributeError as e:
+            LOGGER.error('View plugin %s is not valid.', path, exc_info=True)
+            continue
+
+        if not callable(view):
+            LOGGER.error('View plugin %s is not callable', path)
+            continue
+
+        if not hasattr(view, 'pattern'):
+            LOGGER.error('View plugin %s must have "pattern" attribute', path)
+            continue
+
+        if getattr(view, 'method', '').lower() not in ('get', 'post'):
+            LOGGER.error('View plugin %s method attribute must be get or post', path)
+            continue
+
+        # Everything seems good.
+        plugins.append(view)
+
+    return plugins
+
+
 # Configuration
 CACHE_CONTROL = interval(os.environ.get('PVS_CACHE_CONTROL'))
 FILE_ROOT = os.environ.get('PVS_FILES', '/mnt/files')
@@ -67,3 +112,4 @@ MAX_FILE_SIZE = int(os.environ.get('PVS_MAX_FILE_SIZE', '0'))
 MAX_PAGES = int(os.environ.get('PVS_MAX_PAGES', '0'))
 MAX_STORAGE_AGE = interval(os.environ.get('PVS_STORE_MAX_AGE'))
 MAX_OFFICE_WORKERS = int(os.environ.get('PVS_MAX_OFFICE_WORKERS', 0))
+VIEWS = load_plugins(os.environ.get('PVS_PLUGINS', ''))
