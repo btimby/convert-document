@@ -39,44 +39,41 @@ def _is_newer(left, right):
     return stat(left).st_mtime > stat(right).st_mtime
 
 
-def get(key, obj):
+def get(obj):
     if BASE_PATH is None:
         # Storage is disabled.
-        return
+        return False, None
 
     # Caller opted out of storage.
     if obj.args['store'] is False:
-        return
+        return False, None
 
+    if obj.origin is None:
+        return False, None
+
+    key = make_key(
+        obj.origin, obj.format, obj.width, obj.height)
     store_path = make_path(key)
 
     if not isfile(store_path):
-        return
+        return False, None
 
-    elif _is_newer(obj.src.path, store_path):
+    if _is_newer(obj.src.path, store_path):
         LOGGER.info('Removing stale file from storage')
         STORAGE.labels('del').inc()
         safe_delete(store_path)
+        return False, key
 
-    else:
-        LOGGER.info('Serving from storage')
-        STORAGE.labels('get').inc()
-        # update atime, not mtime, possible LRU...
-        os.utime(store_path, (time(), stat(store_path).st_mtime))
-        obj.dst = PathModel(store_path)
+    LOGGER.info('Serving from storage')
+    STORAGE.labels('get').inc()
+    # update atime, not mtime, possible LRU...
+    os.utime(store_path, (time(), stat(store_path).st_mtime))
+    obj.dst = PathModel(store_path)
 
-        return True
+    return True, key
 
 
 def put(key, obj):
-    if BASE_PATH is None:
-        # Storage is disabled.
-        return
-
-    # Caller opted out of storage.
-    if obj.args['store'] is False:
-        return
-
     STORAGE.labels('put').inc()
     LOGGER.info('Storing file')
 
@@ -92,8 +89,12 @@ def put(key, obj):
         # passed in path will be served.
         return
 
+    # Change mtime of stored preview to match source path. If source path
+    # changes later, this preview will be regenerated.
     src_mtime = stat(obj.src.path).st_mtime
     os.utime(store_path, (src_mtime, src_mtime))
+
+    # Update dst path, this is the preview sent in the response.
     obj.dst = PathModel(store_path)
 
 

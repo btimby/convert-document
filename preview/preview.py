@@ -48,14 +48,15 @@ class Backend(object):
 
 
 async def generate(obj):
-    use_store = not obj.src.is_temp
-    store_key = storage.make_key(
-        obj.src.path, obj.format, obj.width, obj.height)
-
-    if use_store and storage.get(store_key, obj):
+    store, key = storage.get(obj)
+    # If the file was fetched from the store, it will have been loaded into
+    # obj. We can return to continue with the response.
+    if store:
         return
 
+    # Otherwise, we need to generate a new preview.
     await Backend.preview(obj)
 
-    if use_store:
-        storage.put(store_key, obj)
+    # If a key was generated, it is OK to store the preview for reuse.
+    if key:
+        storage.put(key, obj)
