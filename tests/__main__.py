@@ -1,6 +1,12 @@
+import os
 import unittest
 
-from tests.test_format import *
+
+# Set some settings for testing...
+os.environ['PVS_MAX_PAGES'] = '10'
+
+
+from tests.test_preview import *
 
 
 unittest.main()

@@ -16,7 +16,7 @@ UNIT_VALUES = {
 def boolean(s):
     if s is None:
         return
-    return s.lower() not in ('1', 'off', 'no', 'false', 'none', '')
+    return s.lower() not in ('0', 'off', 'no', 'false', 'none', '')
 
 
 def interval(s):

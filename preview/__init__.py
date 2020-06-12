@@ -101,24 +101,26 @@ def parse_pages(pages):
     if not pages:
         return (1, 1)
 
-    elif pages == 'all':
-        return (0, MAX_PAGES)
+    if pages == 'all':
+        return (1, MAX_PAGES)
 
-    else:
-        try:
-            first, last = map(int, pages.split('-'))
+    if pages.isdigit():
+        return(int(pages), int(pages))
 
-            # MAX_PAGES == 0 == unlimited, we can let them choose.
-            if MAX_PAGES != 0:
-                # Otherwise limit to MAX_PAGES.
-                last = min(last, first + MAX_PAGES)
+    try:
+        first, last = map(int, pages.split('-'))
 
-            return first, last
+        # MAX_PAGES == 0 == unlimited, we can let them choose.
+        if MAX_PAGES != 0:
+            # Otherwise limit to MAX_PAGES (inclusive).
+            last = min(last, first + MAX_PAGES - 1)
 
-        except ValueError as e:
-            LOGGER.debug('Ignoring: %s', e, exc_info=True)
-            raise web.HTTPBadRequest(
-                reason='Pages must be a range n-n or "all"')
+        return first, last
+
+    except ValueError as e:
+        LOGGER.exception('Could not parse page range %s', pages)
+        raise web.HTTPBadRequest(
+            reason='Pages must be a range n-n or "all"')
 
 
 class PreviewResponse(web.FileResponse):
