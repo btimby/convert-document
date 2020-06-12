@@ -14,13 +14,14 @@ UNIT_VALUES = {
 
 
 def boolean(s):
-    if s is None:
-        return
-    return s.lower() not in ('0', 'off', 'no', 'false', 'none', '')
+    "Any value besides the 'falsey' values should be True"
+    if s in ('', None):
+        return False
+    return s.lower() not in ('0', 'off', 'no', 'false', 'none')
 
 
 def interval(s):
-    if s is None:
+    if s in ('', None):
         return
 
     s = s.lower()
@@ -32,14 +33,15 @@ def interval(s):
             unit = UNIT_VALUES[unit]
 
         except KeyError:
-            raise Exception('Interval unit should be one of: %s' % 
+            raise ValueError('Interval unit should be one of: %s' % 
                             (', '.join(UNIT_VALUES.keys())))
 
     try:
         seconds = int(s)
 
     except ValueError:
-        raise Exception('Interval must be integer followed by unit, ex: 1d')
+        raise ValueError(
+            'Interval must be integer followed by optional unit, ex: 1d')
 
     return seconds * unit
 
