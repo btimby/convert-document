@@ -1,4 +1,5 @@
 from preview.metrics import CONVERSIONS, CONVERSION_ERRORS
+from preview.errors import InvalidFormatError
 
 
 class BaseBackend(object):
@@ -10,7 +11,11 @@ class BaseBackend(object):
         pass
 
     def preview(self, obj):
-        method = getattr(self, '_preview_%s' % obj.format)
+        try:
+            method = getattr(self, '_preview_%s' % obj.format)
+
+        except AttributeError:
+            raise InvalidFormatError('Backend does not support format %s' % obj.format)
 
         if not callable(method):
             raise Exception('Unsupported output format: %s' % obj.format)

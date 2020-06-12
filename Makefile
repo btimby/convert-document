@@ -24,6 +24,11 @@ Pipfile: Pipfile.lock
 	touch Pipfile
 
 
+.PHONY: test
+test: Pipfile
+	pipenv run python3 -m tests
+
+
 .PHONY: integration
 integration: Pipfile
 	pipenv run python3 integration.py
