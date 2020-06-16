@@ -40,5 +40,5 @@ RUN pipenv install --system
 
 COPY preview/ /app/preview/
 COPY images/ /app/images/
-COPY plugins/ /app/plugin/
+COPY plugins/ /app/plugins/
 COPY fixtures/ /fixtures/

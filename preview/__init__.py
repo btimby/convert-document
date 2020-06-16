@@ -159,8 +159,7 @@ async def get_path(request):
         check_size(getsize(path))
 
     elif file:
-        origin = None
-        path = await upload(file)
+        origin = path = await upload(file)
 
     elif url:
         origin = url

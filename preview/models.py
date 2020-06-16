@@ -49,7 +49,7 @@ class PreviewModel(object):
         self._height = height
         self._format = format
         self._origin = origin
-        self._name = name or basename(path)
+        self._name = name or basename(origin)
         self._src = PathModel(path)
         self._dst = None
         self._args = {}

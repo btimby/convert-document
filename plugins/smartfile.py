@@ -68,6 +68,19 @@ def _parse_key(key):
     return key
 
 
+def _parse_root(mapping):
+    if not mapping:
+        return
+
+    try:
+        fr, to = mapping.split(':')
+
+    except ValueError:
+        raise ValueError('Root mapping (JWT_ROOT) should be in form: /path1:path2')
+
+    return fr, to
+
+
 # JWT verification key and algorithm.
 KEY = _parse_key(os.environ.get('JWT_KEY', None))
 ALGO = os.environ.get('JWT_ALGO', 'HS256')
@@ -76,7 +89,10 @@ ALGO = os.environ.get('JWT_ALGO', 'HS256')
 UPSTREAM = os.environ.get('JWT_UPSTREAM', None)
 # Cache server addresses.
 CACHE = _configure_cache(os.environ.get('JWT_CACHE_ADDRESS', ''))
-BASE = os.environ.get('JWT_BASE_PATH', '/mnt/mfs00')
+ROOT = _parse_root(
+    os.environ.get(
+        'JWT_BASE_PATH',
+        '/internal/downloads:/mnt/mfs00/scratch00/temp/downloads/'))
 
 
 async def handler(request):
@@ -84,6 +100,7 @@ async def handler(request):
     uri = request.match_info['uri']
 
     token = request.cookies.get('sessionid')
+    LOGGER.debug('Token: %s', token)
     if not token:
         raise web.HTTPBadRequest(reason='Missing session')
 
@@ -98,7 +115,7 @@ async def handler(request):
 
     if CACHE:
         # Hash origin
-        key = 'preview:%s' % hashlib.md5(origin).hexdigest()
+        key = 'preview:%s' % hashlib.md5(origin.encode('utf8')).hexdigest()
 
         # Look up path in cache using hashed origin as cache key
         path = CACHE.get(key)
@@ -110,10 +127,22 @@ async def handler(request):
     # Otherwise, perform subrequest, add path to cache, return it.
     async with ClientSession(cookies={'sessionid': token}) as s:
         async with s.get('%sapi/%s/path/data%s' % (UPSTREAM, version, uri)) as r:
-            # SmartFile returns the filesystem path in X-Accel-Redirect header.
-            path = r.headers.get('x-accel-redirect')
+            LOGGER.debug(await r.text())
 
-    path = pathjoin(BASE, path)
+            # SmartFile returns the filesystem path in X-Accel-Redirect header.
+            try:
+                path = r.headers['x-accel-redirect']
+
+            except KeyError:
+                LOGGER.exception('Could not retrieve X-Accel-Redirect header')
+                raise web.HTTPBadRequest(reason='Invalid response')
+
+    if not path.startswith(ROOT[0]):
+        LOGGER.error('Path does not start with expected path')
+        raise web.HTTPBadRequest('Invalid path')
+
+    # Transform path
+    path = pathjoin(ROOT[1], path[len(ROOT[0]:)])
 
     if CACHE:
         CACHE.set(key, path)
