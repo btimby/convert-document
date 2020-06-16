@@ -54,6 +54,10 @@ dev: build
 	docker-compose -f dev.yml -p preview-dev up --scale soffice-server=3
 
 
+.PHONY: run
+run: small
+
+
 .PHONY: shell
 shell:
 	docker run -ti btimby/preview-server bash

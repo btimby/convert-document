@@ -9,9 +9,6 @@ from os.path import join as pathjoin
 
 from tempfile import NamedTemporaryFile
 
-import uvloop
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
 
@@ -20,15 +17,15 @@ from preview.utils import (
     run_in_executor, log_duration, get_extension, chroot
 )
 from preview.preview import generate, UnsupportedTypeError, Backend
-from preview.storage import BASE_PATH, Cleanup
+from preview.storage import BASE_PATH
 from preview.metrics import (
     metrics_handler, metrics_middleware, TRANSFER_LATENCY,
     TRANSFERS_IN_PROGRESS
 )
 from preview.config import (
     boolean, DEFAULT_FORMAT, DEFAULT_WIDTH, DEFAULT_HEIGHT, MAX_WIDTH,
-    MAX_HEIGHT, LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL, UID, GID,
-    X_ACCEL_REDIR, PORT, MAX_FILE_SIZE, MAX_PAGES, PLUGINS,
+    MAX_HEIGHT, LOGLEVEL, HTTP_LOGLEVEL, FILE_ROOT, CACHE_CONTROL,
+    X_ACCEL_REDIR, MAX_FILE_SIZE, MAX_PAGES, PLUGINS,
 )
 from preview.models import PreviewModel
 from preview.errors import InvalidFormatError

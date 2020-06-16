@@ -1,6 +1,10 @@
 import os
 import logging
 
+from runpy import run_path
+
+from preview.errors import InvalidPluginError
+
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
@@ -24,9 +28,8 @@ def interval(s):
     if s in ('', None):
         return
 
-    s = s.lower()
     # Default unit is seconds.
-    unit = 1
+    unit, s = 1, s.lower()
     if s[-1] in UNIT_VALUES.keys():
         unit, s = s[-1], s[:-1]
         try:
@@ -61,26 +64,27 @@ def load_plugins(views):
             continue
 
         module, _, function = path.rpartition(':')
-        module = __import__(module)
 
         try:
-            plugin = getattr(module, function)
+            module = run_path(module)
 
-        except AttributeError as e:
-            LOGGER.error('View plugin %s is not valid.', path, exc_info=True)
-            continue
+        except FileNotFoundError:
+            raise InvalidPluginError('Python file does not exist: %s' % module)
+
+        try:
+            plugin = module[function]
+
+        except KeyError as e:
+            raise InvalidPluginError('Plugin function %s does not exist.' % path)
 
         if not callable(plugin):
-            LOGGER.error('View plugin %s is not callable', path)
-            continue
+            raise InvalidPluginError('Plugin %s is not callable' % path)
 
         if not hasattr(plugin, 'pattern'):
-            LOGGER.error('View plugin %s must have "pattern" attribute', path)
-            continue
+            raise InvalidPluginError('Plugin %s does not have "pattern" attribute' % path)
 
         if getattr(plugin, 'method', '').lower() not in ('get', 'post'):
-            LOGGER.error('View plugin %s method attribute must be get or post', path)
-            continue
+            raise InvalidPluginError('Plugin %s has invalid "method" attribute' % path)
 
         # Everything seems good.
         plugins.append(plugin)
