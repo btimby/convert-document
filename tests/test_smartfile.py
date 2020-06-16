@@ -15,12 +15,6 @@ from tests.base import PreviewTestCase
 from plugins import smartfile
 
 
-ROOT = dirname(dirname(__file__))
-FIXTURE_SAMPLE_PDF = pathjoin(ROOT, 'fixtures/sample.pdf')
-FIXTURE_SAMPLE_DOC = pathjoin(ROOT, 'fixtures/sample.doc')
-FIXTURE_QUICKTIME_MOV = pathjoin(ROOT, 'fixtures/Quicktime_Video.mov')
-
-
 class PreviewFormatTestCase(PreviewTestCase):
     @unittest_run_loop
     async def test_handler(self):
@@ -30,7 +24,7 @@ class PreviewFormatTestCase(PreviewTestCase):
         with aioresponses(passthrough=['http://127.0.0.1']) as mock:
             # Mock call to SmartFile backend that plugin makes.
             mock.get(
-                'http://api/api/2/path/data/a/file.txt',
+                'http://api/api/2/path/data/sample.pdf',
                 headers={
                     'X-Accel-Redirect': 'fixtures/sample.pdf'
                 },
@@ -38,7 +32,7 @@ class PreviewFormatTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/api/2/path/data/a/file.txt',
+                '/api/2/path/data/sample.pdf',
                 params={
                     'format': 'pdf',
                 },
