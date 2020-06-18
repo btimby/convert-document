@@ -42,13 +42,16 @@ def _is_newer(left, right):
 def get(obj):
     if BASE_PATH is None:
         # Storage is disabled.
+        LOGGER.debug('Storage is disabled, BASE_PATH is not configured')
         return False, None
 
     # Caller opted out of storage.
     if obj.args['store'] is False:
+        LOGGER.debug('Storage is disabled for this request')
         return False, None
 
     if obj.origin is None:
+        LOGGER.debug('Storage is disabled, no origin')
         return False, None
 
     key = make_key(
@@ -56,7 +59,8 @@ def get(obj):
     store_path = make_path(key)
 
     if not isfile(store_path):
-        return False, None
+        LOGGER.info('Preview not found in storage')
+        return False, key
 
     if _is_newer(obj.src.path, store_path):
         LOGGER.info('Removing stale file from storage')
