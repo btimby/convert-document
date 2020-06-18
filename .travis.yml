@@ -24,7 +24,8 @@ script:
   - for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
   - docker-compose -f medium.yml -p preview-demo ps
   - docker-compose -f medium.yml -p preview-demo logs soffice-server
-  - python3.6 test.py 100 10
+  - python3.6 -m tests
+  - python3.6 integration.py 100 10
 
 after_script:
   - docker-compose -f medium.yml logs preview-server
