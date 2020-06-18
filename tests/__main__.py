@@ -11,10 +11,10 @@ os.environ['PVS_MAX_PAGES'] = '10'
 os.environ['PVS_PLUGINS'] = 'plugins/proxy.py:handler'
 
 # Smartfile plugin settings:
-os.environ['JWT_KEY'] = 'foo key bar'
-os.environ['JWT_ALGO'] = 'HS256'
-os.environ['JWT_UPSTREAM'] = 'http://api/'
-os.environ['JWT_BASE_PATH'] = '/files/:%s' % ROOT
+os.environ['PROXY_JWT_KEY'] = 'foo key bar'
+os.environ['PROXY_JWT_ALGO'] = 'HS256'
+os.environ['PROXY_UPSTREAM'] = 'http://api/'
+os.environ['PROXY_BASE_PATH'] = '/files/:%s' % ROOT
 
 
 from tests.test_preview import *

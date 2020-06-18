@@ -15,14 +15,14 @@ from tests.base import PreviewTestCase
 from plugins import proxy
 
 
-class PreviewFormatTestCase(PreviewTestCase):
+class ProxyPluginTestCase(PreviewTestCase):
     @unittest_run_loop
     async def test_handler(self):
         "Request a preview as PDF and ensure PDF is returned."
         token = jwt.encode({'uid': 1}, proxy.KEY, algorithm=proxy.ALGO)
 
         with aioresponses(passthrough=['http://127.0.0.1']) as mock:
-            # Mock call to Proxy backend that plugin makes.
+            # Mock response from Proxy backend.
             mock.get(
                 'http://api/api/2/path/data/sample.pdf',
                 headers={

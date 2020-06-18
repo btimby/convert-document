@@ -83,19 +83,19 @@ def _parse_root(mapping):
 
 
 # JWT verification key and algorithm.
-KEY = _parse_key(os.environ.get('JWT_KEY', None))
-ALGO = os.environ.get('JWT_ALGO', 'HS256')
+KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))
+ALGO = os.environ.get('PROXY_JWT_ALGO', 'HS256')
 
 # Address to proxy request to.
-UPSTREAM = os.environ.get('JWT_UPSTREAM', None)
+UPSTREAM = os.environ.get('PROXY_UPSTREAM', None)
 # Cache server addresses.
-CACHE = _configure_cache(os.environ.get('JWT_CACHE_ADDRESS', ''))
+CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', ''))
 # This configuration option contains a mapping from a URI to a disk path. It
 # mirrors an alias configured in nginx that is used to download files. For
 # example this configuration option might be: /downloads:/path/to/files. When
 # the backend returns a path such as: /downloads/a/file.txt, the true path of
 # the file is /path/to/files/a/file.txt.
-ROOT = _parse_root(os.environ.get('JWT_BASE_PATH'))
+ROOT = _parse_root(os.environ.get('PROXY_BASE_PATH'))
 
 
 async def handler(request):
