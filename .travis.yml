@@ -14,7 +14,7 @@ services:
 
 install:
   - echo "${TRAVIS_BRANCH}"
-  - pipenv install --system
+  - pip3 install aiohttp
 
 before_script:
   - make build-cache
@@ -24,7 +24,7 @@ script:
   - for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
   - docker-compose -f medium.yml -p preview-demo ps
   - docker-compose -f medium.yml -p preview-demo logs soffice-server
-  - python3.6 -m tests
+  - docker-compose -f medium.yml -p preview-demo run preview-server python3 -m tests
   - python3.6 integration.py 100 10
 
 after_script:
