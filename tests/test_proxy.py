@@ -12,21 +12,21 @@ import jwt
 
 from tests.base import PreviewTestCase
 
-from plugins import smartfile
+from plugins import proxy
 
 
 class PreviewFormatTestCase(PreviewTestCase):
     @unittest_run_loop
     async def test_handler(self):
         "Request a preview as PDF and ensure PDF is returned."
-        token = jwt.encode({'uid': 1}, smartfile.KEY, algorithm=smartfile.ALGO)
+        token = jwt.encode({'uid': 1}, proxy.KEY, algorithm=proxy.ALGO)
 
         with aioresponses(passthrough=['http://127.0.0.1']) as mock:
-            # Mock call to SmartFile backend that plugin makes.
+            # Mock call to Proxy backend that plugin makes.
             mock.get(
                 'http://api/api/2/path/data/sample.pdf',
                 headers={
-                    'X-Accel-Redirect': 'fixtures/sample.pdf'
+                    'X-Accel-Redirect': '/files/fixtures/sample.pdf'
                 },
             )
 

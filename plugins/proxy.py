@@ -1,22 +1,23 @@
 """
-An adapter from SmartFile to preview-server.
+A plugin that retrieves file paths from backend server.
 
 This module implements a plugin for preview-server that allows preview-server
-to proxy requests to the SmartFile API.
+to proxy requests to a backend server.
 
-Requests are received by preview-server, the route pattern allows it to respond
-to a preview request. Such requests are routed to preview-server rather than
-the SmartFile API. The handler in this module is invoked in order to convert
-the provided uri to a filesystem path. The filesystem path is what
-preview-server requires in order to generate a preview.
+Preview requests are received by preview-server, the path is given within the
+URL. In order to locate the file on disk, this plugin will make a request to a
+backend server, providing a session token and a portion of the URI. The backend
+replies with a path in the X-Accel-Redirect header. This path is used to
+generate a preview.
 
-This module also takes care to include the user_id into the origin (origin is
-used by preview-server to store generated previews). This means that generated
-previews will only be returned from cache for the same user. In other words,
-the API is always asked to convert a uri to a path for each user. Otherwise
-authentication would be completely bypassed for previews.
+Once the path has been resolved, an "origin" value is created that identifies
+the file. This origin includes user information from the session token in order
+to preserve user-based privileges that the backend enforces. In other words,
+the file path alone is not sufficient to identify an individual file. Thus the
+user_id is combined with the path and use as a caching key.
 
-
+By utilizing the URI fragment as well as the user_id as a key, the true path
+can be cached, obviating the need for duplicate requests to the backend.
 """
 
 import os
@@ -89,10 +90,12 @@ ALGO = os.environ.get('JWT_ALGO', 'HS256')
 UPSTREAM = os.environ.get('JWT_UPSTREAM', None)
 # Cache server addresses.
 CACHE = _configure_cache(os.environ.get('JWT_CACHE_ADDRESS', ''))
-ROOT = _parse_root(
-    os.environ.get(
-        'JWT_BASE_PATH',
-        '/internal/downloads:/mnt/mfs00/scratch00/temp/downloads/'))
+# This configuration option contains a mapping from a URI to a disk path. It
+# mirrors an alias configured in nginx that is used to download files. For
+# example this configuration option might be: /downloads:/path/to/files. When
+# the backend returns a path such as: /downloads/a/file.txt, the true path of
+# the file is /path/to/files/a/file.txt.
+ROOT = _parse_root(os.environ.get('JWT_BASE_PATH'))
 
 
 async def handler(request):
@@ -139,10 +142,10 @@ async def handler(request):
 
     if not path.startswith(ROOT[0]):
         LOGGER.error('Path does not start with expected path')
-        raise web.HTTPBadRequest('Invalid path')
+        raise web.HTTPBadRequest(reason='Invalid path')
 
     # Transform path
-    path = pathjoin(ROOT[1], path[len(ROOT[0]:)])
+    path = pathjoin(ROOT[1], path[len(ROOT[0]):].lstrip('/'))
 
     if CACHE:
         CACHE.set(key, path)
