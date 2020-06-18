@@ -14,7 +14,7 @@ services:
 
 install:
   - echo "${TRAVIS_BRANCH}"
-  - pip3 install aiohttp
+  - pipenv install --system
 
 before_script:
   - make build-cache
