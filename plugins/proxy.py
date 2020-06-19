@@ -91,9 +91,9 @@ KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))
 ALGO = os.environ.get('PROXY_JWT_ALGO', 'HS256')
 
 # Address to proxy plain requests to.
-ANON_UPSTREAM = os.environ.get('PROXY_ANONYMOUS_UPSTREAM', None)
+ANON_UPSTREAM = os.environ.get('PROXY_ANON_UPSTREAM', None)
 # Address to proxy JWT requests to.
-JWT_UPSTREAM = os.environ.get('PROXY_JWT_UPSTREAM', None)
+AUTH_UPSTREAM = os.environ.get('PROXY_AUTH_UPSTREAM', None)
 # Cache server addresses.
 CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', ''))
 # This configuration option contains a mapping from a URI to a disk path. It
@@ -171,8 +171,7 @@ async def authenticated(request):
         raise web.HTTPBadRequest(reason='Invalid session')
 
     origin = '/users/%s%s' % (user_id, uri)
-
-    url = '%sapi/%s/path/data%s' % (JWT_UPSTREAM, version, uri)
+    url = '%sapi/%s/path/data%s' % (AUTH_UPSTREAM, version, uri)
     path = await get_path(origin, url, cookies={'sessionid': token})
 
     # Return tuple as preview-server expects.
@@ -190,6 +189,7 @@ async def anonymous(request):
     link_id = request.match_info['link_id']
     uri = request.match_info['uri']
     origin = '/%s/%s' % (link_id, uri)
+    url = '%s%s%s' % (ANON_UPSTREAM, link_id, uri)
     path = await get_path(origin, url)
     return path, origin
 
@@ -202,5 +202,5 @@ authenticated.method = 'get'
 # Configure the route for plain proxying.
 # /link/keJf1XlM5aY/path_to_file.exe?preview=true
 # /keJf1XlM5aY/path_to_file.exe?preview=true
-anonymous.pattern = r'/(link/)?{link_id:[\w\d]+}{uri:.*}'
+anonymous.pattern = r'/{_:link/|}{link_id:[\w\d]+}{uri:.*}'
 anonymous.method = 'get'
