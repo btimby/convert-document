@@ -40,7 +40,7 @@ LOGGER.addHandler(logging.NullHandler())
 # Cache aiohttp ClientSession instance. ClientSession should be reused if
 # possible as it provides connection pooling. CookieJar is set to usafe to
 # allow cookies to be used even with backend servers defined by IP address.
-SESSION = ClientSession(cookie_jar=CookieJar(unsafe=True))
+SESSION = ClientSession(loop=LOOP, cookie_jar=CookieJar(unsafe=True))
 
 
 def _configure_cache(caches):
@@ -63,7 +63,7 @@ def _configure_cache(caches):
         LOGGER.warn('No memcache backends defined, using only in-memory cache')
 
     else:
-        client = Memcache(backends)
+        client = Memcache(backends, loop=LOOP)
 
     return client
 
