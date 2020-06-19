@@ -8,12 +8,12 @@ ROOT = dirname(dirname(__file__))
 
 # Set some settings for testing...
 os.environ['PVS_MAX_PAGES'] = '10'
-os.environ['PVS_PLUGINS'] = 'plugins/proxy.py:handler'
+os.environ['PVS_PLUGINS'] = 'plugins/proxy.py:authenticated'
 
 # Smartfile plugin settings:
 os.environ['PROXY_JWT_KEY'] = 'foo key bar'
 os.environ['PROXY_JWT_ALGO'] = 'HS256'
-os.environ['PROXY_UPSTREAM'] = 'http://api/'
+os.environ['PROXY_JWT_UPSTREAM'] = 'http://api/'
 os.environ['PROXY_BASE_PATH'] = '/files/:%s' % ROOT
 
 

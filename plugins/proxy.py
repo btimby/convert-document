@@ -29,12 +29,16 @@ from os.path import join as pathjoin, exists as pathexists
 import jwt
 from jwt.exceptions import DecodeError
 
-from aiohttp import web, ClientSession
+from aiohttp import web, ClientSession, CookieJar
 from aiomcache_multi import Client as Memcache
 
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
+# Cache aiohttp ClientSession instance. ClientSession should be reused if
+# possible as it provides connection pooling. CookieJar is set to usafe to
+# allow cookies to be used even with backend servers defined by IP address.
+SESSION = ClientSession(cookie_jar=CookieJar(unsafe=True))
 
 
 def _configure_cache(caches):
@@ -86,8 +90,10 @@ def _parse_root(mapping):
 KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))
 ALGO = os.environ.get('PROXY_JWT_ALGO', 'HS256')
 
-# Address to proxy request to.
-UPSTREAM = os.environ.get('PROXY_UPSTREAM', None)
+# Address to proxy plain requests to.
+ANON_UPSTREAM = os.environ.get('PROXY_ANONYMOUS_UPSTREAM', None)
+# Address to proxy JWT requests to.
+JWT_UPSTREAM = os.environ.get('PROXY_JWT_UPSTREAM', None)
 # Cache server addresses.
 CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', ''))
 # This configuration option contains a mapping from a URI to a disk path. It
@@ -98,7 +104,57 @@ CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', ''))
 ROOT = _parse_root(os.environ.get('PROXY_BASE_PATH'))
 
 
-async def handler(request):
+async def cache_get(origin):
+    if not CACHE:
+        return None, None
+
+    # Hash origin
+    key = 'preview:%s' % hashlib.md5(origin.encode('utf8')).hexdigest()
+
+    # Look up path in cache using hashed origin as cache key
+    return await CACHE.get(key), key
+
+
+async def get_path(origin, url, **kwargs):
+    # Return path from cache if available.
+    path, key = await cache_get(origin)
+    if path:
+        return path
+
+    # Otherwise perform a subrequest to resolve the path to a filesystem path
+    async with SESSION.get(
+        url, params={'preview': 'true'}, **kwargs) as res:
+        LOGGER.debug(await res.text())
+
+        # Filesystem path returned via X-Accel-Redirect header.
+        try:
+            path = res.headers['x-accel-redirect']
+
+        except KeyError:
+            LOGGER.exception('Could not retrieve X-Accel-Redirect header')
+            raise web.HTTPBadRequest(reason='Invalid response')
+
+    if not path.startswith(ROOT[0]):
+        LOGGER.error('Path does not start with expected path')
+        raise web.HTTPBadRequest(reason='Invalid path')
+
+    # Transform path
+    path = pathjoin(ROOT[1], path[len(ROOT[0]):].lstrip('/'))
+
+    if key:
+        await CACHE.set(key, path)
+
+    return path
+
+
+async def authenticated(request):
+    """
+    Receive a request authenticated by a JWT and forward to backend.
+
+    This view verifies the JWT in the request then forwards it to a backend to
+    determine the true path of the given URI. Once this is known, it is
+    returned so that preview-server can create and store the preview.
+    """
     version = request.match_info['version']
     uri = request.match_info['uri']
 
@@ -114,46 +170,37 @@ async def handler(request):
         LOGGER.exception('Could not verify JWT')
         raise web.HTTPBadRequest(reason='Invalid session')
 
-    origin = '/users/%d%s' % (user_id, uri)
+    origin = '/users/%s%s' % (user_id, uri)
 
-    if CACHE:
-        # Hash origin
-        key = 'preview:%s' % hashlib.md5(origin.encode('utf8')).hexdigest()
-
-        # Look up path in cache using hashed origin as cache key
-        path = CACHE.get(key)
-
-        # If cache hit, return path
-        if path:
-            return path, origin
-
-    # Otherwise, perform subrequest, add path to cache, return it.
-    async with ClientSession(cookies={'sessionid': token}) as s:
-        async with s.get('%sapi/%s/path/data%s' % (UPSTREAM, version, uri)) as r:
-            LOGGER.debug(await r.text())
-
-            # SmartFile returns the filesystem path in X-Accel-Redirect header.
-            try:
-                path = r.headers['x-accel-redirect']
-
-            except KeyError:
-                LOGGER.exception('Could not retrieve X-Accel-Redirect header')
-                raise web.HTTPBadRequest(reason='Invalid response')
-
-    if not path.startswith(ROOT[0]):
-        LOGGER.error('Path does not start with expected path')
-        raise web.HTTPBadRequest(reason='Invalid path')
-
-    # Transform path
-    path = pathjoin(ROOT[1], path[len(ROOT[0]):].lstrip('/'))
-
-    if CACHE:
-        CACHE.set(key, path)
+    url = '%sapi/%s/path/data%s' % (JWT_UPSTREAM, version, uri)
+    path = await get_path(origin, url, cookies={'sessionid': token})
 
     # Return tuple as preview-server expects.
     return path, origin
 
 
-# Let preview-server know how to configure our route.
-handler.pattern = r'/api/{version:\d+}/path/data{uri:.*}'
-handler.method = 'get'
+async def anonymous(request):
+    """
+    Receive an anonymous request and proxy it to the backend.
+
+    The backend provides the file path which is needed for the preview. Here
+    instead of including the user_id in the origin, link_id (from the url) is
+    used for uniqueness.
+    """
+    link_id = request.match_info['link_id']
+    uri = request.match_info['uri']
+    origin = '/%s/%s' % (link_id, uri)
+    path = await get_path(origin, url)
+    return path, origin
+
+
+# Configure the route for JWT handling.
+# /api/2/path/data/path_to_file.pdf?preview=true&width=40&height=50
+authenticated.pattern = r'/api/{version:\d+}/path/data{uri:.*}'
+authenticated.method = 'get'
+
+# Configure the route for plain proxying.
+# /link/keJf1XlM5aY/path_to_file.exe?preview=true
+# /keJf1XlM5aY/path_to_file.exe?preview=true
+anonymous.pattern = r'/(link/)?{link_id:[\w\d]+}{uri:.*}'
+anonymous.method = 'get'

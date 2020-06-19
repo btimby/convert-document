@@ -9,6 +9,14 @@ from preview.storage import Cleanup
 from preview.config import PROFILE_PATH, GID, UID, PORT
 
 
+# Use uvloop, set it up early so other modules can access the correct event
+# loop during import.
+LOOP = uvloop.new_event_loop()
+# Set up a default executor for conversion backends.
+LOOP.set_default_executor(ThreadPoolExecutor(max_workers=40))
+asyncio.set_event_loop(LOOP)
+
+
 def main():
     if GID:
         os.setgid(int(GID))
@@ -16,10 +24,6 @@ def main():
         os.setuid(int(UID))
 
     app = get_app()
-    loop = uvloop.new_event_loop()
-    # Set up a default executor for conversion backends.
-    loop.set_default_executor(ThreadPoolExecutor(max_workers=40))
-    asyncio.set_event_loop(loop)
 
     # TODO: probably a better way...
     Cleanup(loop)

@@ -24,7 +24,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         with aioresponses(passthrough=['http://127.0.0.1']) as mock:
             # Mock response from Proxy backend.
             mock.get(
-                'http://api/api/2/path/data/sample.pdf',
+                'http://api/api/2/path/data/sample.pdf?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf'
                 },
