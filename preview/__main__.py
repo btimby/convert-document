@@ -26,7 +26,7 @@ def main():
     app = get_app()
 
     # TODO: probably a better way...
-    Cleanup(loop)
+    Cleanup(LOOP)
 
     # TODO: figure out how to wait for pending requests before exiting.
     web.run_app(app, port=PORT)
