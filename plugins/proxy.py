@@ -42,6 +42,9 @@ SESSION = ClientSession(cookie_jar=CookieJar(unsafe=True))
 
 
 def _configure_cache(caches):
+    if caches is None:
+        return
+
     client, backends = None, []
 
     for server in caches.split(';'):
@@ -95,7 +98,7 @@ ANON_UPSTREAM = os.environ.get('PROXY_ANON_UPSTREAM', None)
 # Address to proxy JWT requests to.
 AUTH_UPSTREAM = os.environ.get('PROXY_AUTH_UPSTREAM', None)
 # Cache server addresses.
-CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', ''))
+CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', None))
 # This configuration option contains a mapping from a URI to a disk path. It
 # mirrors an alias configured in nginx that is used to download files. For
 # example this configuration option might be: /downloads:/path/to/files. When
@@ -141,6 +144,7 @@ async def get_path(origin, url, **kwargs):
     # Transform path
     path = pathjoin(ROOT[1], path[len(ROOT[0]):].lstrip('/'))
 
+    # Write back to cache if key has been populated.
     if key:
         await CACHE.set(key, path)
 
@@ -155,6 +159,7 @@ async def authenticated(request):
     determine the true path of the given URI. Once this is known, it is
     returned so that preview-server can create and store the preview.
     """
+    # Extract data from URL pattern.
     version = request.match_info['version']
     uri = request.match_info['uri']
 
@@ -170,6 +175,7 @@ async def authenticated(request):
         LOGGER.exception('Could not verify JWT')
         raise web.HTTPBadRequest(reason='Invalid session')
 
+    # Build params and get path.
     origin = '/users/%s%s' % (user_id, uri)
     url = '%sapi/%s/path/data%s' % (AUTH_UPSTREAM, version, uri)
     path = await get_path(origin, url, cookies={'sessionid': token})
@@ -186,11 +192,16 @@ async def anonymous(request):
     instead of including the user_id in the origin, link_id (from the url) is
     used for uniqueness.
     """
+    # Extract data from URL pattern.
     link_id = request.match_info['link_id']
     uri = request.match_info['uri']
-    origin = '/%s/%s' % (link_id, uri)
+
+    # Build params and get path.
+    origin = '/links/%s%s' % (link_id, uri)
     url = '%s%s%s' % (ANON_UPSTREAM, link_id, uri)
     path = await get_path(origin, url)
+
+    # Return tuple as preview-server expects.
     return path, origin
 
 
@@ -202,5 +213,7 @@ authenticated.method = 'get'
 # Configure the route for plain proxying.
 # /link/keJf1XlM5aY/path_to_file.exe?preview=true
 # /keJf1XlM5aY/path_to_file.exe?preview=true
+# Pattern is a bit complex as we need link/ to be optional in order to support
+# both forms of the url.
 anonymous.pattern = r'/{_:link/|}{link_id:[\w\d]+}{uri:.*}'
 anonymous.method = 'get'
