@@ -4,10 +4,6 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp import web
 
-from preview import get_app
-from preview.storage import Cleanup
-from preview.config import PROFILE_PATH, GID, UID, PORT
-
 
 # Use uvloop, set it up early so other modules can access the correct event
 # loop during import.
@@ -15,6 +11,11 @@ LOOP = uvloop.new_event_loop()
 # Set up a default executor for conversion backends.
 LOOP.set_default_executor(ThreadPoolExecutor(max_workers=40))
 asyncio.set_event_loop(LOOP)
+
+
+from preview import get_app
+from preview.storage import Cleanup
+from preview.config import PROFILE_PATH, GID, UID, PORT
 
 
 def main():
