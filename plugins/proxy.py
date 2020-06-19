@@ -32,6 +32,8 @@ from jwt.exceptions import DecodeError
 from aiohttp import web, ClientSession, CookieJar
 from aiomcache_multi import Client as Memcache
 
+from preview import LOOP
+
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
