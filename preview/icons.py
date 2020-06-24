@@ -43,6 +43,11 @@ def get(obj):
 
     icon_path = pathjoin(ICON_ROOT, str(bestdim), '%s.png' % obj.src.extension)
 
-    if isfile(icon_path):
-        obj.src = PathModel(icon_path)
-        return True
+    if not isfile(icon_path):
+        icon_path = pathjoin(ICON_ROOT, str(bestdim), 'default.png')
+        if not isfile(icon_path):
+            # No default.
+            return False
+
+    obj.src = PathModel(icon_path)
+    return True
