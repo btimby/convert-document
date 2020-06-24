@@ -72,7 +72,7 @@ class PreviewModel(object):
 
     @cached_property
     def extension(self):
-        return get_extension(self._name)
+        return get_extension(self._name).lower()
 
     @property
     def width(self):
