@@ -46,6 +46,7 @@ def get(obj):
     icon_path = pathjoin(ICON_ROOT, str(bestdim), '%s.png' % obj.src.extension)
 
     if not isfile(icon_path):
+        LOGGER.warn('Could not find file-type icon for %s', obj.src.extension)
         icon_path = pathjoin(ICON_ROOT, str(bestdim), 'default.png')
         if not isfile(icon_path):
             # No default.
