@@ -41,6 +41,8 @@ def get(obj):
         if dim >= max(obj.width, obj.height):
             break
 
+    LOGGER.debug('Found %d best match for %dx%d', bestdim, obj.width, obj.height)
+
     icon_path = pathjoin(ICON_ROOT, str(bestdim), '%s.png' % obj.src.extension)
 
     if not isfile(icon_path):
@@ -49,5 +51,6 @@ def get(obj):
             # No default.
             return False
 
+    LOGGER.info('Using icon: %s', icon_path)
     obj.src = PathModel(icon_path)
     return True
