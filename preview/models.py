@@ -95,9 +95,11 @@ class PreviewModel(object):
     def src(self, obj):
         if self._src is not None:
             self._src.cleanup()
+        # Reset attributes related to src.
         self._origin = obj.path
         self._name = basename(obj.path)
-        del self.__dict__['extension']
+        # Clear extension cache.
+        self.__dict__.pop('extension', None)
         self._src = obj
 
     @property
