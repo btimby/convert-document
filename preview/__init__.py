@@ -221,38 +221,22 @@ async def get_params(request):
 
 async def preview(obj):
     try:
-        try:
-            await generate(obj)
-
-        except Exception as e:
-            # NOTE: we send 203 to indicate that the content is not exactly
-            # what was requested. This helps our tools / tests determine
-            # if an error occurred. We also disable caching in the case of
-            # an error response.
-            LOGGER.exception(e)
-            if not icons.get(obj):
-                raise web.HTTPInternalServerError()
-
-            await generate(obj)
-            status = 203
-
-        else:
-            status = 200
+        await generate(obj)
 
         if BASE_PATH is None or obj.dst.is_temp:
-            response = PreviewResponse(obj, status=status)
+            response = PreviewResponse(obj)
 
         elif X_ACCEL_REDIR:
             x_accel_path = chroot(obj.dst.path, BASE_PATH, X_ACCEL_REDIR)
-            response = web.Response(status=status)
+            response = web.Response()
             response.headers['X-Accel-Redirect'] = x_accel_path
             response.content_type = obj.content_type
 
         else:
-            response = PreviewResponse(obj, status=status)
+            response = PreviewResponse(obj)
 
         # Don't cache error responses.
-        if CACHE_CONTROL and status == 200:
+        if CACHE_CONTROL:
             max_age = 60 * int(CACHE_CONTROL)
             response.headers['Cache-Control'] = \
                 'max-age=%i, public' % max_age

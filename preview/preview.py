@@ -10,7 +10,7 @@ from preview.backends.video import VideoBackend
 from preview.backends.pdf import PdfBackend
 from preview.metrics import PREVIEWS, PREVIEW_SIZE_IN, PREVIEW_SIZE_OUT
 from preview.config import FILE_ROOT
-from preview import storage
+from preview import storage, icons
 
 
 LOGGER = logging.getLogger()
@@ -55,8 +55,19 @@ async def generate(obj):
         return
 
     # Otherwise, we need to generate a new preview.
-    await Backend.preview(obj)
+    try:
+        await Backend.preview(obj)
 
-    # If a key was generated, it is OK to store the preview for reuse.
-    if key:
-        storage.put(key, obj)
+    except:
+        # Attempt to get a file type icon.
+        if not icons.get(obj):
+            # If no icon could be located, raise the exception.
+            raise
+
+        # Resize or convert the icon to the desired size / format.
+        await Backend.preview(obj)
+
+    else:
+        # If a key and preview was generated, store the preview for reuse.
+        if key:
+            storage.put(key, obj)

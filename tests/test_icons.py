@@ -27,5 +27,5 @@ class PreviewFormatTestCase(PreviewTestCase):
         )
         # Status 203 indicates success using alternate representation
         # (file type icon).
-        self.assertEqual(r.status, 203)
+        self.assertEqual(r.status, 200)
         self.assertEqual(r.headers['content-type'], 'image/gif')
