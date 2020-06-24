@@ -122,7 +122,7 @@ async def get_path(origin, url, **kwargs):
     # Return path from cache if available.
     path, key = await cache_get(origin)
     if path:
-        return path
+        return path.decode('utf8')
 
     # Otherwise perform a subrequest to resolve the path to a filesystem path
     async with SESSION.get(
@@ -146,7 +146,7 @@ async def get_path(origin, url, **kwargs):
 
     # Write back to cache if key has been populated.
     if key:
-        await CACHE.set(key, path)
+        await CACHE.set(key, path.encode('utf8'))
 
     return path
 
