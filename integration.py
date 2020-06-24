@@ -46,6 +46,10 @@ LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.StreamHandler())
 
 
+def is_success(status):
+    return status >= 200 and status < 300
+
+
 class TaskPool(object):
     def __init__(self, limit):
         self._semaphore = asyncio.Semaphore(limit)
@@ -80,7 +84,7 @@ class TaskPool(object):
 async def do_response(path, i, response):
     res = await response.read()
     ct = response.headers['Content-Type']
-    if response.status == 200:
+    if is_success(response.status):
         print('\033[K', i, response.status, len(res), ct, res[:20], end='\r')
 
     else:
@@ -144,8 +148,8 @@ def main(total, concurrent):
     statuses = loop.run_until_complete(amain(total, concurrent))
     duration = time() - start
 
-    failures = len([x for x in statuses if x not in (200, 203)])
-    successes = len([x for x in statuses if x in (200, 203)])
+    failures = len([x for x in statuses if not is_success(x)])
+    successes = len([x for x in statuses if is_success(x)])
 
     print('\n', end='')
     print('Total duration: %f, RPS: %f' % (duration, total / duration))
