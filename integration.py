@@ -144,8 +144,8 @@ def main(total, concurrent):
     statuses = loop.run_until_complete(amain(total, concurrent))
     duration = time() - start
 
-    failures = len([x for x in statuses if x != 200])
-    successes = len([x for x in statuses if x == 200])
+    failures = len([x for x in statuses if x not in (200, 203)])
+    successes = len([x for x in statuses if x in (200, 203)])
 
     print('\n', end='')
     print('Total duration: %f, RPS: %f' % (duration, total / duration))
