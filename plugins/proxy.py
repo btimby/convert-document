@@ -35,41 +35,32 @@ from aiomcache_multi import Client as Memcache
 from preview import LOOP
 
 
-LOGGER = logging.getLogger(__name__)
-LOGGER.addHandler(logging.NullHandler())
-# Cache aiohttp ClientSession instance. ClientSession should be reused if
-# possible as it provides connection pooling. CookieJar is set to usafe to
-# allow cookies to be used even with backend servers defined by IP address.
-SESSION = ClientSession(loop=LOOP, cookie_jar=CookieJar(unsafe=True))
-
-
+# These functions are used to parse configuration into globals.
 def _configure_cache(caches):
-    if caches is None:
+    if not caches:
         return
 
-    client, backends = None, []
+    backends = []
 
     for server in caches.split(';'):
         try:
             host, port = server.split(':')
+            port = int(port)
 
         except ValueError:
             continue
 
-        port = int(port)
         backends.append((host, port))
 
     if not backends:
         LOGGER.warn('No memcache backends defined, using only in-memory cache')
 
     else:
-        client = Memcache(backends, loop=LOOP)
-
-    return client
+        return Memcache(backends, loop=LOOP)
 
 
 def _parse_key(key):
-    if key is None:
+    if not key:
         return
 
     if pathexists(key):
@@ -90,6 +81,13 @@ def _parse_root(mapping):
 
     return fr, to
 
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(logging.NullHandler())
+# Cache aiohttp ClientSession instance. ClientSession should be reused if
+# possible as it provides connection pooling. CookieJar is set to usafe to
+# allow cookies to be used even with backend servers defined by IP address.
+SESSION = ClientSession(loop=LOOP, cookie_jar=CookieJar(unsafe=True))
 
 # JWT verification key and algorithm.
 KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))

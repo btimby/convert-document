@@ -224,17 +224,12 @@ async def preview(obj):
         try:
             await generate(obj)
 
-        except InvalidFormatError as e:
-            LOGGER.exception(e)
-            raise web.HTTPBadRequest(reason=str(e))
-
         except Exception as e:
             # NOTE: we send 203 to indicate that the content is not exactly
             # what was requested. This helps our tools / tests determine
             # if an error occurred. We also disable caching in the case of
             # an error response.
             LOGGER.exception(e)
-            obj.cleanup()
             if not icons.get(obj):
                 raise web.HTTPInternalServerError()
 

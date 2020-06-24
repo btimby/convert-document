@@ -21,6 +21,7 @@ os.environ['PROXY_BASE_PATH'] = '/files/:%s' % ROOT
 from tests.test_preview import *
 from tests.test_plugins import *
 from tests.test_proxy import *
+from tests.test_icons import *
 
 
 unittest.main()

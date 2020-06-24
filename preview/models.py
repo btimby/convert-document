@@ -95,6 +95,9 @@ class PreviewModel(object):
     def src(self, obj):
         if self._src is not None:
             self._src.cleanup()
+        self._origin = obj.path
+        self._name = basename(obj.path)
+        del self.__dict__['extension']
         self._src = obj
 
     @property
