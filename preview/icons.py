@@ -6,9 +6,9 @@ from os.path import join as pathjoin
 
 from preview.models import PathModel
 from preview.backends.image import ImageBackend
+from preview.config import ICON_ROOT
 
 
-ICON_ROOT = 'images/file-types'
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 

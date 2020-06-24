@@ -1,6 +1,7 @@
 import os
 import logging
 
+from os.path import dirname, join as pathjoin
 from runpy import run_path
 
 from preview.errors import InvalidPluginError
@@ -15,6 +16,7 @@ UNIT_VALUES = {
     'm': 60,
     's': 1,
 }
+ROOT = dirname(dirname(__file__))
 
 
 def boolean(s):
@@ -119,3 +121,4 @@ MAX_PAGES = int(os.environ.get('PVS_MAX_PAGES', '0'))
 MAX_STORAGE_AGE = interval(os.environ.get('PVS_STORE_MAX_AGE'))
 MAX_OFFICE_WORKERS = int(os.environ.get('PVS_MAX_OFFICE_WORKERS', 0))
 PLUGINS = load_plugins(os.environ.get('PVS_PLUGINS', ''))
+ICON_ROOT = os.environ.get('PVS_ICONS', pathjoin(ROOT, 'images/file-types'))
