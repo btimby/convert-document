@@ -45,7 +45,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
     @unittest_run_loop
     async def test_anonymous_link(self):
-        "Make an anonymous request."
+        "Make an anonymous request to longer URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
                 'http://api/f00b4r/sample.pdf?preview=true',
@@ -66,7 +66,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
     @unittest_run_loop
     async def test_anonymous(self):
-        "Make an anonymous request."
+        "Make an anonymous request to shorter URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
                 'http://api/f00b4r/sample.pdf?preview=true',
@@ -84,3 +84,24 @@ class ProxyPluginTestCase(PreviewTestCase):
             )
         self.assertEqual(r.status, 200)
         self.assertEqual(r.headers['content-type'], 'application/pdf')
+
+    @unittest_run_loop
+    async def test_unsupported(self):
+        "Make a request for an unsupported file type"
+        with aioresponses(passthrough=['http://127.0.0.1']) as resp:
+            resp.get(
+                'http://api/f00b4r/w64.exe?preview=true',
+                headers={
+                    'X-Accel-Redirect': '/files/fixtures/sample.pdf',
+                },
+            )
+
+            r = await self.client.request(
+                'GET',
+                '/link/f00b4r/w64.exe',
+                params={
+                    'format': 'image',
+                },
+            )
+        self.assertEqual(r.status, 200)
+        self.assertEqual(r.headers['content-type'], 'image/gif')

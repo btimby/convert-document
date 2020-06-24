@@ -64,6 +64,7 @@ async def generate(obj):
             # If no icon could be located, raise the exception.
             raise
 
+        LOGGER.debug('Could not generate preview', exc_info=True)
         # Resize or convert the icon to the desired size / format.
         await Backend.preview(obj)
 
