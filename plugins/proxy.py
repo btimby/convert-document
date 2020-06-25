@@ -169,7 +169,7 @@ async def authenticated(request):
         raise web.HTTPBadRequest(reason='Missing session')
 
     try:
-        user_id = jwt.decode(token, KEY, algorithms=[ALGO])['uid']
+        user_id = jwt.decode(token, KEY, algorithms=[ALGO])['u']
 
     except (DecodeError, KeyError):
         LOGGER.exception('Could not verify JWT')
