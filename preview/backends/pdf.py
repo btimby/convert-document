@@ -26,9 +26,6 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
     ]
 
     if pages != (0, 0):
-        # NOTE: At this time -dFirstPage is ignored by ghostscript, it always
-        # starts at page 1. I also tested -sPageList which did not work at all.
-        # Leaving this as it does not hurt. -dLastPage works as expected.
         args.extend([
             b'-dFirstPage=%i' % pages[0], b'-dLastPage=%i' % pages[1]])
 
