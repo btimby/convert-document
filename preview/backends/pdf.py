@@ -51,16 +51,14 @@ class PdfBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
-        pages = obj.args.get('pages')
-
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            _run_ghostscript(obj, 'pdfwrite', t.name, pages=pages)
+            _run_ghostscript(obj, 'pdfwrite', t.name, pages=obj.args.get('pages'))
             obj.dst = PathModel(t.name)
 
     @log_duration
     def _preview_image(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.png') as t:
-            _run_ghostscript(obj, 'png16m', t.name, pages=(1, 1))
+            _run_ghostscript(obj, 'png16m', t.name, pages=obj.args.get('pages'))
             obj.src = PathModel(t.name)
 
         ImageBackend()._preview_image(obj)

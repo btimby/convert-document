@@ -55,7 +55,7 @@ def get(obj):
         return False, None
 
     key = make_key(
-        obj.origin, obj.format, obj.width, obj.height)
+        obj.origin, obj.format, obj.width, obj.height, obj.args.get('pages'))
     store_path = make_path(key)
 
     if not isfile(store_path):

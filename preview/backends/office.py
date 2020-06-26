@@ -84,15 +84,13 @@ class OfficeBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
-        pages = obj.args.get('pages')
-
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            t.write(convert(obj, pages=pages))
+            t.write(convert(obj, pages=obj.args.get('pages')))
             obj.dst = PathModel(t.name)
 
     @log_duration
     def _preview_image(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            t.write(convert(obj, pages=(1, 1)))
+            t.write(convert(obj, pages=obj.args.get('pages')))
             obj.src = PathModel(t.name)
         PdfBackend()._preview_image(obj)
