@@ -19,7 +19,7 @@ class ProxyPluginTestCase(PreviewTestCase):
     @unittest_run_loop
     async def test_authenticated(self):
         "Make an authenticated request."
-        token = jwt.encode({'uid': 1}, proxy.KEY, algorithm=proxy.ALGO)
+        token = jwt.encode({'u': 1}, proxy.KEY, algorithm=proxy.ALGO)
 
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             # Mock response from Proxy backend.
