@@ -20,7 +20,11 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
     if not obj.src.size:
         raise Exception('Invalid file size 0')
 
-    args = []
+    args = [
+        b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-q',
+        b'-sDEVICE=%s' % bytes(device, 'utf8'),
+    ]
+
     if pages != (0, 0):
         # NOTE: At this time -dFirstPage is ignored by ghostscript, it always
         # starts at page 1. I also tested -sPageList which did not work at all.
@@ -29,8 +33,6 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
             b'-dFirstPage=%i' % pages[0], b'-dLastPage=%i' % pages[1]])
 
     args.extend([
-        b'-dNOPAUSE', b'-dBATCH', b'-dSAFER', b'-q',
-        b'-sDEVICE=%s' % bytes(device, 'utf8'),
         b'-sOutputFile=%s' % bytes(outfile, 'utf8'),
         bytes(obj.src.path, 'utf8'),
     ])
@@ -52,13 +54,15 @@ class PdfBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
-            _run_ghostscript(obj, 'pdfwrite', t.name, pages=obj.args.get('pages'))
+            _run_ghostscript(
+                obj, 'pdfwrite', t.name, pages=obj.args.get('pages'))
             obj.dst = PathModel(t.name)
 
     @log_duration
     def _preview_image(self, obj):
         with NamedTemporaryFile(delete=False, suffix='.png') as t:
-            _run_ghostscript(obj, 'png16m', t.name, pages=obj.args.get('pages'))
+            _run_ghostscript(
+                obj, 'png16m', t.name, pages=obj.args.get('pages'))
             obj.src = PathModel(t.name)
 
         ImageBackend()._preview_image(obj)
