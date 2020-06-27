@@ -15,6 +15,7 @@ from tempfile import NamedTemporaryFile
 
 from aiohttp import web, ClientSession
 from aiohttp.web_middlewares import normalize_path_middleware
+from aiohttp_sentry import SentryMiddleware
 
 
 # Use uvloop, set it up early so other modules can access the correct event
@@ -49,6 +50,7 @@ MEGABYTE = 1024 * 1024
 BUFFER_SIZE = 8 * MEGABYTE
 MAX_UPLOAD = 800 * MEGABYTE
 ROOT = dirname(__file__)
+SENTRY_DSN = os.environ.get('SENTRY_DSN', None)
 
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.StreamHandler())
@@ -305,10 +307,16 @@ async def test(request):
 
 
 def get_app():
+    middlewares = [
+        normalize_path_middleware(),
+        metrics_middleware(),
+    ]
+    if SENTRY_DSN:
+        middlewares.append(
+            SentryMiddleware(
+                patch_logging=True, sentry_log_level=logging.ERROR))
     app = web.Application(
-        client_max_size=MAX_UPLOAD, middlewares=[
-            normalize_path_middleware(), metrics_middleware()
-            ])
+        client_max_size=MAX_UPLOAD, middlewares=middlewares)
 
     # Register handler for default preview routes.
     default_handler = make_handler(get_path)

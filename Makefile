@@ -1,4 +1,5 @@
 TAG=latest
+SOURCE_COMMIT=$(shell git rev-parse --short HEAD)
 
 all: test
 
@@ -49,7 +50,7 @@ integration: Pipfile
 
 .PHONY: small
 small: build
-	docker-compose -f small.yml -p preview-small up
+	SOURCE_COMMIT=${SOURCE_COMMIT} docker-compose -f small.yml -p preview-small up
 
 
 .PHONY: medium

@@ -22,7 +22,6 @@ before_script:
 
 script:
   - make test
-  - make integration
 
 after_script:
   - make end-test
