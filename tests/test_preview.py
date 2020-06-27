@@ -24,7 +24,9 @@ class PreviewFormatTestCase(PreviewTestCase):
     async def test_pdf(self):
         "Request a preview as PDF and ensure PDF is returned."
         r = await self.client.request(
-            'GET', '/preview/', params={'format': 'pdf', 'path': FIXTURE_SAMPLE_PDF})
+            'GET', '/preview/', params={
+                'format': 'pdf',
+                'path': FIXTURE_SAMPLE_PDF})
         self.assertEqual(r.status, 200)
         self.assertEqual(r.headers['content-type'], 'application/pdf')
 
@@ -32,7 +34,9 @@ class PreviewFormatTestCase(PreviewTestCase):
     async def test_image(self):
         "Request a preview as an image and ensure GIF is returned."
         r = await self.client.request(
-            'GET', '/preview/', params={'format': 'image', 'path': FIXTURE_QUICKTIME_MOV})
+            'GET', '/preview/', params={
+                'format': 'image',
+                'path': FIXTURE_QUICKTIME_MOV})
         self.assertEqual(r.status, 200)
         self.assertEqual(r.headers['content-type'], 'image/gif')
 
@@ -40,7 +44,29 @@ class PreviewFormatTestCase(PreviewTestCase):
     async def test_invalid(self):
         'Request an invalid format and ensure a 400 is returned.'
         r = await self.client.request(
-            'GET', '/preview/', params={'format': 'foobar', 'path': FIXTURE_SAMPLE_PDF})
+            'GET', '/preview/', params={
+                'format': 'foobar',
+                'path': FIXTURE_SAMPLE_PDF})
+        self.assertEqual(r.status, 500)
+
+    @unittest_run_loop
+    async def test_pdf_page_oob(self):
+        'Request an invalid page from a pdf.'
+        r = await self.client.request(
+            'GET', '/preview/', params={
+                'format': 'image',
+                'path': FIXTURE_SAMPLE_PDF,
+                'pages': '10'})
+        self.assertEqual(r.status, 400)
+
+    @unittest_run_loop
+    async def test_doc_page_oob(self):
+        'Request an invalid page from a pdf.'
+        r = await self.client.request(
+            'GET', '/preview/', params={
+                'format': 'image',
+                'path': FIXTURE_SAMPLE_DOC,
+                'pages': '10'})
         self.assertEqual(r.status, 400)
 
 

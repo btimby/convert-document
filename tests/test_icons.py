@@ -17,7 +17,7 @@ ROOT = dirname(dirname(__file__))
 FIXTURE_W64_EXE = pathjoin(ROOT, 'fixtures/w64.exe')
 
 
-class PreviewFormatTestCase(PreviewTestCase):
+class PreviewIconTestCase(PreviewTestCase):
     @unittest_run_loop
     async def test_exe(self):
         "Request a preview for unsupported format and ensure icon is returned."

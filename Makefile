@@ -24,9 +24,22 @@ Pipfile: Pipfile.lock
 	touch Pipfile
 
 
+.PHONY: start-test
+start-test: build-cache
+	docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
+	for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
+	docker-compose -f medium.yml -p preview-demo ps
+	docker-compose -f medium.yml -p preview-demo logs soffice-server
+
+
+.PHONY: end-test
+end-test:
+	docker-compose -f medium.yml -p preview-demo kill soffice-server
+
+
 .PHONY: test
-test: Pipfile
-	pipenv run python3 -m tests
+test:
+	docker-compose -f medium.yml -p preview-demo run preview-server python3 -m tests
 
 
 .PHONY: integration
