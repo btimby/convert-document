@@ -51,7 +51,7 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
         pass
 
     # Checkout output for errors that require special handling.
-    if b'FirstPage is greater than' in stream.getvalue():
+    if pages != (0, 0) and b'FirstPage is greater than' in stream.getvalue():
         raise InvalidPageError(pages)
 
 
