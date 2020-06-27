@@ -67,9 +67,9 @@ class PdfBackend(BaseBackend):
         if pages is None:
             pages = obj.args.get('pages')
 
-        # We can only convert one page to an image.
+        # We can only convert one page to an image, choose the first.
         if pages != (1, 1):
-            pages = (pages[0], pages[0] + 1)
+            pages = (pages[0], pages[0])
 
         with NamedTemporaryFile(delete=False, suffix='.png') as t:
             _run_ghostscript(

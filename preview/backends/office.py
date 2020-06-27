@@ -97,4 +97,4 @@ class OfficeBackend(BaseBackend):
         # We need to override the pages parameter since the pdf we just
         # generated contains only the pages we want, we don't need to further
         # limit pages.
-        PdfBackend()._preview_image(obj, pages=(1, 1))
+        PdfBackend()._preview_image(obj, pages=(0, 0))
