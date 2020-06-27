@@ -57,6 +57,9 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
             if pages != (0, 0):
                 # Specific page(s) were requested.
                 if e.returncode == 5 and b'UnoException during export' in e.stderr:
+                    LOGGER.debug(
+                        'unoconv failed, invalid page, aborting: %i; %s\n%s',
+                        e.returncode, e.stdout, e.stderr)
                     # Requested page(s) were invalid (most likely).
                     raise InvalidPageError(pages)
             if not retry:
