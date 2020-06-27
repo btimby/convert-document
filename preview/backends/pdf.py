@@ -29,7 +29,13 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
         args.extend([
             b'-dFirstPage=%i' % pages[0], b'-dLastPage=%i' % pages[1]])
 
+    # Calculate suitable DPI...
+    dpi = max(obj.width / 8.5, obj.height / 11)
+    # Round up to multiple of 72.
+    dpi = int(dpi // 72 * 72 + 72)
+
     args.extend([
+        b'-r%i' % dpi,
         b'-o', bytes(outfile, 'utf8'),
         bytes(obj.src.path, 'utf8'),
     ])
