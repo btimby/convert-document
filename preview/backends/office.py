@@ -93,4 +93,8 @@ class OfficeBackend(BaseBackend):
         with NamedTemporaryFile(delete=False, suffix='.pdf') as t:
             t.write(convert(obj, pages=obj.args.get('pages')))
             obj.src = PathModel(t.name)
-        PdfBackend()._preview_image(obj)
+
+        # We need to override the pages parameter since the pdf we just
+        # generated contains only the pages we want, we don't need to further
+        # limit pages.
+        PdfBackend()._preview_image(obj, pages=(1, 1))

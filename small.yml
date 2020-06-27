@@ -17,8 +17,8 @@ services:
       - PVS_STORE=/mnt/store
 #      - PVS_UID=101
 #      - PVS_GID=101
-      - PVS_LOGLEVEL=WARNING
-      - PVS_HTTP_LOGLEVEL=DEBUG
+      - PVS_LOG_LEVEL=DEBUG
+      - PVS_HTTP_LOG_LEVEL=DEBUG
       - PVS_SOFFICE_ADDR=soffice-server
       - PVS_SOFFICE_PORT=2002
       - PVS_METRICS=off
