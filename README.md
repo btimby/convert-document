@@ -103,6 +103,16 @@ https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
 `PVS_SOFFICE_RETRY` - Control how many times to retry connection to soffice before failing.
 
 
+## Error tracking with Sentry
+
+You can enable sentry error tracking by setting some environment variables:
+
+`SENTRY_DSN` - The DSN for your sentry server.
+
+`SENTRY_RELEASE` - The release to include with error reports. This defaults to the git hash of preview-server.
+
+`SENTRY_ENVIRONMENT` - The environment to include with error reports. There is no default for this.
+
 ## Development
 
 To build, run:
