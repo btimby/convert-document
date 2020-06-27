@@ -41,7 +41,7 @@ from preview.config import (
     X_ACCEL_REDIR, MAX_FILE_SIZE, MAX_PAGES, PLUGINS,
 )
 from preview.models import PreviewModel
-from preview.errors import InvalidFormatError
+from preview.errors import InvalidPageError
 
 
 # Limits
@@ -243,6 +243,9 @@ async def preview(obj):
 
     except web.HTTPException:
         raise
+
+    except InvalidPageError:
+        raise web.HTTPBadRequest(reason='Invalid page requested')
 
     except Exception as e:
         LOGGER.exception(e)

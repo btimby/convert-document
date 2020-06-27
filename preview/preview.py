@@ -10,6 +10,7 @@ from preview.backends.video import VideoBackend
 from preview.backends.pdf import PdfBackend
 from preview.metrics import PREVIEWS, PREVIEW_SIZE_IN, PREVIEW_SIZE_OUT
 from preview.config import FILE_ROOT
+from preview.errors import InvalidPageError
 from preview import storage, icons
 
 
@@ -57,6 +58,9 @@ async def generate(obj):
     # Otherwise, we need to generate a new preview.
     try:
         await Backend.preview(obj)
+
+    except InvalidPageError:
+        raise
 
     except:
         # Attempt to get a file type icon.

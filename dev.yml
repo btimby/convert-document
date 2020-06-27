@@ -8,8 +8,8 @@ services:
     image: btimby/preview-server
     volumes:
       - ./fixtures:/mnt/files:ro
-      - previews:/mnt/store
       - ./:/app:ro
+      - previews:/mnt/store
     tmpfs:
       - /tmp
     environment:

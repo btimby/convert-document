@@ -1,5 +1,6 @@
 import logging
 
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 import ghostscript
@@ -8,6 +9,7 @@ from preview.backends.base import BaseBackend
 from preview.backends.image import ImageBackend
 from preview.utils import log_duration
 from preview.models import PathModel
+from preview.errors import InvalidPageError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -44,8 +46,13 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
 
     # TODO: fix this lib. You cannot clean up the object with try / except if
     # __init__() raises.
-    with ghostscript.Ghostscript(*args):
+    stream = BytesIO()
+    with ghostscript.Ghostscript(stdout=stream, stderr=stream, *args):
         pass
+
+    # Checkout output for errors that require special handling.
+    if b'FirstPage is greater than' in stream.getvalue():
+        raise InvalidPageError(pages)
 
 
 class PdfBackend(BaseBackend):

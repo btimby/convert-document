@@ -11,6 +11,7 @@ from preview.config import (
     SOFFICE_ADDR, SOFFICE_PORT, SOFFICE_TIMEOUT, SOFFICE_RETRY, MAX_OFFICE_WORKERS
 )
 from preview.models import PathModel
+from preview.errors import InvalidPageError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -53,13 +54,15 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
             return p.stdout
 
         except subprocess.CalledProcessError as e:
-            LOGGER.warning(e, exc_info=True)
-            LOGGER.warning(e.stdout)
-            LOGGER.warning(e.stderr)
+            if pages != (0, 0):
+                # Specific page(s) were requested.
+                if e.returncode == 5 and b'UnoException during export' in e.stderr:
+                    # Requested page(s) were invalid (most likely).
+                    raise InvalidPageError(pages)
             if not retry:
                 raise
             LOGGER.debug(
-                'unoconv failed with (retrying): %i; %s\n%s',
+                'unoconv failed, retrying: %i; %s\n%s',
                 e.returncode, e.stdout, e.stderr)
 
         except Exception as e:
