@@ -199,7 +199,9 @@ async def anonymous(request):
     # Build params and get path.
     origin = '/links/%s%s' % (link_id, uri)
     url = '%s%s%s' % (ANON_UPSTREAM, link_id, uri)
-    path = await get_path(origin, url)
+    path = await get_path(
+        origin, url,
+        cookies={'sessionid': request.cookies.get('sessionid')})
 
     # Return tuple as preview-server expects.
     return path, origin
