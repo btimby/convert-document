@@ -124,9 +124,12 @@ async def get_path(origin, url, **kwargs):
     if path:
         return path.decode('utf8')
 
+    # Set params and headers without clobbering kwargs.
+    kwargs.setdefault('params', {})['preview'] = 'true'
+    kwargs.setdefault('headers', {})['X-Forwarded-Proto'] = 'https'
+
     # Otherwise perform a subrequest to resolve the path to a filesystem path
-    async with SESSION.get(
-        url, params={'preview': 'true'}, **kwargs) as res:
+    async with SESSION.get(url, **kwargs) as res:
         LOGGER.debug(await res.text())
 
         # Filesystem path returned via X-Accel-Redirect header.
@@ -199,9 +202,7 @@ async def anonymous(request):
     # Build params and get path.
     origin = '/links/%s%s' % (link_id, uri)
     url = '%s%s%s' % (ANON_UPSTREAM, link_id, uri)
-    path = await get_path(
-        origin, url,
-        cookies={'sessionid': request.cookies.get('sessionid')})
+    path = await get_path(origin, url)
 
     # Return tuple as preview-server expects.
     return path, origin
