@@ -48,7 +48,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make an anonymous request to longer URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/links/f00b4r/sample.pdf?preview=true',
+                'http://api/link/f00b4r/sample.pdf?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
@@ -69,7 +69,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make an anonymous request to shorter URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/links/f00b4r/sample.pdf?preview=true',
+                'http://api/link/f00b4r/sample.pdf?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
@@ -90,7 +90,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make a request for an unsupported file type"
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/links/f00b4r/w64.exe?preview=true',
+                'http://api/link/f00b4r/w64.exe?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
