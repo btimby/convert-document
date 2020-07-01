@@ -51,8 +51,22 @@ def convert_to_pdf(path):
 class ImageBackend(BaseBackend):
     name = 'image'
     extensions = [
-        'bmp', 'dcx', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'tif', 'xbm',
-        'xpm'
+        # https://imagemagick.org/script/formats.php
+        'aai', 'art', 'arw', 'avs', 'bpg', 'bmp', 'bmp2', 'bmp3', 'cals',
+        'cgm', 'cin', 'cip', 'cmyk', 'cr2', 'crw', 'cube', 'cur', 'cut', 'cut',
+        'dcm', 'dcr', 'dcx', 'dds', 'dib', 'djvu', 'dng', 'dpx', 'emf', 'epdf',
+        'epi', 'eps', 'eps2', 'eps3', 'epsf', 'epsi', 'ept', 'exr', 'fax',
+        'fig', 'fits', 'fpx', 'gif', 'gplt', 'gray', 'graya', 'hdr', 'heic',
+        'hpgl', 'hrz', 'ico', 'info', 'jbig', 'jng', 'jp2', 'jpt', 'j2c',
+        'j2k', 'jpg', 'jpeg', 'jxr', 'jxl', 'mat', 'miff', 'mono', 'mng',
+        'm2v', 'mpc', 'mpr', 'mrw', 'msl', 'mtv', 'mvg', 'nef', 'orf', 'otb',
+        'p7', 'palm', 'pam', 'pbm', 'pcd', 'pcds', 'pcl', 'pcx', 'pdb', 'pef',
+        'pes', 'pfa', 'pfb', 'pfm', 'pgm', 'picon', 'pict', 'pix', 'png',
+        'png8', 'png00', 'png24', 'png32', 'png48', 'png64', 'pnm', 'ppm',
+        'psd', 'ptif', 'pwp', 'rad', 'raf', 'rgb', 'rgb565', 'rgba', 'rgf',
+        'rla', 'rle', 'sct', 'sfw', 'sgi', 'sun', 'svg', 'tga', 'tiff', 'tif',
+        'ttf', 'ubrl', 'ubrl6', 'uil', 'viff', 'wbmp', 'wbmp', 'wdp', 'wmf',
+        'wpg', 'x', 'xbm', 'xcf', 'xwd', 'x3f', 'yuv', 'xpm',
     ]
 
     @log_duration
