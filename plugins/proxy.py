@@ -93,10 +93,8 @@ SESSION = ClientSession(loop=LOOP, cookie_jar=CookieJar(unsafe=True))
 KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))
 ALGO = os.environ.get('PROXY_JWT_ALGO', 'HS256')
 
-# Address to proxy plain requests to.
-ANON_UPSTREAM = os.environ.get('PROXY_ANON_UPSTREAM', None)
-# Address to proxy JWT requests to.
-AUTH_UPSTREAM = os.environ.get('PROXY_AUTH_UPSTREAM', None)
+# Address to proxy requests to.
+UPSTREAM = os.environ.get('PROXY_UPSTREAM', None)
 # Cache server addresses.
 CACHE = _configure_cache(os.environ.get('PROXY_CACHE_ADDRESS', None))
 # This configuration option contains a mapping from a URI to a disk path. It
@@ -180,7 +178,7 @@ async def authenticated(request):
 
     # Build params and get path.
     origin = '/users/%s%s' % (user_id, uri)
-    url = '%sapi/%s/path/data%s' % (AUTH_UPSTREAM, version, uri)
+    url = '%sapi/%s/path/data%s' % (UPSTREAM, version, uri)
     path = await get_path(origin, url, cookies={'sessionid': token})
 
     # Return tuple as preview-server expects.
@@ -201,7 +199,7 @@ async def anonymous(request):
 
     # Build params and get path.
     origin = '/links/%s%s' % (link_id, uri)
-    url = '%s%s%s' % (ANON_UPSTREAM, link_id, uri)
+    url = '%slinks/%s' % (UPSTREAM, origin)
     path = await get_path(origin, url)
 
     # Return tuple as preview-server expects.

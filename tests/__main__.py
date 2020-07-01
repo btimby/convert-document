@@ -13,8 +13,7 @@ os.environ['PVS_PLUGINS'] = 'plugins/proxy.py:authenticated;plugins/proxy.py:ano
 # Smartfile plugin settings:
 os.environ['PROXY_JWT_KEY'] = 'foo key bar'
 os.environ['PROXY_JWT_ALGO'] = 'HS256'
-os.environ['PROXY_AUTH_UPSTREAM'] = 'http://api/'
-os.environ['PROXY_ANON_UPSTREAM'] = 'http://api/'
+os.environ['PROXY_UPSTREAM'] = 'http://api/'
 os.environ['PROXY_BASE_PATH'] = '/files/:%s' % ROOT
 
 
