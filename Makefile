@@ -83,10 +83,10 @@ login:
 
 .PHONY: tag
 tag:
-	docker tag btimby/preview-server btimby/preview-base:${SOURCE_COMMIT}
+	docker tag btimby/preview-base btimby/preview-base:${SOURCE_COMMIT}
 	docker tag btimby/preview-server btimby/preview-server:${SOURCE_COMMIT}
 	docker tag btimby/preview-soffice btimby/preview-soffice:${SOURCE_COMMIT}
-	docker tag btimby/preview-server btimby/preview-base:latest
+	docker tag btimby/preview-base btimby/preview-base:latest
 	docker tag btimby/preview-server btimby/preview-server:latest
 	docker tag btimby/preview-soffice btimby/preview-soffice:latest
 
