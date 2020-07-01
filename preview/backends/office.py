@@ -76,10 +76,14 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
 class OfficeBackend(BaseBackend):
     name = 'office'
     extensions = [
+        # https://en.wikipedia.org/wiki/LibreOffice#Supported_file_formats
         'dot', 'docm', 'dotx', 'dotm', 'psw', 'doc', 'xls', 'ppt', 'wpd',
         'wps', 'csv', 'sdw', 'sgl', 'vor', 'docx', 'xlsx', 'pptx', 'xlsm',
         'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
-        'odt', 'ods', 'odp', 'log', 'txt',
+        'odt', 'ods', 'odp', 'log', 'txt', 'abw', 'zabw', 'cwk', 'hwp',
+        'jtd', 'jtt', 'psw', 'wri', '602', 'wpd', 'wps', 'pmd', 'pm3', 'pm4',
+        'pm5', 'pm6', 'p65', 'pub', 'qxp', 'html', 'htm', 'epub', 'fb2',
+        'rfl',
     ]
     executor = ThreadPoolExecutor(max_workers=MAX_OFFICE_WORKERS) \
         if MAX_OFFICE_WORKERS else None
