@@ -74,7 +74,7 @@ class VideoBackend(BaseBackend):
         'tak', 'tee', 'thp', 'tmv', 'truehd', 'vc1', 'vcd', 'v4l2', 'vivo',
         'vmd', 'vob', 'voc', 'vplayer', 'vqf', 'w64', 'wc3movie', 'webm',
         'webvtt', 'wmv', 'wsaud', 'wsvqa', 'wtv', 'wv', 'xa', 'xbin', 'xmv',
-        'xwma', 'yop'
+        'xwma', 'yop',
     ]
 
     @log_duration

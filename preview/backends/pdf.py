@@ -59,7 +59,8 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
 class PdfBackend(BaseBackend):
     name = 'pdf'
     extensions = [
-        'pdf', 'eps', 'ps',
+        # https://www.file-extensions.org/ghostscript-file-extensions
+        'pdf', 'eps', 'ps', 'pm',
     ]
 
     @log_duration
