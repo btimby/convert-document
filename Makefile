@@ -3,14 +3,14 @@ SOURCE_COMMIT=$(shell git rev-parse --short HEAD)
 all: test
 
 .PHONY: build
-build:
+build: login
 	docker build -f docker/base/Dockerfile -t btimby/preview-base .
 	docker build -f docker/soffice/Dockerfile -t btimby/preview-soffice .
 	docker build -f docker/preview/Dockerfile -t btimby/preview-server .
 
 
 .PHONY: build-cache
-build-cache:
+build-cache: login
 	docker pull btimby/preview-base || true
 	docker pull btimby/preview-soffice || true
 	docker pull btimby/preview-server || true
@@ -25,7 +25,7 @@ Pipfile: Pipfile.lock
 
 
 .PHONY: start-test
-start-test:
+start-test: login
 	docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
 	for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
 	docker-compose -f medium.yml -p preview-demo ps
