@@ -10,6 +10,7 @@ from wand.image import Image, Color
 from preview.backends.base import BaseBackend
 from preview.utils import log_duration
 from preview.models import PathModel
+from preview.errors import InvalidPageError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -56,11 +57,19 @@ class ImageBackend(BaseBackend):
 
     @log_duration
     def _preview_image(self, obj):
+        pages = obj.args.get('pages')
+        if pages != (0, 0):
+            raise InvalidPageError(pages)
+
         path = resize_image(obj.src.path, obj.width, obj.height)
         obj.dst = PathModel(path)
 
     @log_duration
     def _preview_pdf(self, obj):
+        pages = obj.args.get('pages')
+        if pages != (0, 0):
+            raise InvalidPageError(pages)
+
         self._preview_image(obj)
         path = convert_to_pdf(obj.dst.path)
         obj.dst = PathModel(path)

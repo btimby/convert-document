@@ -46,12 +46,13 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
 
     # TODO: fix this lib. You cannot clean up the object with try / except if
     # __init__() raises.
-    stream = BytesIO()
-    with ghostscript.Ghostscript(stdout=stream, stderr=stream, *args):
+    output = BytesIO()
+    with ghostscript.Ghostscript(stdout=output, stderr=output, *args):
         pass
 
     # Checkout output for errors that require special handling.
-    if pages != (0, 0) and b'FirstPage is greater than' in stream.getvalue():
+    output = output.getvalue()
+    if pages != (0, 0) and (b'FirstPage' in output or b'LastPage' in output):
         raise InvalidPageError(pages)
 
 

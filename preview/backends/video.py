@@ -10,6 +10,7 @@ import img2pdf
 from preview.backends.base import BaseBackend
 from preview.utils import log_duration
 from preview.models import PathModel
+from preview.errors import InvalidPageError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -78,6 +79,10 @@ class VideoBackend(BaseBackend):
 
     @log_duration
     def _preview_image(self, obj):
+        pages = obj.args.get('pages')
+        if pages != (0, 0):
+            raise InvalidPageError(pages)
+
         images = grab_frames(obj.src.path, obj.width, obj.height)
 
         with NamedTemporaryFile(delete=False, suffix='.gif') as t:
@@ -89,6 +94,10 @@ class VideoBackend(BaseBackend):
 
     @log_duration
     def _preview_pdf(self, obj):
+        pages = obj.args.get('pages')
+        if pages != (0, 0):
+            raise InvalidPageError(pages)
+
         data = BytesIO()
         image = grab_frames(
             obj.src.path, obj.width, obj.height, start=-1, count=1)[0]
