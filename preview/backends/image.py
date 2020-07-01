@@ -56,8 +56,9 @@ class ImageBackend(BaseBackend):
     ]
 
     @log_duration
-    def _preview_image(self, obj):
-        pages = obj.args.get('pages')
+    def _preview_image(self, obj, pages=None):
+        if pages is None:
+            pages = obj.args.get('pages')
         if pages != (1, 1):
             raise InvalidPageError(pages)
 
@@ -65,8 +66,9 @@ class ImageBackend(BaseBackend):
         obj.dst = PathModel(path)
 
     @log_duration
-    def _preview_pdf(self, obj):
-        pages = obj.args.get('pages')
+    def _preview_pdf(self, obj, pages=None):
+        if pages is None:
+            pages = obj.args.get('pages')
         if pages != (1, 1):
             raise InvalidPageError(pages)
 

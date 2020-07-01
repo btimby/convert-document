@@ -90,4 +90,4 @@ class PdfBackend(BaseBackend):
                 obj, 'png16m', t.name, pages=pages)
             obj.src = PathModel(t.name)
 
-        ImageBackend()._preview_image(obj)
+        ImageBackend()._preview_image(obj, pages=(1, 1))
