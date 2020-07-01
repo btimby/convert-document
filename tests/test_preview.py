@@ -10,7 +10,7 @@ from aiohttp import web
 from tests.base import PreviewTestCase
 
 from preview import parse_pages
-from preview.config import MAX_PAGES, boolean, interval
+from preview.config import MAX_PAGES
 
 
 ROOT = dirname(dirname(__file__))
@@ -88,34 +88,3 @@ class ParsePagesTestCase(TestCase):
         self.assertEqual(parse_pages('1-5'), (1, 5))
         # Ensure special argument "all" does the right thing.
         self.assertEqual(parse_pages('all'), (1, MAX_PAGES))
-
-
-class BooleanTestCase(TestCase):
-    def test_parse_true(self):
-        strings = [
-            'true', 'True', 'TRUE', 'on', 'On', 'ON', 'yes', 'Yes', 'YES', '1',
-        ]
-        for s in strings:
-            self.assertTrue(boolean(s) is True, '%s did not evaluate to True' % s)
-
-    def test_parse_false(self):
-        strings = [
-            None, 'false', 'False', 'FALSE', 'off', 'Off', 'OFF', 'no', 'No', 'NO', '0',
-        ]
-        for s in strings:
-            self.assertTrue(boolean(s) is False, '%s did not evaluate to False' % s)
-
-
-class IntervalTestCase(TestCase):
-    def test_parse_invalid(self):
-        self.assertIsNone(interval(''))
-        self.assertIsNone(interval(None))
-        with self.assertRaises(ValueError):
-            interval('1g')
-
-    def test_parse_valid(self):
-        self.assertEqual(interval('1'), 1)
-        self.assertEqual(interval('1s'), 1)
-        self.assertEqual(interval('5m'), 300)
-        self.assertEqual(interval('500s'), 500)
-        self.assertEqual(interval('007m'), 420)

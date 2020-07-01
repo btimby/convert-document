@@ -14,7 +14,7 @@ from preview.utils import (
     safe_delete, safe_makedirs, run_in_executor, log_duration
 )
 from preview.metrics import STORAGE, STORAGE_FILES, STORAGE_BYTES
-from preview.config import BASE_PATH, MAX_STORAGE_AGE
+from preview.config import BASE_PATH, CLEANUP_MAX_SIZE, CLEANUP_INTERVAL
 from preview.models import PathModel
 
 
@@ -104,12 +104,12 @@ def put(key, obj):
 
 class Cleanup(object):
     def __init__(self, loop, base_path=BASE_PATH,
-                 max_storage_age=MAX_STORAGE_AGE):
+                 max_size=CLEANUP_MAX_SIZE, interval=CLEANUP_INTERVAL):
         self.loop = loop
         self.base_path = base_path
-        self.max_storage_age = max_storage_age
-        self.remove_interval = max(900, max_storage_age or 0 / 2)
-        self.remove_time = 0
+        self.max_size = max_size
+        self.interval = interval
+        self.last = 0
         self.loop.call_soon(run_in_executor(self.cleanup))
 
     def scan(self):
@@ -123,7 +123,7 @@ class Cleanup(object):
                 size = os.path.getsize(path)
                 files.append((atime, size, path))
 
-        # sort by atime
+        # sort by atime desc
         files.sort(key=lambda x: -x[0])
 
         # determine if we are over-size
@@ -132,31 +132,41 @@ class Cleanup(object):
         return size, files
 
     def should_remove(self):
-        if self.base_path is None or self.max_storage_age is None:
-            return
+        if self.base_path is None or self.max_size is None:
+            return False
 
-        if time() - self.remove_time >= self.remove_interval:
-            self.remove_time = time()
+        if time() - self.last >= self.interval:
+            self.last = time()
             return True
 
     @log_duration
     def cleanup(self):
         try:
+            # Get totals for metrics.
             size, files = self.scan()
             count = len(files)
-
-            if self.should_remove():
-                LOGGER.debug('Performing removal')
-                # Prune files older than max_storage_age
-                for atime, file_size, path in files:
-                    if time() - atime > self.max_storage_age:
-                        size, count = size - file_size, count - 1
-                        safe_delete(path)
 
             LOGGER.info('Storage: %i files, totaling %i bytes',
                         count, size)
             STORAGE_FILES.set(count)
             STORAGE_BYTES.set(size)
+
+            if not self.should_remove():
+                return
+
+            LOGGER.debug('Performing cleanup')
+
+            # Prune files older than max_storage_age
+            ifiles = __iter__(files)
+            while size >= self.max_size:
+                try:
+                    atime, file_size, path = ifiles.next()
+
+                except StopIteration:
+                    break
+
+                size -= file_size
+                safe_delete(path)
 
         finally:
             self.loop.call_later(60, run_in_executor(self.cleanup))

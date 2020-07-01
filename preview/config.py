@@ -10,11 +10,17 @@ from preview.errors import InvalidPluginError
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
 
-UNIT_VALUES = {
+TIME_UNITS = {
     'd': 86400,
     'h': 3600,
     'm': 60,
     's': 1,
+}
+SIZE_UNITS = {
+    't': 1024 ** 4,
+    'g': 1024 ** 3,
+    'm': 1024 ** 2,
+    'b': 1,
 }
 ROOT = dirname(dirname(__file__))
 
@@ -26,29 +32,37 @@ def boolean(s):
     return s.lower() not in ('0', 'off', 'no', 'false', 'none')
 
 
-def interval(s):
+def parse_unit(s, units):
     if s in ('', None):
         return
 
     # Default unit is seconds.
     unit, s = 1, s.lower()
-    if s[-1] in UNIT_VALUES.keys():
+    if s[-1] in units.keys():
         unit, s = s[-1], s[:-1]
         try:
-            unit = UNIT_VALUES[unit]
+            unit = units[unit]
 
         except KeyError:
-            raise ValueError('Interval unit should be one of: %s' % 
-                            (', '.join(UNIT_VALUES.keys())))
+            raise ValueError('Unit should be one of: %s' % 
+                            (', '.join(units.keys())))
 
     try:
-        seconds = int(s)
+        value = int(s)
 
     except ValueError:
         raise ValueError(
-            'Interval must be integer followed by optional unit, ex: 1d')
+            'Must be integer followed by optional unit, ex: 1d')
 
-    return seconds * unit
+    return value * unit
+
+
+def interval(s):
+    return parse_unit(s, TIME_UNITS)
+
+
+def bytesize(s):
+    return parse_unit(s, SIZE_UNITS)
 
 
 def load_plugins(views):
@@ -118,7 +132,8 @@ METRICS = boolean(os.environ.get('PVS_METRICS'))
 PROFILE_PATH = os.environ.get('PVS_PROFILE_PATH')
 MAX_FILE_SIZE = int(os.environ.get('PVS_MAX_FILE_SIZE', '0'))
 MAX_PAGES = int(os.environ.get('PVS_MAX_PAGES', '0'))
-MAX_STORAGE_AGE = interval(os.environ.get('PVS_STORE_MAX_AGE'))
+CLEANUP_MAX_SIZE = bytesize(os.environ.get('PVS_CLEANUP_MAX_SIZE', None))
+CLEANUP_INTERVAL = interval(os.environ.get('PVS_CLEANUP_INTERVAL', None))
 MAX_OFFICE_WORKERS = int(os.environ.get('PVS_MAX_OFFICE_WORKERS', 0))
 PLUGINS = load_plugins(os.environ.get('PVS_PLUGINS', ''))
 ICON_ROOT = os.environ.get('PVS_ICONS', pathjoin(ROOT, 'images/file-types'))
