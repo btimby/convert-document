@@ -1,4 +1,3 @@
-TAG=latest
 SOURCE_COMMIT=$(shell git rev-parse --short HEAD)
 
 all: test
@@ -26,7 +25,7 @@ Pipfile: Pipfile.lock
 
 
 .PHONY: start-test
-start-test: build-cache
+start-test:
 	docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
 	for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
 	docker-compose -f medium.yml -p preview-demo ps
@@ -84,13 +83,19 @@ login:
 
 .PHONY: tag
 tag:
-	docker tag btimby/preview-base btimby/preview-base:${TAG}
-	docker tag btimby/preview-server btimby/preview-server:${TAG}
-	docker tag btimby/preview-soffice btimby/preview-soffice:${TAG}
+	docker tag btimby/preview-server btimby/preview-base:${SOURCE_COMMIT}
+	docker tag btimby/preview-server btimby/preview-server:${SOURCE_COMMIT}
+	docker tag btimby/preview-soffice btimby/preview-soffice:${SOURCE_COMMIT}
+	docker tag btimby/preview-server btimby/preview-base:latest
+	docker tag btimby/preview-server btimby/preview-server:latest
+	docker tag btimby/preview-soffice btimby/preview-soffice:latest
 
 
 .PHONY: push
 push: login
-	docker push btimby/preview-base:${TAG}
-	docker push btimby/preview-server:${TAG}
-	docker push btimby/preview-soffice:${TAG}
+	docker push btimby/preview-base:${SOURCE_COMMIT}
+	docker push btimby/preview-server:${SOURCE_COMMIT}
+	docker push btimby/preview-soffice:${SOURCE_COMMIT}
+	docker push btimby/preview-base:latest
+	docker push btimby/preview-server:latest
+	docker push btimby/preview-soffice:latest

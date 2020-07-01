@@ -13,7 +13,6 @@ services:
   - docker
 
 install:
-  - echo "${TRAVIS_BRANCH}"
   - pip3 install aiohttp
 
 before_script:
@@ -27,7 +26,5 @@ after_script:
   - make end-test
 
 after_success:
-  - make tag TAG=latest
-  - make push TAG=latest
-  - make tag TAG=${TRAVIS_COMMIT::7}
-  - make push TAG=${TRAVIS_COMMIT::7}
+  - make tag
+  - make push
