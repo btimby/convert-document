@@ -58,7 +58,7 @@ class ImageBackend(BaseBackend):
     @log_duration
     def _preview_image(self, obj):
         pages = obj.args.get('pages')
-        if pages != (0, 0):
+        if pages != (1, 1):
             raise InvalidPageError(pages)
 
         path = resize_image(obj.src.path, obj.width, obj.height)
@@ -67,7 +67,7 @@ class ImageBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         pages = obj.args.get('pages')
-        if pages != (0, 0):
+        if pages != (1, 1):
             raise InvalidPageError(pages)
 
         self._preview_image(obj)

@@ -199,7 +199,7 @@ async def anonymous(request):
 
     # Build params and get path.
     origin = '/links/%s%s' % (link_id, uri)
-    url = '%slinks/%s' % (UPSTREAM, origin)
+    url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(origin, url)
 
     # Return tuple as preview-server expects.

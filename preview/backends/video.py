@@ -80,7 +80,7 @@ class VideoBackend(BaseBackend):
     @log_duration
     def _preview_image(self, obj):
         pages = obj.args.get('pages')
-        if pages != (0, 0):
+        if pages != (1, 1):
             raise InvalidPageError(pages)
 
         images = grab_frames(obj.src.path, obj.width, obj.height)
@@ -95,7 +95,7 @@ class VideoBackend(BaseBackend):
     @log_duration
     def _preview_pdf(self, obj):
         pages = obj.args.get('pages')
-        if pages != (0, 0):
+        if pages != (1, 1):
             raise InvalidPageError(pages)
 
         data = BytesIO()
