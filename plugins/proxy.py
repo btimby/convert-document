@@ -198,7 +198,7 @@ async def anonymous(request):
     uri = request.match_info['uri']
 
     # Build params and get path.
-    origin = '/links/%s%s' % (link_id, uri)
+    origin = '/link/%s%s' % (link_id, uri)
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(origin, url)
 
