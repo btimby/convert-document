@@ -157,10 +157,10 @@ class Cleanup(object):
             LOGGER.debug('Performing cleanup')
 
             # Prune files older than max_storage_age
-            ifiles = __iter__(files)
+            ifiles = iter(files)
             while size >= self.max_size:
                 try:
-                    atime, file_size, path = ifiles.next()
+                    atime, file_size, path = ifiles.__next__()
 
                 except StopIteration:
                     break
