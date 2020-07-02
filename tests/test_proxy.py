@@ -48,7 +48,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make an anonymous request to longer URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/link/f00b4r/sample.pdf?preview=true',
+                'http://api/link/-_aAbB01=/sample.pdf?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
@@ -56,7 +56,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/link/f00b4r/sample.pdf',
+                '/link/-_aAbB01=/sample.pdf',
                 params={
                     'format': 'pdf',
                 },
@@ -69,7 +69,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make an anonymous request to shorter URL."
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/link/f00b4r/sample.pdf?preview=true',
+                'http://api/link/-_aAbB01=/sample.pdf?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
@@ -77,7 +77,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/f00b4r/sample.pdf',
+                '/-_aAbB01=/sample.pdf',
                 params={
                     'format': 'pdf',
                 },
@@ -90,7 +90,7 @@ class ProxyPluginTestCase(PreviewTestCase):
         "Make a request for an unsupported file type"
         with aioresponses(passthrough=['http://127.0.0.1']) as resp:
             resp.get(
-                'http://api/link/f00b4r/w64.exe?preview=true',
+                'http://api/link/-_aAbB01=/w64.exe?preview=true',
                 headers={
                     'X-Accel-Redirect': '/files/fixtures/sample.pdf',
                 },
@@ -98,7 +98,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/link/f00b4r/w64.exe',
+                '/link/-_aAbB01=/w64.exe',
                 params={
                     'format': 'image',
                 },
