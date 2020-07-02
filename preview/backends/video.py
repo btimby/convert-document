@@ -53,6 +53,7 @@ def grab_frames(path, width, height, start=0, count=15):
 class VideoBackend(BaseBackend):
     name = 'video'
     extensions = [
+        # https://williamyaps.blogspot.com/2017/01/ffmpeg-formats.html
         '3g2', '3gp', '4xm', 'a64', 'aac', 'ac3', 'act', 'adf', 'adts', 'adx',
         'aea', 'afc', 'aiff', 'alaw', 'alsa', 'amr', 'anm', 'apc', 'ape',
         'aqtitle', 'asf', 'ast', 'au', 'avi', 'avm2', 'avr', 'avs', 'bfi',
