@@ -20,7 +20,6 @@ from preview.models import PathModel
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.NullHandler())
-EIGHT_HOURS = 3600 * 8
 
 
 def make_key(*args):
@@ -30,13 +29,6 @@ def make_key(*args):
 
 def make_path(key):
     return pathjoin(BASE_PATH, key[:1], key[1:2], key)
-
-
-def _is_newer(left, right):
-    if not isfile(right):
-        return True
-
-    return stat(left).st_mtime > stat(right).st_mtime
 
 
 def get(obj):
@@ -59,19 +51,20 @@ def get(obj):
     store_path = make_path(key)
 
     if not isfile(store_path):
-        LOGGER.info('Preview not found in storage')
+        LOGGER.debug('Preview for %s not found at %s', obj.origin, store_path)
         return False, key
 
-    if _is_newer(obj.src.path, store_path):
-        LOGGER.info('Removing stale file from storage')
+    mtime = stat(store_path).st_mtime
+    if stat(obj.src.path).st_mtime > mtime:
+        LOGGER.info('Removing preview for %s at %s', obj.origin, store_path)
         STORAGE.labels('del').inc()
         safe_delete(store_path)
         return False, key
 
-    LOGGER.info('Serving from storage')
+    LOGGER.debug('Serving preview for %s from %s', obj.origin, store_path)
     STORAGE.labels('get').inc()
-    # update atime, not mtime, possible LRU...
-    os.utime(store_path, (time(), stat(store_path).st_mtime))
+    # update atime, but leave mtime untouched.
+    os.utime(store_path, (time(), mtime))
     obj.dst = PathModel(store_path)
 
     return True, key
@@ -79,9 +72,10 @@ def get(obj):
 
 def put(key, obj):
     STORAGE.labels('put').inc()
-    LOGGER.info('Storing file')
 
     store_path = make_path(key)
+    LOGGER.debug('Storing preview for %s at %s', obj.origin, store_path)
+
     try:
         safe_makedirs(dirname(store_path))
         shutil.move(obj.dst.path, store_path)
