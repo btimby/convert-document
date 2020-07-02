@@ -54,8 +54,8 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
             return p.stdout
 
         except subprocess.CalledProcessError as e:
-            if pages != (0, 0):
-                # Specific page(s) were requested.
+            if pages not in ((0, 0), (1, 1)):
+                # Specific page(s) beyond the first were requested.
                 raise InvalidPageError(pages)
 
             if not retry:
@@ -82,8 +82,11 @@ class OfficeBackend(BaseBackend):
         'xltx', 'xltm', 'xlt', 'xlw', 'dif', 'rtf', 'pxl', 'pps', 'ppsx',
         'odt', 'ods', 'odp', 'log', 'txt', 'abw', 'zabw', 'cwk', 'hwp',
         'jtd', 'jtt', 'psw', 'wri', '602', 'wpd', 'wps', 'pmd', 'pm3', 'pm4',
-        'pm5', 'pm6', 'p65', 'pub', 'qxp', 'html', 'htm', 'epub', 'fb2',
-        'rfl',
+        'pm5', 'pm6', 'p65', 'pub', 'qxp', 'html', 'htm', 'fb2', 'rfl',
+        # Though listed, epub does not seem to be supported...
+        # 'epub',
+        # Calibre could possibly be used in a separate backend for conversion
+        # from epub to pdf.
     ]
     executor = ThreadPoolExecutor(max_workers=MAX_OFFICE_WORKERS) \
         if MAX_OFFICE_WORKERS else None
