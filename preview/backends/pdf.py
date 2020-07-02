@@ -15,6 +15,19 @@ from preview.errors import InvalidPageError
 LOGGER = logging.getLogger(__name__)
 
 
+def _calc_dpi(width, height):
+    "Calculate DPI necessary to produce a clear image of requested resolution"
+    # Since we are dealing with documents, I am going to assume a paper size of
+    # 8.5 x 11. However, we will use the maximum DPI for either dimension, this
+    # minimizes the risk of "stretching" the image in one dimension if the size
+    # is something else. We return dpi as a tuple so that this function can
+    # calculate the dpi separately for each dimension if desired.
+    dpi = max(width / 8.5, height / 11)
+    # Round to multiple of 144 and then halve.
+    dpi = ((dpi // 144 * 144) + 144) // 2
+    return (dpi, dpi)
+
+
 def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
     # An empty file is apparently a valid file as far as ghostscript is
     # concerned. However, it produces an empty image file, which causes
@@ -32,12 +45,11 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
             b'-dFirstPage=%i' % pages[0], b'-dLastPage=%i' % pages[1]])
 
     # Calculate suitable DPI...
-    dpi = max(obj.width / 8.5, obj.height / 11)
-    # Round up to multiple of 72.
-    dpi = int(dpi // 72 * 72 + 72)
+    dpi = _calc_dpi(obj.width, obj.height)
+    LOGGER.debug('Converting PDF to image with DPI of %ix%i', *dpi)
 
     args.extend([
-        b'-r%i' % dpi,
+        b'-r%ix%i' % dpi,
         b'-o', bytes(outfile, 'utf8'),
         bytes(obj.src.path, 'utf8'),
     ])
