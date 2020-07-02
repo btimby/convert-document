@@ -52,6 +52,13 @@ MAX_UPLOAD = 800 * MEGABYTE
 ROOT = dirname(__file__)
 SENTRY_DSN = os.environ.get('SENTRY_DSN', None)
 
+# For source code formatting.
+# (variable_declaration, comment, line_ending)
+FORMATS = {
+    'py': ('', '# ', ''),
+    'js': ('var ', '// ', ';'),
+}
+
 LOGGER = logging.getLogger()
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(LOGLEVEL)
@@ -270,36 +277,39 @@ def make_handler(f):
     return handler
 
 
-async def extension_list():
-    ext_list = StringIO()
-    ext_list.write('extensions = [')
-    for extensions, obj in Backend.backends.items():
-        ext_list.write('\r\n    # %s backend extensions' % obj.name.title())
-        before, after, llen = '', '', 0
-        for extension in extensions:
-            ext_str = "'%s'," % extension
-
-            if llen == 0 or llen + len(ext_str) + 1 >= 80:
-                llen = 0
-                before, after = '\r\n    ', ''
-
-            else:
-                before, after = ' ', ''
-
-            llen += len(before) + len(ext_str) + len(after)
-
-            ext_list.write(before)
-            ext_list.write(ext_str)
-            ext_list.write(after)
-
-        ext_list.write('\r\n')
-    ext_list.write(']\r\n')
-
-    return ext_list.getvalue()
-
-
 async def info(request):
-    return web.Response(text=await extension_list())
+    format = request.query.get('format', 'py')
+    try:
+        decl, comment, lend = FORMATS[format]
+
+    except KeyError:
+        raise web.HTTPBadRequest(reason='Invalid format %s' % format)
+
+    code = StringIO()
+    code.write('%sextensions = [' % decl)
+    pre, llen = '', 0
+
+    for extensions, backend in Backend.backends.items():
+        code.write(pre)
+        code.write('\r\n    %s%s supported formats\r\n    ' % (
+            comment, backend.name.title()))
+        pre, llen = '', 0
+        for extension in extensions:
+            atom = "'%s'" % extension
+
+            if llen + len(pre) + len(atom) >= 75:
+                pre = ',\r\n    '
+                llen = 0
+
+            code.write(pre)
+            code.write(atom)
+            llen += len(pre) + len(atom)
+            pre = ', '
+        pre = ',\r\n'
+
+    code.write('\r\n]%s' % lend)
+
+    return web.Response(text=code.getvalue())
 
 
 async def test(request):
