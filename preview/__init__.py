@@ -14,7 +14,6 @@ from os.path import join as pathjoin
 from tempfile import NamedTemporaryFile
 
 from aiohttp import web, ClientSession
-from aiohttp.web_exceptions import HTTPMove
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_sentry import SentryMiddleware
 
@@ -250,7 +249,7 @@ def make_handler(f):
 
             await generate(obj)
 
-        except HTTPMove as e:
+        except web.HTTPMovedPermanently as e:
             # Set cache-control header on redirect.
             set_cache_control(e)
             raise e
