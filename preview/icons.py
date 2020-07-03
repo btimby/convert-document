@@ -54,19 +54,20 @@ async def get(obj):
 
     icon_path = _get_best_fit(obj.extension, obj.width, obj.height)
 
+    if not isfile(pathjoin(ICON_ROOT, icon_path)):
+        LOGGER.debug('Could not find file-type icon for %s', obj.extension)
+        icon_path = pathjoin(str(bestdim), 'default.png')
+        if not isfile(pathjon(ICON_ROOT, icon_path)):
+            LOGGER.debug('Could not find default file-type icon.')
+            return False
+
     if ICON_REDIRECT:
         # Redirect browser to icon.
         url = '%s/%s' % (ICON_REDIRECT.rstrip('/'), icon_path)
         raise web.HTTPMovedPermanently(location=url)
 
+    # Convert to full local path.
     icon_path = pathjoin(ICON_ROOT, icon_path)
-
-    if not isfile(icon_path):
-        LOGGER.debug('Could not find file-type icon for %s', obj.extension)
-        icon_path = pathjoin(ICON_ROOT, str(bestdim), 'default.png')
-        if not isfile(icon_path):
-            # No default.
-            return False
 
     LOGGER.debug('Using icon: %s', icon_path)
     obj.src = PathModel(icon_path)
