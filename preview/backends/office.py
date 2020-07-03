@@ -32,6 +32,12 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
     if pages != (0, 0):
         cmd.extend(['-e', 'PageRange=%i-%i' % pages])
 
+    # Give a hint at which input filter to use. The file name passed to unoconv
+    # may not have an extension.
+    format = FMTS.byextension('.%s' % obj.src.extension)
+    if format:
+        cmd.extend(['-I', format[0].name])
+
     file_data = None
     if obj.src.is_shared:
         cmd.append(obj.src.path)
@@ -40,12 +46,6 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
         cmd.append('--stdin')
         with open(obj.src.path, 'rb') as f:
             file_data = f.read()
-
-    # Give a hint at which input filter to use. The file name passed to unoconv
-    # may not have an extension.
-    format = FMTS.byextension('.%s' % obj.src.extension)
-    if format:
-        cmd.extend(['-I', format[0].name])
 
     LOGGER.debug('unoconv cmd: %s' % cmd)
 
@@ -59,6 +59,9 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
 
         except subprocess.CalledProcessError as e:
             if pages not in ((0, 0), (1, 1)):
+                LOGGER.exception(
+                    'unoconv failed, throwing page error: %i; %s\n%s',
+                    e.returncode, e.stdout, e.stderr)
                 # Specific page(s) beyond the first were requested.
                 raise InvalidPageError(pages)
 
