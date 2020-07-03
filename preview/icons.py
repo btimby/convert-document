@@ -45,7 +45,16 @@ def _get_best_fit(extension, width, height):
 
     LOGGER.debug('Found %d best match for %dx%d', bestdim, width, height)
 
-    return pathjoin(str(bestdim), '%s.png' % extension)
+    icon_path = pathjoin(str(bestdim), '%s.png' % extension)
+
+    if not isfile(pathjoin(ICON_ROOT, icon_path)):
+        LOGGER.debug('Could not find file-type icon for %s', obj.extension)
+        icon_path = pathjoin(str(bestdim), 'default.png')
+        if not isfile(pathjon(ICON_ROOT, icon_path)):
+            LOGGER.debug('Could not find default file-type icon.')
+            return
+
+    return icon_path
 
 
 async def get(obj):
@@ -53,13 +62,8 @@ async def get(obj):
         return
 
     icon_path = _get_best_fit(obj.extension, obj.width, obj.height)
-
-    if not isfile(pathjoin(ICON_ROOT, icon_path)):
-        LOGGER.debug('Could not find file-type icon for %s', obj.extension)
-        icon_path = pathjoin(str(bestdim), 'default.png')
-        if not isfile(pathjon(ICON_ROOT, icon_path)):
-            LOGGER.debug('Could not find default file-type icon.')
-            return False
+    if icon_path is None:
+        return
 
     if ICON_REDIRECT:
         # Redirect browser to icon.
