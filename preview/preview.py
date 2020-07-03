@@ -56,26 +56,8 @@ async def generate(obj):
         return
 
     # Otherwise, we need to generate a new preview.
-    try:
-        await Backend.preview(obj)
+    await Backend.preview(obj)
 
-    except InvalidPageError:
-        raise
-
-    except Exception as e:
-        if not isinstance(e, UnsupportedTypeError):
-            LOGGER.exception(e)
-
-        # Attempt to get a file type icon.
-        if not icons.get(obj):
-            # If no icon could be located, raise the exception.
-            raise
-
-        LOGGER.debug('Could not generate preview', exc_info=True)
-        # Resize or convert the icon to the desired size / format.
-        await Backend.preview(obj)
-
-    else:
-        # If a key and preview was generated, store the preview for reuse.
-        if key:
-            storage.put(key, obj)
+    # If a key and preview was generated, store the preview for reuse.
+    if key:
+        storage.put(key, obj)

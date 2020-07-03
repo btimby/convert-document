@@ -25,6 +25,15 @@ services:
       - PVS_SOFFICE_ADDR=haproxy
       - PVS_SOFFICE_PORT=2002
       - PVS_METRICS=on
+      - PVS_ICON_ROOT=/app/images/file-types
+      - PVS_ICON_REDIRECT=http://localhost:8000/images/file-types
+
+  nginx:
+    image: nginx:1.19
+    volumes:
+      - ./images:/usr/share/nginx/html/images:ro
+    ports:
+      - 8000:80
 
   soffice-server:
     image: btimby/preview-soffice

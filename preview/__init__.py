@@ -228,9 +228,32 @@ async def get_params(request):
     return width, height, format, name, args
 
 
-async def preview(obj):
-    try:
-        await generate(obj)
+def make_handler(f):
+    # Sets up an HTTP handler, uses f to extract parameters. f() is expected
+    # to return a tuple of (path, origin).
+    async def handler(request):
+        try:
+            path, origin = await f(request)
+            width, height, format, name, args = await get_params(request)
+            obj = PreviewModel(path, width, height, format, origin=origin,
+                            name=name, args=args)
+
+            await generate(obj)
+
+        except web.HTTPException:
+            raise
+
+        except InvalidPageError:
+            raise web.HTTPBadRequest(reason='Invalid page requested')
+
+        except Exception as e:
+            if not isinstance(e, UnsupportedTypeError):
+                LOGGER.exception(e)
+
+            # Attempt to get a file type icon.
+            if not await icons.get(obj):
+                # If no icon could be located, raise the exception.
+                raise web.HTTPInternalServerError(reason='Unrecoverable error')
 
         if BASE_PATH is None or obj.dst.is_temp:
             response = PreviewResponse(obj)
@@ -250,29 +273,7 @@ async def preview(obj):
             response.headers['Cache-Control'] = \
                 'max-age=%i, public' % max_age
 
-    except web.HTTPException:
-        raise
-
-    except InvalidPageError:
-        raise web.HTTPBadRequest(reason='Invalid page requested')
-
-    except Exception as e:
-        LOGGER.exception(e)
-        raise web.HTTPInternalServerError(reason='Unrecoverable error')
-
-    return response
-
-
-def make_handler(f):
-    # Sets up an HTTP handler, uses f to extract parameters. f() is expected
-    # to return a tuple of (path, origin).
-    async def handler(request):
-        path, origin = await f(request)
-        width, height, format, name, args = await get_params(request)
-        obj = PreviewModel(path, width, height, format, origin=origin,
-                           name=name, args=args)
-
-        return await preview(obj)
+        return response
 
     return handler
 

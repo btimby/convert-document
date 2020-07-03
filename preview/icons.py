@@ -4,9 +4,13 @@ import logging
 from os.path import isfile, isdir, dirname
 from os.path import join as pathjoin
 
+from functools import lru_cache
+
+from aiohttp import web
+
 from preview.models import PathModel
-from preview.backends.image import ImageBackend
-from preview.config import ICON_ROOT
+from preview.preview import Backend
+from preview.config import ICON_ROOT, ICON_REDIRECT, ICON_RESIZE
 
 
 LOGGER = logging.getLogger(__name__)
@@ -31,19 +35,31 @@ def _dimensions():
 DIMENSIONS = _dimensions()
 
 
-def get(obj):
-    if not DIMENSIONS:
-        return
-
+@lru_cache(1000)
+def _get_best_fit(extension, width, height):
     bestdim = DIMENSIONS[0]
     for dim in DIMENSIONS:
         bestdim = dim
-        if dim >= max(obj.width, obj.height):
+        if dim >= max(width, height):
             break
 
-    LOGGER.debug('Found %d best match for %dx%d', bestdim, obj.width, obj.height)
+    LOGGER.debug('Found %d best match for %dx%d', bestdim, width, height)
 
-    icon_path = pathjoin(ICON_ROOT, str(bestdim), '%s.png' % obj.extension)
+    return pathjoin(str(bestdim), '%s.png' % extension)
+
+
+async def get(obj):
+    if not DIMENSIONS:
+        return
+
+    icon_path = _get_best_fit(obj.extension, obj.width, obj.height)
+
+    if ICON_REDIRECT:
+        # Redirect browser to icon.
+        url = '%s/%s' % (ICON_REDIRECT.rstrip('/'), icon_path)
+        raise web.HTTPFound(location=url)
+
+    icon_path = pathjoin(ICON_ROOT, icon_path)
 
     if not isfile(icon_path):
         LOGGER.debug('Could not find file-type icon for %s', obj.extension)
@@ -54,4 +70,9 @@ def get(obj):
 
     LOGGER.debug('Using icon: %s', icon_path)
     obj.src = PathModel(icon_path)
+
+    if ICON_RESIZE:
+        # Resize or convert the icon to the desired size / format.
+        await Backend.preview(obj)
+
     return True
