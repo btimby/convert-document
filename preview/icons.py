@@ -57,7 +57,7 @@ async def get(obj):
     if ICON_REDIRECT:
         # Redirect browser to icon.
         url = '%s/%s' % (ICON_REDIRECT.rstrip('/'), icon_path)
-        raise web.HTTPFound(location=url)
+        raise web.HTTPMovedPermanently(location=url)
 
     icon_path = pathjoin(ICON_ROOT, icon_path)
 

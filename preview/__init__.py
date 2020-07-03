@@ -70,6 +70,15 @@ def check_size(size):
         raise web.HTTPBadRequest(reason='File larger than configured maximum')
 
 
+def set_cache_control(obj):
+    # Don't cache error responses.
+    if not CACHE_CONTROL:
+        return
+
+    max_age = 60 * int(CACHE_CONTROL)
+    obj.headers['Cache-Control'] = 'max-age=%i, public' % max_age
+
+
 @log_duration
 async def upload(upload):
     extension = get_extension(upload.filename)
@@ -240,38 +249,40 @@ def make_handler(f):
 
             await generate(obj)
 
+        except web.HTTPMove as e:
+            # Set cache-control header on redirect.
+            set_cache_control(e)
+            raise e
+
         except web.HTTPException:
+            # Allow HTTP exceptions to go unchecked.
             raise
 
         except InvalidPageError:
+            # Invalid page should not be masked by an icon.
             raise web.HTTPBadRequest(reason='Invalid page requested')
 
         except Exception as e:
+            # For any other error, log it and produce a file-type icon if
+            # possible.
             if not isinstance(e, UnsupportedTypeError):
                 LOGGER.exception(e)
 
             # Attempt to get a file type icon.
             if not await icons.get(obj):
-                # If no icon could be located, raise the exception.
+                # If no icon could be located, raise an exception.
                 raise web.HTTPInternalServerError(reason='Unrecoverable error')
 
-        if BASE_PATH is None or obj.dst.is_temp:
+        if (BASE_PATH is None or obj.dst.is_temp) and not X_ACCEL_REDIR:
             response = PreviewResponse(obj)
 
-        elif X_ACCEL_REDIR:
+        else:
             x_accel_path = chroot(obj.dst.path, BASE_PATH, X_ACCEL_REDIR)
             response = web.Response()
             response.headers['X-Accel-Redirect'] = x_accel_path
             response.content_type = obj.content_type
 
-        else:
-            response = PreviewResponse(obj)
-
-        # Don't cache error responses.
-        if CACHE_CONTROL:
-            max_age = 60 * int(CACHE_CONTROL)
-            response.headers['Cache-Control'] = \
-                'max-age=%i, public' % max_age
+        set_cache_control(response)
 
         return response
 
