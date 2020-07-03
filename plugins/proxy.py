@@ -129,7 +129,10 @@ async def get_path(origin, url, **kwargs):
 
     # Otherwise perform a subrequest to resolve the path to a filesystem path
     async with SESSION.get(url, **kwargs) as res:
-        LOGGER.debug(await res.text())
+        if res.status != 200:
+            LOGGER.exception('Backend request failed.')
+            raise web.HTTPInternalServerError(
+                reason='Backend returned %i' % res.status)
 
         # Filesystem path returned via X-Accel-Redirect header.
         try:
@@ -172,8 +175,9 @@ async def authenticated(request):
 
     try:
         user_id = jwt.decode(token, KEY, algorithms=[ALGO])['u']
+        assert user_id is not None
 
-    except (DecodeError, KeyError):
+    except (DecodeError, KeyError, AssertionError):
         LOGGER.exception('Could not verify JWT')
         raise web.HTTPBadRequest(reason='Invalid session')
 
