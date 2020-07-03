@@ -34,7 +34,7 @@ start-test: login
 
 .PHONY: end-test
 end-test:
-	docker-compose -f medium.yml -p preview-demo kill soffice-server
+	docker-compose -f medium.yml -p preview-demo down
 
 
 .PHONY: test
