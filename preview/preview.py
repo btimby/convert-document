@@ -63,7 +63,8 @@ async def generate(obj):
         raise
 
     except Exception as e:
-        LOGGER.exception(e)
+        if not isinstance(e, UnsupportedTypeError):
+            LOGGER.exception(e)
 
         # Attempt to get a file type icon.
         if not icons.get(obj):
