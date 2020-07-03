@@ -82,7 +82,7 @@ def load_plugins(views):
         module, _, function = path.rpartition(':')
 
         try:
-            module = run_path(module, run_path=module)
+            module = run_path(module, run_name=module)
 
         except FileNotFoundError:
             raise InvalidPluginError('Python file does not exist: %s' % module)
