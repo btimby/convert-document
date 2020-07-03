@@ -54,17 +54,20 @@ small: build
 
 .PHONY: medium
 medium: build
-	docker-compose -f medium.yml -p preview-medium up --scale soffice-server=3
+	docker-compose -f medium.yml -p preview-medium up --scale soffice-server=3 \
+		--scale preview-server=2
 
 
 .PHONY: large
 large: build
-	docker-compose -f large.yml -p preview-large up \
-		--scale soffice-server=5 --scale preview-server=2
+	docker-compose -f large.yml -p preview-large up --scale soffice-server=5 \
+		--scale preview-server=3
+
 
 .PHONY: dev
 dev: build
-	docker-compose -f dev.yml -p preview-dev up --scale soffice-server=3
+	docker-compose -f dev.yml -p preview-dev up --scale soffice-server=3 \
+		 --scale preview-server=2
 
 
 .PHONY: run
