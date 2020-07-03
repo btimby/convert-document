@@ -34,6 +34,7 @@ from aiohttp import web, ClientSession, CookieJar
 from aiomcache_multi import Client as Memcache
 
 from preview import LOOP
+from preview.utils import log_duration
 
 
 # These functions are used to parse configuration into globals.
@@ -156,6 +157,7 @@ async def get_path(origin, url, **kwargs):
     return path
 
 
+@log_duration
 async def authenticated(request):
     """
     Receive a request authenticated by a JWT and forward to backend.
@@ -190,6 +192,7 @@ async def authenticated(request):
     return path, origin
 
 
+@log_duration
 async def anonymous(request):
     """
     Receive an anonymous request and proxy it to the backend.
