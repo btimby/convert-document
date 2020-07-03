@@ -14,6 +14,9 @@ class PathModel(object):
     def __init__(self, path):
         self._path = path
 
+    def __repr__(self):
+        return '<PathModel: %s>' % self.path
+
     @property
     def path(self):
         return self._path
@@ -55,6 +58,11 @@ class PreviewModel(object):
         self._args = {}
         if args:
             self._args.update(args)
+
+    def __repr__(self):
+        dst_path = getattr(self.dst, 'path', None)
+        return '<PreviewModel: %s, %s->%s, %ix%i>' % (
+            self.name, self.src.path, dst_path, self.width, self.height)
 
     @property
     def content_type(self):
