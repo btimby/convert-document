@@ -62,7 +62,9 @@ async def generate(obj):
     except InvalidPageError:
         raise
 
-    except:
+    except Exception as e:
+        LOGGER.exception(e)
+
         # Attempt to get a file type icon.
         if not icons.get(obj):
             # If no icon could be located, raise the exception.
