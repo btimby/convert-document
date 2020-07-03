@@ -3,6 +3,7 @@ import subprocess
 
 from tempfile import NamedTemporaryFile
 from concurrent.futures import ThreadPoolExecutor
+from runpy import run_path
 
 from preview.backends.base import BaseBackend
 from preview.backends.pdf import PdfBackend
@@ -19,6 +20,7 @@ LOGGER.addHandler(logging.NullHandler())
 TEXT_FORMATS = [
     'log',
 ]
+FMTS = run_path('/usr/local/bin/unoconv')['fmts']
 
 
 def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
@@ -35,13 +37,15 @@ def convert(obj, retry=SOFFICE_RETRY, pages=(1, 1)):
         cmd.append(obj.src.path)
 
     else:
-        format = obj.src.extension
-        if format in TEXT_FORMATS:
-            format = 'txt'
-
-        cmd.extend(['-I', format, '--stdin'])
+        cmd.append('--stdin')
         with open(obj.src.path, 'rb') as f:
             file_data = f.read()
+
+    # Give a hint at which input filter to use. The file name passed to unoconv
+    # may not have an extension.
+    format = FMTS.byextension('.%s' % obj.src.extension)
+    if format:
+        cmd.extend(['-I', format[0].name])
 
     LOGGER.debug('unoconv cmd: %s' % cmd)
 
