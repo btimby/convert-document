@@ -273,7 +273,7 @@ def make_handler(f):
                 # If no icon could be located, raise an exception.
                 raise web.HTTPInternalServerError(reason='Unrecoverable error')
 
-        if (BASE_PATH is None or obj.dst.is_temp) and not X_ACCEL_REDIR:
+        if BASE_PATH is None or obj.dst.is_temp or not X_ACCEL_REDIR:
             response = PreviewResponse(obj)
 
         else:
