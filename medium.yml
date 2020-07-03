@@ -10,6 +10,13 @@ services:
       - ./fixtures:/mnt/files:ro
       - ./:/app:ro
       - previews:/mnt/store
+    labels:
+      - autoheal
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 0
     tmpfs:
       - /tmp
     ports:
@@ -31,7 +38,7 @@ services:
     labels:
       - autoheal
     healthcheck:
-      test: ["CMD", "timeout", "10", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null 2>&1"]
+      test: ["CMD", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null"]
       interval: 30s
       timeout: 10s
       retries: 0
