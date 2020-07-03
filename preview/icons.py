@@ -48,7 +48,7 @@ def _get_best_fit(extension, width, height):
     icon_path = pathjoin(str(bestdim), '%s.png' % extension)
 
     if not isfile(pathjoin(ICON_ROOT, icon_path)):
-        LOGGER.debug('Could not find file-type icon for %s', obj.extension)
+        LOGGER.debug('Could not find file-type icon for %s', extension)
         icon_path = pathjoin(str(bestdim), 'default.png')
         if not isfile(pathjon(ICON_ROOT, icon_path)):
             LOGGER.debug('Could not find default file-type icon.')
