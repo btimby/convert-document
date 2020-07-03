@@ -56,7 +56,14 @@ def log_duration(f):
 
         finally:
             duration = time() - start
-            level = logging.DEBUG if duration <= 5 else logging.INFO
+
+            if duration <= 5:
+                level = logging.DEBUG
+            elif duration <= 10:
+                level = logging.INFO
+            else:
+                level = logging.WARNING
+
             LOGGER.log(
                 level, '%s took %fs', fstr(f, args, kwargs), duration)
 
