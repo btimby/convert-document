@@ -25,6 +25,7 @@ import logging
 import hashlib
 
 from os.path import join as pathjoin, exists as pathexists
+from urllib.parse import quote as urlquote
 
 import jwt
 from jwt.exceptions import DecodeError
@@ -177,7 +178,7 @@ async def authenticated(request):
         raise web.HTTPBadRequest(reason='Invalid session')
 
     # Build params and get path.
-    origin = '/users/%s%s' % (user_id, uri)
+    origin = '/users/%s%s' % (user_id, urlquote(uri))
     url = '%sapi/%s/path/data%s' % (UPSTREAM, version, uri)
     path = await get_path(origin, url, cookies={'sessionid': token})
 
@@ -198,7 +199,7 @@ async def anonymous(request):
     uri = request.match_info['uri']
 
     # Build params and get path.
-    origin = '/link/%s%s' % (link_id, uri)
+    origin = '/link/%s%s' % (link_id, urlquote(uri))
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(origin, url)
 
