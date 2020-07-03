@@ -80,25 +80,38 @@
                     var fmt = $('#format').val();
 
                     if (fmt == 'pdf') {
-                        var elem = $('<iframe/>')
+                        var cont = $('<iframe/>')
                             .css({width: w, height: h});
-
+                        var elem = cont;
                     } else {
-                        var elem = $('<img/>')
-                            .css('background', 'url("' + spinner + '") no-repeat center')
-                            .css({width: w, height: h});
+                        var cont = $('<a/>')
+                            .attr('href', '')
+                        var cont = $('<img/>')
+                            .css({
+                                width: w,
+                                height: h,
+                                'background': 'url("' + spinner + '") no-repeat center'
+                            });
+                        var elem = $('<img/>');
+                        elem.on('load', function() {
+                            cont.css('background-image', 'url("' + elem.attr('src') + '")')
+                        });
                     }
 
                     if (obj.path) {
                         var src = baseUrl + '?path=' + obj.path;
-                        elem.attr('title', obj.path);
                     } else if (obj.url) {
                         var src = baseUrl + '?url=' + obj.url;
-                        elem.attr('title', obj.url);
                     }
                     src += '&width=' + w + '&height=' + h + '&format=' + fmt;
-                    elem.attr('src', src)
-                        .appendTo($('#previews'));
+                    elem.attr('src', src);
+                    var a = $('<a/>')
+                        .attr({
+                            'href': src,
+                            'target': '#blank'
+                        })
+                        .append(cont);
+                    a.appendTo($('#previews'));
                 });
 
                 refresh();
