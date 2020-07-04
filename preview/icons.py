@@ -11,6 +11,7 @@ from aiohttp import web
 from preview.models import PathModel
 from preview.preview import Backend
 from preview.config import ICON_ROOT, ICON_REDIRECT, ICON_RESIZE
+from preview.utils import run_in_executor
 
 
 LOGGER = logging.getLogger(__name__)
@@ -57,7 +58,8 @@ def _get_best_fit(extension, width, height):
     return icon_path
 
 
-async def get(obj):
+@run_in_executor
+def get(obj):
     if not DIMENSIONS:
         return
 
@@ -78,6 +80,6 @@ async def get(obj):
 
     if ICON_RESIZE:
         # Resize or convert the icon to the desired size / format.
-        await Backend.preview(obj)
+        Backend.preview(obj)
 
     return True

@@ -40,15 +40,16 @@ class Backend(object):
     }
 
     @staticmethod
-    async def preview(obj):
+    def preview(obj):
         for extensions, be in Backend.backends.items():
             if obj.extension in extensions:
-                return await run_in_executor(_preview, be.executor)(be, obj)
+                return _preview(be, obj)
 
         raise UnsupportedTypeError('No backend for %s', obj.extension)
 
 
-async def generate(obj):
+@run_in_executor
+def generate(obj):
     store, key = storage.get(obj)
     # If the file was fetched from the store, it will have been loaded into
     # obj. We can return to continue with the response.
@@ -56,7 +57,7 @@ async def generate(obj):
         return
 
     # Otherwise, we need to generate a new preview.
-    await Backend.preview(obj)
+    Backend.preview(obj)
 
     # If a key and preview was generated, store the preview for reuse.
     if key:
