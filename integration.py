@@ -28,7 +28,7 @@ RESOLUTIONS = [
     ('160', '120'),
 ]
 FILES = [
-    {'url': 'https://www.fujifilmusa.com/products/digital_cameras/x/fujifilm_x20/sample_images/img/index/ff_x20_008.JPG'},
+    {'url': 'https://res.cloudinary.com/demo/image/upload/multiple/folders/sample.jpg'},
     {'url': 'http://www.pdf995.com/samples/pdf.pdf'},
     {'url': 'https://archive.org/download/SampleMpeg4_201307/sample_mpeg4.mp4'},
     {'url': 'http://homepages.inf.ed.ac.uk/neilb/TestWordDoc.doc'},
