@@ -128,6 +128,7 @@ async def get_path(request, origin, url, **kwargs):
     kwargs.setdefault('params', {})['preview'] = 'true'
     headers = kwargs.setdefault('headers', {})
     headers['X-Forwarded-Proto'] = 'https'
+    headers['Host'] = request.headers.get('host')
     x_forwarded_for = request.headers.get('x-forwarded-for')
     if x_forwarded_for:
         headers['X-Forwarded-For'] = x_forwarded_for
