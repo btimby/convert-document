@@ -241,39 +241,53 @@ def make_handler(f):
     # Sets up an HTTP handler, uses f to extract parameters. f() is expected
     # to return a tuple of (path, origin).
     async def handler(request):
-        # TODO: need to handle an exception and make a lightweight PreviewModel
-        # to use with icons.get().
-        path, origin = await f(request)
+        # It is fairly safe to read these arguments first.
         width, height, format, name, args = await get_params(request)
-        obj = PreviewModel(path, width, height, format, origin=origin,
-                        name=name, args=args)
 
         try:
-            await generate(obj)
-
-        except web.HTTPMovedPermanently as e:
-            # Set cache-control header on redirect.
-            set_cache_control(e)
-            raise e
-
-        except web.HTTPException:
-            # Allow HTTP exceptions to go unchecked.
-            raise
-
-        except InvalidPageError:
-            # Invalid page should not be masked by an icon.
-            raise web.HTTPBadRequest(reason='Invalid page requested')
+            path, origin = await f(request)
 
         except Exception as e:
-            # For any other error, log it and produce a file-type icon if
-            # possible.
-            if not isinstance(e, UnsupportedTypeError):
-                LOGGER.exception(e)
-
-            # Attempt to get a file type icon.
+            LOGGER.exception('Failed to get path and origin')
+            # Attempt to get default icon.
+            obj = PreviewModel('icon.blank', width, height, format,
+                               origin='icon.blank', name=name, args=args)
             if not await icons.get(obj):
                 # If no icon could be located, raise an exception.
-                raise web.HTTPInternalServerError(reason='Unrecoverable error')
+                raise web.HTTPInternalServerError(
+                    reason='Unrecoverable error')
+
+        else:
+            obj = PreviewModel(path, width, height, format, origin=origin,
+                               name=name, args=args)
+
+            try:
+                await generate(obj)
+
+            except web.HTTPMovedPermanently as e:
+                # Set cache-control header on redirect.
+                set_cache_control(e)
+                raise e
+
+            except web.HTTPException:
+                # Allow HTTP exceptions to go unchecked.
+                raise
+
+            except InvalidPageError:
+                # Invalid page should not be masked by an icon.
+                raise web.HTTPBadRequest(reason='Invalid page requested')
+
+            except Exception as e:
+                # For any other error, log it and produce a file-type icon if
+                # possible.
+                if not isinstance(e, UnsupportedTypeError):
+                    LOGGER.exception(e)
+
+                # Attempt to get a file type icon.
+                if not await icons.get(obj):
+                    # If no icon could be located, raise an exception.
+                    raise web.HTTPInternalServerError(
+                        reason='Unrecoverable error')
 
         if BASE_PATH is None or obj.dst.is_temp or not X_ACCEL_REDIR:
             response = PreviewResponse(obj)
