@@ -118,7 +118,7 @@ async def cache_get(origin):
     return await CACHE.get(key), key
 
 
-async def get_path(origin, url, **kwargs):
+async def get_path(request, origin, url, **kwargs):
     # Return path from cache if available.
     path, key = await cache_get(origin)
     if path:
@@ -126,7 +126,11 @@ async def get_path(origin, url, **kwargs):
 
     # Set params and headers without clobbering kwargs.
     kwargs.setdefault('params', {})['preview'] = 'true'
-    kwargs.setdefault('headers', {})['X-Forwarded-Proto'] = 'https'
+    headers = kwargs.setdefault('headers', {})
+    headers['X-Forwarded-Proto'] = 'https'
+    x_forwarded_for = request.headers.get('x-forwarded-for')
+    if x_forwarded_for:
+        headers['X-Forwarded-For'] = x_forwarded_for
 
     # Otherwise perform a subrequest to resolve the path to a filesystem path
     async with SESSION.get(url, **kwargs) as res:
@@ -186,7 +190,7 @@ async def authenticated(request):
     # Build params and get path.
     origin = '/users/%s%s' % (user_id, urlquote(uri))
     url = '%sapi/%s/path/data%s' % (UPSTREAM, version, uri)
-    path = await get_path(origin, url, cookies={'sessionid': token})
+    path = await get_path(request, origin, url, cookies={'sessionid': token})
 
     # Return tuple as preview-server expects.
     return path, origin
@@ -208,7 +212,7 @@ async def anonymous(request):
     # Build params and get path.
     origin = '/link/%s%s' % (link_id, urlquote(uri))
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
-    path = await get_path(origin, url)
+    path = await get_path(request, origin, url)
 
     # Return tuple as preview-server expects.
     return path, origin
