@@ -241,12 +241,14 @@ def make_handler(f):
     # Sets up an HTTP handler, uses f to extract parameters. f() is expected
     # to return a tuple of (path, origin).
     async def handler(request):
-        try:
-            path, origin = await f(request)
-            width, height, format, name, args = await get_params(request)
-            obj = PreviewModel(path, width, height, format, origin=origin,
-                            name=name, args=args)
+        # TODO: need to handle an exception and make a lightweight PreviewModel
+        # to use with icons.get().
+        path, origin = await f(request)
+        width, height, format, name, args = await get_params(request)
+        obj = PreviewModel(path, width, height, format, origin=origin,
+                        name=name, args=args)
 
+        try:
             await generate(obj)
 
         except web.HTTPMovedPermanently as e:
