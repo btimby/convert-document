@@ -4,7 +4,7 @@ all: test
 
 .PHONY: shared
 shared:
-	-${DOCKER} network create --subnet=192.168.100.0/24 --ip-range=192.168.100.0/25 --gateway=192.168.100.254 shared
+	-docker network create --subnet=192.168.100.0/24 --ip-range=192.168.100.0/25 --gateway=192.168.100.254 shared
 
 
 .PHONY: build
