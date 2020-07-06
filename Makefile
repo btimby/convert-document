@@ -30,7 +30,7 @@ Pipfile: Pipfile.lock
 
 
 .PHONY: start-test
-start-test: login
+start-test: login shared
 	docker-compose -f medium.yml -p preview-demo up -d --scale preview-soffice=3
 	for i in 1 2 3 4 5; do curl http://localhost:3000/ > /dev/null 2>&1 && break || sleep 5; done
 	docker-compose -f medium.yml -p preview-demo ps
