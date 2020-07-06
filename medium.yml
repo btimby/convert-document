@@ -3,6 +3,11 @@ version: '3'
 volumes:
   previews:
 
+networks:
+  shared:
+    external:
+      name: shared
+
 services:
   preview-server:
     image: btimby/preview-server
@@ -17,6 +22,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 0
+    networks:
+      - shared
     tmpfs:
       - /tmp
     environment:
@@ -40,6 +47,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 0
+    networks:
+      - shared
     tmpfs:
       - /tmp
     environment:
@@ -48,6 +57,8 @@ services:
 
   haproxy:
     image: haproxy:2.1
+    networks:
+      - shared
     ports:
       - 3000:3000
       - 3001:8080
@@ -57,6 +68,8 @@ services:
   autoheal:
     image: willfarrell/autoheal
     restart: always
+    networks:
+      - shared
     environment:
       - AUTOHEAL_CONTAINER_LABEL=autoheal
     volumes:

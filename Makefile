@@ -2,8 +2,13 @@ SOURCE_COMMIT=$(shell git rev-parse --short HEAD)
 
 all: test
 
+.PHONY: shared
+shared:
+	-${DOCKER} network create --subnet=192.168.100.0/24 --ip-range=192.168.100.0/25 --gateway=192.168.100.254 shared
+
+
 .PHONY: build
-build: login
+build: login shared
 	docker build -f docker/base/Dockerfile -t btimby/preview-base .
 	docker build -f docker/soffice/Dockerfile -t btimby/preview-soffice .
 	docker build -f docker/preview/Dockerfile -t btimby/preview-server .
