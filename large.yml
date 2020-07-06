@@ -60,24 +60,6 @@ services:
     volumes:
       - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - 9090:9090
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - 3002:3000
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - ./docker/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
-      - ./docker/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
-      - ./docker/grafana/preview-server-dashboard.json:/etc/grafana/provisioning/dashboards/preview-server-dashboard.json:ro
-
   autoheal:
     image: willfarrell/autoheal
     restart: always
