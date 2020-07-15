@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "eb759d122eadd29831c05aef5cc2bde414c4424a259439f7b190986658990b39"
+            "sha256": "711e3d8c806db0a5e07d5d32f8a4417c92fb68176aa9869d85245b9a8563913c"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -315,6 +315,14 @@
             ],
             "version": "==0.7.0"
         },
+        "readerwriterlock": {
+            "hashes": [
+                "sha256:22c2587eee403561250a1b28d871ee5f3b51fdb72b514608881217b20e537834",
+                "sha256:a773a72987a76c4008a36b2c0ec08b68e14b794841d95d0150c96406da15c73a"
+            ],
+            "index": "pypi",
+            "version": "==1.0.7"
+        },
         "six": {
             "hashes": [
                 "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259",
@@ -356,11 +364,11 @@
         },
         "wand": {
             "hashes": [
-                "sha256:d5b75ac13d7485032970926415648586eafeeb1eb62ed6ebd0778358cf9d70e0",
-                "sha256:df0780b1b54938a43d29279a6588fde11e349550c8958a673d57c26a3e6de7f1"
+                "sha256:65440e478b595aaa18483e25091adacf6d4458c49c2fd8d59e0fd44a7393a14a",
+                "sha256:b56b96189df2ac3db586afdc6ba67ca37c886d234c3fd98d94172f03248a8e3b"
             ],
             "index": "pypi",
-            "version": "==0.6.1"
+            "version": "==0.6.2"
         },
         "yappi": {
             "hashes": [

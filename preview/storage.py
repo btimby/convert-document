@@ -11,11 +11,12 @@ from os.path import isfile, dirname
 from os.path import join as pathjoin
 
 from preview.utils import (
-    safe_delete, safe_makedirs, run_in_executor, log_duration
+    safe_remove, safe_makedirs, run_in_executor, log_duration
 )
 from preview.metrics import STORAGE, STORAGE_FILES, STORAGE_BYTES
 from preview.config import BASE_PATH, CLEANUP_MAX_SIZE, CLEANUP_INTERVAL
 from preview.models import PathModel
+from preview.backends.image import cleanup
 
 
 LOGGER = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ def get(obj):
     if stat(obj.src.path).st_mtime > mtime:
         LOGGER.info('Removing preview for %s at %s', obj.origin, store_path)
         STORAGE.labels('del').inc()
-        safe_delete(store_path)
+        safe_remove(store_path)
         return False, key
 
     LOGGER.debug('Serving preview for %s from %s', obj.origin, store_path)
@@ -136,6 +137,13 @@ class Cleanup(object):
     @log_duration
     def cleanup(self):
         try:
+            # Try to clean up magickwand temp files.
+            cleanup()
+
+        except:
+            LOGGER.exception(e)
+
+        try:
             # Get totals for metrics.
             size, files = self.scan()
             count = len(files)
@@ -160,7 +168,7 @@ class Cleanup(object):
                     break
 
                 size -= file_size
-                safe_delete(path)
+                safe_remove(path)
 
         finally:
             self.loop.call_later(60, run_in_executor(self.cleanup))

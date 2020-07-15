@@ -70,7 +70,7 @@ def log_duration(f):
     return inner
 
 
-def safe_delete(path):
+def safe_remove(path):
     try:
         os.remove(path)
 

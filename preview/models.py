@@ -6,7 +6,7 @@ from os.path import join as pathjoin
 
 from cached_property import cached_property
 
-from preview.utils import safe_delete, get_extension
+from preview.utils import safe_remove, get_extension
 from preview.config import FILE_ROOT
 
 
@@ -37,12 +37,12 @@ class PathModel(object):
     def extension(self):
         return get_extension(self._path)
 
-    def safe_delete(self):
-        safe_delete(self._path)
+    def safe_remove(self):
+        safe_remove(self._path)
 
     def cleanup(self):
         if self.is_temp:
-            self.safe_delete()
+            self.safe_remove()
 
 
 class PreviewModel(object):
