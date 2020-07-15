@@ -7,8 +7,7 @@ from io import BytesIO
 
 import img2pdf
 
-from threading import RLock
-from readerwriterlock.rwlock import RWLockRead
+from rwlock.rwlock import RWLock
 from wand.image import Image, Color, libmagick
 
 from preview.backends.base import BaseBackend
@@ -17,13 +16,13 @@ from preview.models import PathModel
 from preview.errors import InvalidPageError
 
 
-WAND_LOCK = RWLockRead(lock_factory=RLock)
+WAND_LOCK = RWLock()
 LOGGER = logging.getLogger(__name__)
 TMP_PATTERN = 'magick-*'
 
 
 def resize_image(path, width, height):
-    with WAND_LOCK.gen_rlock(), Image(width=width, height=height) as bg:
+    with WAND_LOCK.reader_lock, Image(width=width, height=height) as bg:
         # Resize our input image.
         with Image(filename=path, resolution=300) as s:
             d = Image(s.sequence[0])
@@ -34,6 +33,7 @@ def resize_image(path, width, height):
             left = (bg.width - d.width) // 2
             top = (bg.height - d.height) // 2
             bg.composite(d, left, top, operator='over')
+
         with tempfile.NamedTemporaryFile(delete=False, suffix='.gif') as t:
             bg.save(filename=t.name)
             return t.name
@@ -42,7 +42,7 @@ def resize_image(path, width, height):
 def convert_to_pdf(path):
     data = BytesIO()
     # Remove alpha channel
-    with WAND_LOCK.gen_rlock(), Image(filename=path, resolution=300) as img:
+    with WAND_LOCK.reader_lock, Image(filename=path, resolution=300) as img:
         img.background_color = Color("white")
         img.alpha_channel = 'deactivate'
         img.format = 'png'
@@ -58,11 +58,13 @@ def cleanup():
     """
     Shut down wand and remove temp files.
     """
-    with WAND_LOCK.gen_wlock():
+    with WAND_LOCK.writer_lock:
         libmagick.MagickWandTerminus()
+
         try:
             tmp = tempfile.gettempdir()
             tmp = pathjoin(tmp, TMP_PATTERN)
+
             for fn in glob(tmp):
                 LOGGER.debug('Removing wand temp file %s', fn)
                 safe_remove(fn)
