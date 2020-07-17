@@ -136,12 +136,8 @@ class Cleanup(object):
 
     @log_duration
     def cleanup(self):
-        try:
-            # Try to clean up magickwand temp files.
-            cleanup()
-
-        except:
-            LOGGER.exception(e)
+        # Try to clean up magickwand temp files.
+        cleanup()
 
         try:
             # Get totals for metrics.

@@ -59,8 +59,6 @@ def cleanup():
     Shut down wand and remove temp files.
     """
     with WAND_LOCK.writer_lock:
-        libmagick.MagickWandTerminus()
-
         try:
             tmp = tempfile.gettempdir()
             tmp = pathjoin(tmp, TMP_PATTERN)
@@ -69,8 +67,8 @@ def cleanup():
                 LOGGER.debug('Removing wand temp file %s', fn)
                 safe_remove(fn)
 
-        finally:
-            libmagick.MagickWandGenesis()
+        except Exception as e:
+            LOGGER.exception(e)
 
 
 class ImageBackend(BaseBackend):
