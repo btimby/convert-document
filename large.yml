@@ -23,7 +23,6 @@ services:
     tmpfs:
       - /tmp
     environment:
-      - PVS_X_ACCEL_REDIRECT=/internal/preview
       - PVS_STORE=/tmp
 #      - PVS_UID=101
 #      - PVS_GID=101

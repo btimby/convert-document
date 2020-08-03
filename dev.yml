@@ -27,7 +27,6 @@ services:
     tmpfs:
       - /tmp
     environment:
-      - PVS_X_ACCEL_REDIRECT=/internal/preview
       - PVS_STORE=/mnt/store
       - PVS_STORE_MAX_AGE=1h
 #      - PVS_UID=101
