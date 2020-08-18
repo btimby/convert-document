@@ -173,7 +173,7 @@ async def authenticated(request):
     """
     # Extract data from URL pattern.
     version = request.match_info['version']
-    uri = request.match_info['uri']
+    uri = urlquote(request.match_info['uri'])
 
     token = request.cookies.get('sessionid')
     LOGGER.debug('Token: %s', token)
@@ -189,7 +189,7 @@ async def authenticated(request):
         raise web.HTTPBadRequest(reason='Invalid session')
 
     # Build params and get path.
-    origin = '/users/%s%s' % (user_id, urlquote(uri))
+    origin = '/users/%s%s' % (user_id, uri)
     url = '%sapi/%s/path/data%s' % (UPSTREAM, version, uri)
     path = await get_path(request, origin, url, cookies={'sessionid': token})
 
@@ -208,10 +208,10 @@ async def anonymous(request):
     """
     # Extract data from URL pattern.
     link_id = request.match_info['link_id']
-    uri = request.match_info['uri']
+    uri = urlquote(request.match_info['uri'])
 
     # Build params and get path.
-    origin = '/link/%s%s' % (link_id, urlquote(uri))
+    origin = '/link/%s%s' % (link_id, uri)
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(request, origin, url)
 
