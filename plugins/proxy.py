@@ -75,13 +75,17 @@ def _parse_root(mapping):
     if not mapping:
         return
 
-    try:
-        fr, to = mapping.split(':')
+    mappings = []
+    for pair in mapping.split(';'):
+        try:
+            fr, to = pair.split(':')
 
-    except ValueError:
-        raise ValueError('Root mapping (JWT_ROOT) should be in form: /path1:path2')
+        except ValueError:
+            raise ValueError('Root mapping (JWT_ROOT) should be in form: /uri1:/path1;/uri2:/path2')
 
-    return fr, to
+        mappings.append((fr, to))
+
+    return mappings
 
 
 LOGGER = logging.getLogger(__name__)
@@ -152,8 +156,11 @@ async def get_path(request, origin, url, **kwargs):
         LOGGER.error('Path does not start with expected path')
         raise web.HTTPBadRequest(reason='Invalid path')
 
-    # Transform path
-    path = pathjoin(ROOT[1], path[len(ROOT[0]):].lstrip('/'))
+    # Transform path if a suitable mapping is defined.
+    for pair in ROOT:
+        if path.startswith(pair[0]):
+            path = pathjoin(pair[1], path[len(pair[0]):].lstrip('/'))
+            break
 
     # Write back to cache if key has been populated.
     if key:
