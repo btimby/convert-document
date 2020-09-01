@@ -152,15 +152,15 @@ async def get_path(request, origin, url, **kwargs):
             LOGGER.exception('Could not retrieve X-Accel-Redirect header')
             raise web.HTTPBadRequest(reason='Invalid response')
 
-    if not path.startswith(ROOT[0]):
-        LOGGER.error('Path does not start with expected path')
-        raise web.HTTPBadRequest(reason='Invalid path')
-
     # Transform path if a suitable mapping is defined.
     for pair in ROOT:
         if path.startswith(pair[0]):
             path = pathjoin(pair[1], path[len(pair[0]):].lstrip('/'))
             break
+
+    else:
+        LOGGER.error('Path does not start with expected path')
+        raise web.HTTPBadRequest(reason='Invalid path')
 
     # Write back to cache if key has been populated.
     if key:
