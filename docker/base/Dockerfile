@@ -28,6 +28,7 @@ RUN apt-get update \
         python3-uno python3-lxml python3-icu curl imagemagick libmagickwand-dev \
         python-setuptools git libavformat-dev libavcodec-dev libavutil-dev \
         libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev inotify-tools \
+        inkscape \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
