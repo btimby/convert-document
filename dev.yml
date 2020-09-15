@@ -16,7 +16,7 @@ services:
       - ./:/app:ro
       - previews:/mnt/store
     labels:
-      - autoheal
+      - autoheal=true
     healthcheck:
       test: ["CMD", "curl", "http://localhost:3000/"]
       interval: 30s
@@ -43,7 +43,7 @@ services:
     volumes:
       - ./fixtures:/mnt/files:ro
     labels:
-      - autoheal
+      - autoheal=true
     healthcheck:
       test: ["CMD", "bash", "-c", "echo 'Hello world' | unoconv --server=127.0.0.1 --port=2002 --stdin --stdout > /dev/null"]
       interval: 30s
