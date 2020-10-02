@@ -96,8 +96,8 @@ LOGGER.addHandler(logging.NullHandler())
 SESSION = ClientSession(loop=LOOP, cookie_jar=CookieJar(unsafe=True))
 
 # JWT verification key and algorithm.
-KEY = _parse_key(os.environ.get('PROXY_JWT_KEY', None))
-ALGO = os.environ.get('PROXY_JWT_ALGO', 'HS256')
+KEY = _parse_key(os.environ.get('JWT_KEY', None))
+ALGO = os.environ.get('JWT_ALGO', 'HS256')
 
 # Address to proxy requests to.
 UPSTREAM = os.environ.get('PROXY_UPSTREAM', None)
