@@ -218,7 +218,7 @@ async def anonymous(request):
     uri = urlquote(request.match_info['uri'])
 
     # Build params and get path.
-    origin = '/frontend/link/%s%s' % (link_id, uri)
+    origin = '/link/%s%s' % (link_id, uri)
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(request, origin, url)
 
@@ -236,5 +236,5 @@ authenticated.method = 'get'
 # /keJf1XlM5aY/path_to_file.exe?preview=true
 # Pattern is a bit complex as we need link/ to be optional in order to support
 # both forms of the url.
-anonymous.pattern = r'/{_:link/|}{link_id:[=\-\w]+}{uri:.*}'
+anonymous.pattern = r'/api/{version:\d+}/{_:link/|}{link_id:[=\-\w]+}{uri:.*}'
 anonymous.method = 'get'
