@@ -218,7 +218,7 @@ async def anonymous(request):
     uri = urlquote(request.match_info['uri'])
 
     # Build params and get path.
-    origin = '/link/%s%s' % (link_id, uri)
+    origin = '/frontend/link/%s%s' % (link_id, uri)
     url = '%s%s' % (UPSTREAM.rstrip('/'), origin)
     path = await get_path(request, origin, url)
 
