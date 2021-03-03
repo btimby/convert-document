@@ -57,7 +57,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/link/-_aAbB01=/sample.pdf',
+                'api/3/link/-_aAbB01=/sample.pdf',
                 params={
                     'format': 'pdf',
                 },
@@ -78,7 +78,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/-_aAbB01=/sample.pdf',
+                'api/3/link/-_aAbB01=/sample.pdf',
                 params={
                     'format': 'pdf',
                 },
@@ -99,7 +99,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/link/-_aAbB01=/w64.exe',
+                'api/3/link/-_aAbB01=/w64.exe',
                 params={
                     'format': 'image',
                 },
@@ -120,7 +120,7 @@ class ProxyPluginTestCase(PreviewTestCase):
 
             r = await self.client.request(
                 'GET',
-                '/link/-_aAbB01=/baz/foo%23bar.pdf',
+                'api/3/link/-_aAbB01=/baz/foo%23bar.pdf',
                 params={
                     'format': 'image',
                 },
