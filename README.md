@@ -1,4 +1,4 @@
-![CI status](https://travis-ci.org/btimby/django-proxysql.png "CI Status")
+[![Build Status](https://travis-ci.org/btimby/preview-server.svg?branch=master)](https://travis-ci.org/btimby/preview-server)
 
 # preview-server
 
