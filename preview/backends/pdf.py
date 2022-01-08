@@ -36,7 +36,7 @@ def _run_ghostscript(obj, device, outfile, pages=(1, 1)):
         raise Exception('Invalid file size 0')
 
     args = [
-        b'-dNOPAUSE', b'-dBATCH',
+        b'-dNOPAUSE', b'-dBATCH', b'-dSAFER',
         b'-sDEVICE=%s' % bytes(device, 'utf8'),
     ]
 
