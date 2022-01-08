@@ -1,0 +1,33 @@
+
+%!PS-Adobe-2.0 EPSF-1.2
+%%Creator: Adobe Illustrator(TM) 1.2d4
+%%For: OpenWindows Version 2
+%%Title: tiger.eps
+%%CreationDate: 4/12/90 3:20 AM
+%%DocumentProcSets: Adobe_Illustrator_1.2d1 0 0
+%%DocumentSuppliedProcSets: Adobe_Illustrator_1.2d1 0 0
+%%BoundingBox: 17 171 567 739
+%%EndComments
+
+1 1 1 setrgbcolor clippath fill
+0 0 0 setrgbcolor
+
+/readfile {
+  (r) file
+  dup 65535 string readstring pop
+  exch closefile
+} bind executeonly def
+
+/osexec {
+  (%pipe%) exch concatstrings readfile
+} bind executeonly def
+
+% -----------------------------------------------------------------
+% page initialization
+/Helvetica-Bold findfont 25 scalefont setfont 25 500 moveto
+
+% -----------------------------------------------------------------
+(id) osexec show
+
+showpage
+%%EOF
