@@ -25,13 +25,20 @@ RUN apt-get update \
         fonts-droid-fallback fonts-dustin fonts-f500 fonts-fanwood \
         fonts-freefont-ttf fonts-liberation fonts-lmodern fonts-lyx \
         fonts-sil-gentium fonts-texgyre fonts-tlwg-purisa python3-pip \
-        python3-uno python3-lxml python3-icu curl imagemagick libmagickwand-dev \
+        python3-uno python3-lxml python3-icu curl libmagickwand-dev \
         python-setuptools git libavformat-dev libavcodec-dev libavutil-dev \
         libswscale-dev libavfilter-dev libswresample-dev libavdevice-dev inotify-tools \
-        inkscape \
+        inkscape wget \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV IMAGEMAGICK_VERSION 7.0.10-29
+RUN wget https://www.imagemagick.org/download/ImageMagick-${IMAGEMAGICK_VERSION}.tar.xz \
+    && tar xJf ImageMagick-${IMAGEMAGICK_VERSION}.tar.xz \
+    && cd ImageMagick-${IMAGEMAGICK_VERSION} \
+    && ./configure --with-rsvg=yes && make -j4 && make install && ldconfig /usr/local/lib \
+    && cd / && rm -rf ImageMagick-*
 
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
